@@ -11,14 +11,20 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="photo-background" aria-hidden="true">
+    <div class="photo-layer photo-layer-a"></div>
+    <div class="photo-layer photo-layer-b"></div>
+    <div class="photo-overlay"></div>
+  </div>
   <header class="topbar">
     <a class="brand" href="#" aria-label="JetPhotos+ home">
       <span class="brand-mark"><img src="assets/jetphotosplus-logo.png" alt=""></span>
       <span>JetPhotos+</span>
     </a>
     <div class="top-actions">
-      <a href="https://github.com/samuelffer/jetphotosplus" target="_blank" rel="noreferrer">GitHub <span>↗</span></a>
-      <button id="theme" class="theme" aria-label="Toggle theme" title="Toggle theme">☾</button>
+      <a class="github-link" href="https://github.com/samuelffer/jetphotosplus" target="_blank" rel="noreferrer" aria-label="View on GitHub" title="View on GitHub">
+        <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path></svg>
+      </a>
     </div>
   </header>
 
@@ -26,7 +32,6 @@
     <section class="hero" aria-labelledby="title">
       <div class="hero-mark"><img src="assets/jetphotosplus-logo.png" alt="JetPhotos+ logo"></div>
       <h1 id="title">JetPhotos<span>+</span></h1>
-      <p class="tagline">Small tools. A smoother JetPhotos experience.</p>
       <p class="description">A lightweight community extension that adds useful tools directly where you need them — without changing the JetPhotos experience you already know.</p>
 
       <div class="actions">
@@ -67,9 +72,61 @@
     <a class="github-release" id="releaseLink" href="https://github.com/samuelffer/jetphotosplus/releases/tag/1.9.3-BETA" target="_blank" rel="noreferrer">View release on GitHub ↗</a>
   </dialog>
 
+<script src="assets/photos.js"></script>
 <script>
+const photoLayers = [
+  document.querySelector('.photo-layer-a'),
+  document.querySelector('.photo-layer-b')
+];
+
+function initPhotoBackground() {
+  const photos = Array.isArray(window.JPP_PHOTOS) ? window.JPP_PHOTOS : [];
+  if (!photos.length) return;
+
+  let deck = [];
+  let activeLayer = 0;
+  let previous = null;
+
+  function refillDeck() {
+    deck = [...photos];
+    for (let i = deck.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    if (deck.length > 1 && deck[0] === previous) [deck[0], deck[1]] = [deck[1], deck[0]];
+  }
+
+  function nextPhoto() {
+    if (!deck.length) refillDeck();
+    const photo = deck.shift();
+    if (!photo) return;
+    previous = photo;
+    const nextLayer = 1 - activeLayer;
+    const layer = photoLayers[nextLayer];
+    layer.style.backgroundImage = `url("${encodeURI(photo)}")`;
+    layer.classList.add('is-visible');
+    photoLayers[activeLayer].classList.remove('is-visible');
+    activeLayer = nextLayer;
+  }
+
+  photoLayers[activeLayer].style.backgroundImage = `url("${encodeURI(photos[0])}")`;
+  previous = photos[0];
+  photoLayers[activeLayer].classList.add('is-visible');
+  deck = photos.filter(photo => photo !== previous);
+
+  const PHOTO_DURATION_MS = 8500;
+  function scheduleNext() {
+    setTimeout(() => {
+      nextPhoto();
+      scheduleNext();
+    }, PHOTO_DURATION_MS);
+  }
+  scheduleNext();
+}
+
+initPhotoBackground();
+
 const body = document.body;
-const theme = document.querySelector('#theme');
 const dialog = document.querySelector('#releasesDialog');
 const openReleases = document.querySelector('#openReleases');
 const closeReleases = document.querySelector('#closeReleases');
@@ -77,19 +134,23 @@ const closeReleases = document.querySelector('#closeReleases');
 const RELEASE_API = 'https://api.github.com/repos/samuelffer/jetphotosplus/releases/tags/1.9.3-BETA';
 const FALLBACK_RELEASE = 'https://github.com/samuelffer/jetphotosplus/releases/tag/1.9.3-BETA';
 
-if (localStorage.getItem('theme') === 'dark') body.classList.add('dark');
-function updateThemeIcon() { theme.textContent = body.classList.contains('dark') ? '☀' : '☾'; }
-updateThemeIcon();
-
-theme.addEventListener('click', () => {
-  body.classList.toggle('dark');
-  localStorage.setItem('theme', body.classList.contains('dark') ? 'dark' : 'light');
-  updateThemeIcon();
+openReleases.addEventListener('click', () => {
+  dialog.showModal();
+});
+closeReleases.addEventListener('click', () => closeDialog());
+dialog.addEventListener('click', e => { if (e.target === dialog) closeDialog(); });
+dialog.addEventListener('cancel', e => {
+  e.preventDefault();
+  closeDialog();
 });
 
-openReleases.addEventListener('click', () => dialog.showModal());
-closeReleases.addEventListener('click', () => dialog.close());
-dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
+function closeDialog() {
+  dialog.classList.add('is-closing');
+  dialog.addEventListener('animationend', () => {
+    dialog.classList.remove('is-closing');
+    dialog.close();
+  }, { once: true });
+}
 
 async function loadRelease() {
   const downloadButton = document.querySelector('#downloadButton');
@@ -130,7 +191,7 @@ async function loadRelease() {
       downloadLabel.textContent = `Download ${cleanVersion}`;
     }
 
-    if (Array.isArray(release.body) && release.body.trim()) {
+    if (typeof release.body === 'string' && release.body.trim()) {
       const items = release.body
         .split('\n')
         .map(line => line.replace(/^\s*[-*]\s+/, '').trim())
