@@ -1,0 +1,151 @@
+* { box-sizing: border-box; }
+
+:root {
+  --bg: #ffffff;
+  --surface: #f1f3f4;
+  --surface-hover: #e8eaed;
+  --text: #1f1f1f;
+  --muted: #5f6368;
+  --border: #dadce0;
+  --accent: #669df6;
+  --accent-hover: #7baaf7;
+  --accent-soft: #e8f0fe;
+  --on-accent: #001d35;
+  --success: #81c995;
+  --dialog: #ffffff;
+}
+
+body.dark {
+  --bg: #202124;
+  --surface: #2d2e31;
+  --surface-hover: #35363a;
+  --text: #e8eaed;
+  --muted: #9aa0a6;
+  --border: #3c4043;
+  --accent: #8ab4f8;
+  --accent-hover: #aecbfa;
+  --accent-soft: #26354d;
+  --on-accent: #001d35;
+  --dialog: #292a2d;
+}
+
+html, body { width: 100%; height: 100%; }
+body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Roboto, Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  transition: background .2s ease, color .2s ease;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font: inherit; }
+
+.topbar {
+  height: 64px;
+  flex: 0 0 64px;
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand { display: flex; align-items: center; gap: 10px; font: 600 15px "Google Sans", sans-serif; }
+.brand-mark {
+  position: relative;
+  width: 31px;
+  height: 31px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--text);
+  color: var(--bg);
+  font: 700 10px "Google Sans", sans-serif;
+}
+.brand-mark b { position: absolute; right: 2px; bottom: 1px; color: var(--accent); font-size: 12px; }
+
+.top-actions { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 13px; }
+.top-actions a:hover { color: var(--text); }
+.theme {
+  width: 34px; height: 34px; padding: 0;
+  display: grid; place-items: center;
+  border: 1px solid var(--border); border-radius: 50%;
+  background: var(--surface); color: var(--text); cursor: pointer;
+  transition: background .15s, transform .15s;
+}
+.theme:hover { background: var(--surface-hover); transform: translateY(-1px); }
+
+.app-shell { flex: 1; display: grid; place-items: center; min-height: 0; }
+.hero { width: min(620px, calc(100% - 40px)); text-align: center; transform: translateY(-12px); }
+.hero-mark {
+  position: relative;
+  width: 68px; height: 68px; margin: 0 auto 20px;
+  display: grid; place-items: center;
+  border-radius: 20px;
+  background: var(--text); color: var(--bg);
+  font: 700 18px "Google Sans", sans-serif;
+  box-shadow: 0 6px 20px rgba(0,0,0,.08);
+}
+.hero-mark b { position: absolute; right: 7px; bottom: 5px; color: var(--accent); font-size: 20px; }
+
+.eyebrow { margin: 0; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: 1.25px; }
+.hero h1 { margin: 0; font: 600 clamp(48px, 8vw, 70px)/1 "Google Sans", sans-serif; letter-spacing: -3px; }
+.hero h1 span { color: var(--accent); }
+.tagline { margin: 15px 0 0; font: 500 18px "Google Sans", sans-serif; }
+.description { max-width: 430px; margin: 10px auto 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+
+.actions { display: flex; justify-content: center; align-items: center; gap: 9px; margin-top: 27px; }
+.download, .release-button {
+  min-height: 45px; padding: 0 18px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  transition: transform .15s, background .15s;
+}
+.download { border: 0; background: var(--accent); color: var(--on-accent); }
+.download:hover { background: var(--accent-hover); transform: translateY(-1px); }
+.release-button { border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.release-button:hover { background: var(--surface-hover); transform: translateY(-1px); }
+.download-icon { font-size: 17px; line-height: 1; }
+.release-badge { display: inline-flex; align-items: center; gap: 7px; margin-top: 14px; color: var(--muted); font-size: 11px; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+
+footer {
+  height: 46px; flex: 0 0 46px;
+  width: min(720px, calc(100% - 40px)); margin: 0 auto;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  color: var(--muted); font-size: 10px;
+}
+
+.release-dialog {
+  width: min(450px, calc(100% - 32px));
+  padding: 25px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--dialog);
+  color: var(--text);
+  box-shadow: 0 18px 60px rgba(0,0,0,.22);
+}
+.release-dialog::backdrop { background: rgba(0,0,0,.38); backdrop-filter: blur(2px); }
+.dialog-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.dialog-head h2 { margin: 5px 0 0; font: 600 24px "Google Sans", sans-serif; }
+.close { width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--surface); color: var(--text); cursor: pointer; font-size: 21px; }
+.close:hover { background: var(--surface-hover); }
+.release-date { margin: 4px 0 16px; color: var(--muted); font-size: 12px; }
+.release-dialog ul { margin: 0 0 22px; padding-left: 19px; color: var(--muted); font-size: 13px; line-height: 1.8; }
+.github-release { color: var(--accent); font-size: 13px; font-weight: 500; }
+
+@media (max-width: 600px) {
+  body { overflow: auto; }
+  .topbar { padding: 0 18px; }
+  .app-shell { min-height: calc(100vh - 110px); }
+  .hero { transform: none; }
+  .hero h1 { letter-spacing: -2px; }
+  .actions { flex-direction: column; }
+  .download, .release-button { width: min(270px, 100%); }
+  footer { width: calc(100% - 32px); }
+}
