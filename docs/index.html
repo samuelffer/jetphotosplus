@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="JetPhotos+ — small tools that make JetPhotos better to use.">
+  <title>JetPhotos+</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="JetPhotos+ home">
+      <span class="brand-mark"><span>JP</span><b>+</b></span>
+      <span>JetPhotos+</span>
+    </a>
+    <div class="top-actions">
+      <a href="https://github.com/samuelffer/jetphotosplus" target="_blank" rel="noreferrer">GitHub <span>↗</span></a>
+      <button id="theme" class="theme" aria-label="Toggle theme" title="Toggle theme">☾</button>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="hero" aria-labelledby="title">
+      <div class="hero-mark"><span>JP</span><b>+</b></div>
+      <h1 id="title">JetPhotos<span>+</span></h1>
+      <p class="tagline">A better way to use JetPhotos.</p>
+
+      <div class="actions">
+        <a class="download" id="downloadButton" href="https://github.com/samuelffer/jetphotosplus/releases/tag/1.9.3-BETA" target="_blank" rel="noreferrer">
+          <span class="download-icon">↓</span>
+          <span id="downloadLabel">Download v1.9.3</span>
+        </a>
+        <button class="release-button" id="openReleases">Release notes</button>
+      </div>
+      <div class="release-badge" aria-live="polite">
+        <span class="status-dot"></span>
+        <span id="releaseStatus">v1.9.3 · BETA</span>
+      </div>
+
+    </section>
+  </main>
+
+  <footer>
+    <span>JetPhotos+</span>
+    <span>Unofficial community extension · Not affiliated with JetPhotos</span>
+  </footer>
+
+  <dialog id="releasesDialog" class="release-dialog">
+    <div class="dialog-head">
+      <div>
+        <p class="eyebrow">RELEASE NOTES</p>
+        <h2 id="releaseVersion">v1.9.3</h2>
+      </div>
+      <button id="closeReleases" class="close" aria-label="Close">×</button>
+    </div>
+    <p class="release-date" id="releaseDate">Current release · BETA</p>
+    <ul id="releaseNotes">
+      <li>Updated JetPhotos+ project identity and logo.</li>
+      <li>Improved header and settings-menu behavior.</li>
+      <li>Removed unused legacy code and old UI logic.</li>
+      <li>UI fixes and stability improvements.</li>
+    </ul>
+    <a class="github-release" id="releaseLink" href="https://github.com/samuelffer/jetphotosplus/releases/tag/1.9.3-BETA" target="_blank" rel="noreferrer">View release on GitHub ↗</a>
+  </dialog>
+
+<script>
+const body = document.body;
+const theme = document.querySelector('#theme');
+const dialog = document.querySelector('#releasesDialog');
+const openReleases = document.querySelector('#openReleases');
+const closeReleases = document.querySelector('#closeReleases');
+
+const RELEASE_API = 'https://api.github.com/repos/samuelffer/jetphotosplus/releases/tags/1.9.3-BETA';
+const FALLBACK_RELEASE = 'https://github.com/samuelffer/jetphotosplus/releases/tag/1.9.3-BETA';
+
+if (localStorage.getItem('theme') === 'dark') body.classList.add('dark');
+function updateThemeIcon() { theme.textContent = body.classList.contains('dark') ? '☀' : '☾'; }
+updateThemeIcon();
+
+theme.addEventListener('click', () => {
+  body.classList.toggle('dark');
+  localStorage.setItem('theme', body.classList.contains('dark') ? 'dark' : 'light');
+  updateThemeIcon();
+});
+
+openReleases.addEventListener('click', () => dialog.showModal());
+closeReleases.addEventListener('click', () => dialog.close());
+dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
+
+async function loadRelease() {
+  const downloadButton = document.querySelector('#downloadButton');
+  const downloadLabel = document.querySelector('#downloadLabel');
+  const releaseStatus = document.querySelector('#releaseStatus');
+  const releaseVersion = document.querySelector('#releaseVersion');
+  const releaseDate = document.querySelector('#releaseDate');
+  const releaseLink = document.querySelector('#releaseLink');
+  const releaseNotes = document.querySelector('#releaseNotes');
+
+  try {
+    const response = await fetch(RELEASE_API, { headers: { Accept: 'application/vnd.github+json' } });
+    if (!response.ok) throw new Error('Release not found');
+    const release = await response.json();
+
+    const version = release.tag_name || '1.9.3-BETA';
+    const cleanVersion = version.replace(/^v/i, '');
+    const asset = (release.assets || []).find(file => /\.zip$/i.test(file.name));
+    const published = release.published_at
+      ? new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(release.published_at))
+      : 'Current release';
+
+    releaseStatus.textContent = `${cleanVersion} · ${release.prerelease ? 'BETA' : 'STABLE'}`;
+    releaseVersion.textContent = cleanVersion;
+    releaseDate.textContent = published;
+    releaseLink.href = release.html_url || FALLBACK_RELEASE;
+
+    if (asset) {
+      downloadButton.href = asset.browser_download_url;
+      downloadButton.removeAttribute('target');
+      downloadButton.removeAttribute('rel');
+      downloadButton.setAttribute('download', asset.name);
+      downloadLabel.textContent = `Download ${cleanVersion}`;
+    } else {
+      downloadButton.href = release.html_url || FALLBACK_RELEASE;
+      downloadButton.target = '_blank';
+      downloadButton.rel = 'noreferrer';
+      downloadLabel.textContent = `Download ${cleanVersion}`;
+    }
+
+    if (Array.isArray(release.body) && release.body.trim()) {
+      const items = release.body
+        .split('\n')
+        .map(line => line.replace(/^\s*[-*]\s+/, '').trim())
+        .filter(Boolean)
+        .slice(0, 8);
+      if (items.length) {
+        releaseNotes.innerHTML = items.map(item => `<li>${item.replace(/[<>]/g, '')}</li>`).join('');
+      }
+    }
+  } catch (error) {
+    // Keep the page usable even if GitHub's API is temporarily unavailable.
+    downloadButton.href = FALLBACK_RELEASE;
+    downloadButton.target = '_blank';
+    downloadButton.rel = 'noreferrer';
+  }
+}
+
+loadRelease();
+</script>
+</body>
+</html>
