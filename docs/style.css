@@ -1,151 +1,253 @@
 * { box-sizing: border-box; }
 
 :root {
-  --bg: #ffffff;
-  --surface: #f1f3f4;
-  --surface-hover: #e8eaed;
-  --text: #1f1f1f;
-  --muted: #5f6368;
-  --border: #dadce0;
-  --accent: #669df6;
-  --accent-hover: #7baaf7;
-  --accent-soft: #e8f0fe;
-  --on-accent: #001d35;
-  --success: #81c995;
+  --bg: #eef1f6;
+  --surface: #ffffff;
+  --surface-strong: #f2f4f8;
+  --surface-hover: #e8ecf3;
+  --text: #12161d;
+  --muted: #5c6675;
+  --border: #e2e6ec;
+  --accent: #3f8cff;
+  --accent-hover: #2f7bef;
+  --accent-soft: #eaf2ff;
+  --on-accent: #ffffff;
+  --success: #2fae66;
   --dialog: #ffffff;
-}
-
-body.dark {
-  --bg: #202124;
-  --surface: #2d2e31;
-  --surface-hover: #35363a;
-  --text: #e8eaed;
-  --muted: #9aa0a6;
-  --border: #3c4043;
-  --accent: #8ab4f8;
-  --accent-hover: #aecbfa;
-  --accent-soft: #26354d;
-  --on-accent: #001d35;
-  --dialog: #292a2d;
+  --shadow: 0 18px 50px rgba(26, 39, 58, .12);
 }
 
 html, body { width: 100%; height: 100%; }
 body {
   margin: 0;
+  height: 100vh;
   overflow: hidden;
   background: var(--bg);
   color: var(--text);
-  font-family: Roboto, Arial, sans-serif;
+  font-family: "Manrope", Arial, sans-serif;
   display: flex;
   flex-direction: column;
-  transition: background .2s ease, color .2s ease;
 }
 
 a { color: inherit; text-decoration: none; }
 button { font: inherit; }
 
 .topbar {
-  height: 64px;
-  flex: 0 0 64px;
-  padding: 0 32px;
+  height: 68px;
+  flex: 0 0 68px;
+  padding: 0 36px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  backdrop-filter: blur(12px);
 }
 
-.brand { display: flex; align-items: center; gap: 10px; font: 600 15px "Google Sans", sans-serif; }
+.brand { display: flex; align-items: center; gap: 11px; font: 700 14px "Plus Jakarta Sans", sans-serif; letter-spacing: -.35px; }
 .brand-mark {
-  position: relative;
-  width: 31px;
-  height: 31px;
-  display: grid;
-  place-items: center;
-  border-radius: 9px;
-  background: var(--text);
-  color: var(--bg);
-  font: 700 10px "Google Sans", sans-serif;
-}
-.brand-mark b { position: absolute; right: 2px; bottom: 1px; color: var(--accent); font-size: 12px; }
-
-.top-actions { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 13px; }
-.top-actions a:hover { color: var(--text); }
-.theme {
-  width: 34px; height: 34px; padding: 0;
+  width: 34px; height: 34px;
   display: grid; place-items: center;
-  border: 1px solid var(--border); border-radius: 50%;
-  background: var(--surface); color: var(--text); cursor: pointer;
-  transition: background .15s, transform .15s;
+  border-radius: 10px;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  overflow: hidden;
 }
-.theme:hover { background: var(--surface-hover); transform: translateY(-1px); }
+.brand-mark img { width: 23px; height: 23px; object-fit: contain; transition: transform .2s ease; }
+.brand:hover .brand-mark img { transform: scale(1.08); }
 
-.app-shell { flex: 1; display: grid; place-items: center; min-height: 0; }
-.hero { width: min(620px, calc(100% - 40px)); text-align: center; transform: translateY(-12px); }
+.top-actions { display: flex; align-items: center; gap: 14px; color: var(--muted); font-size: 12px; font-weight: 700; }
+.github-link {
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  border: 1px solid var(--border); border-radius: 11px;
+  background: var(--surface); color: var(--text);
+  transition: background .15s, transform .15s, border-color .15s, color .15s;
+}
+.github-link:hover { background: var(--surface-hover); border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); color: var(--accent); transform: translateY(-1px); }
+
+.app-shell { flex: 1; display: grid; place-items: center; min-height: 0; padding: 32px 0; }
+
+/*
+  The hero always sits on top of a rotating photo whose dominant colour is
+  unpredictable (blue sky, orange sunset ramp, grey tarmac...). It's a single,
+  self-contained light glass card so text stays legible no matter what photo
+  is behind it - there's no separate light/dark mode to keep in sync.
+*/
+.hero {
+  width: min(600px, calc(100% - 40px));
+  text-align: center;
+  position: relative;
+  padding: 48px 44px 40px;
+  border-radius: 30px;
+  background: linear-gradient(165deg, rgba(255, 255, 255, .9), rgba(255, 255, 255, .78));
+  border: 1px solid rgba(255, 255, 255, .7);
+  box-shadow:
+    0 40px 90px -30px rgba(20, 30, 50, .35),
+    0 1px 0 rgba(255, 255, 255, .8) inset;
+  backdrop-filter: blur(26px) saturate(160%);
+  -webkit-backdrop-filter: blur(26px) saturate(160%);
+}
+.hero > * { position: relative; }
+
 .hero-mark {
-  position: relative;
-  width: 68px; height: 68px; margin: 0 auto 20px;
+  width: 80px; height: 80px; margin: 0 auto 22px;
   display: grid; place-items: center;
-  border-radius: 20px;
-  background: var(--text); color: var(--bg);
-  font: 700 18px "Google Sans", sans-serif;
-  box-shadow: 0 6px 20px rgba(0,0,0,.08);
+  border-radius: 23px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  transform: rotate(-3deg);
 }
-.hero-mark b { position: absolute; right: 7px; bottom: 5px; color: var(--accent); font-size: 20px; }
+.hero-mark img { width: 54px; height: 54px; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,.1)); }
 
-.eyebrow { margin: 0; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: 1.25px; }
-.hero h1 { margin: 0; font: 600 clamp(48px, 8vw, 70px)/1 "Google Sans", sans-serif; letter-spacing: -3px; }
+.eyebrow { margin: 0; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: 1.35px; }
+.hero h1 {
+  margin: 0; color: var(--text);
+  font: 800 clamp(44px, 7.4vw, 68px)/.98 "Plus Jakarta Sans", sans-serif;
+  letter-spacing: -3.6px;
+}
 .hero h1 span { color: var(--accent); }
-.tagline { margin: 15px 0 0; font: 500 18px "Google Sans", sans-serif; }
-.description { max-width: 430px; margin: 10px auto 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+.description { max-width: 460px; margin: 18px auto 0; color: var(--muted); font-size: 13.5px; line-height: 1.7; }
 
-.actions { display: flex; justify-content: center; align-items: center; gap: 9px; margin-top: 27px; }
+.actions { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 28px; }
 .download, .release-button {
-  min-height: 45px; padding: 0 18px; border-radius: 999px;
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  font-size: 14px; font-weight: 500; cursor: pointer;
-  transition: transform .15s, background .15s;
+  min-height: 46px; padding: 0 20px; border-radius: 13px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  font-size: 13px; font-weight: 800; cursor: pointer;
+  transition: transform .15s, background .15s, box-shadow .15s, border-color .15s;
 }
-.download { border: 0; background: var(--accent); color: var(--on-accent); }
-.download:hover { background: var(--accent-hover); transform: translateY(-1px); }
-.release-button { border: 1px solid var(--border); background: var(--surface); color: var(--text); }
-.release-button:hover { background: var(--surface-hover); transform: translateY(-1px); }
-.download-icon { font-size: 17px; line-height: 1; }
-.release-badge { display: inline-flex; align-items: center; gap: 7px; margin-top: 14px; color: var(--muted); font-size: 11px; }
-.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+.download {
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--text);
+  box-shadow: 0 10px 22px -6px rgba(20, 30, 50, .28);
+}
+.download:hover { transform: translateY(-2px); box-shadow: 0 14px 28px -6px rgba(20, 30, 50, .34); border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); }
+.release-button {
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.5);
+  color: var(--text);
+}
+.release-button:hover { background: rgba(255,255,255,.85); border-color: color-mix(in srgb, var(--accent) 28%, var(--border)); transform: translateY(-2px); }
+.release-button:active { transform: translateY(0) scale(.96); }
+.download-icon { font-size: 18px; line-height: 1; }
+.release-badge {
+  display: inline-flex; align-items: center; gap: 8px; margin-top: 18px;
+  padding: 6px 12px; border: 1px solid var(--border); border-radius: 999px;
+  background: rgba(255,255,255,.55); color: var(--muted); font-size: 10px; font-weight: 700;
+}
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 20%, transparent); }
 
 footer {
-  height: 46px; flex: 0 0 46px;
-  width: min(720px, calc(100% - 40px)); margin: 0 auto;
+  height: 52px; flex: 0 0 52px;
+  width: 100%; margin: 0;
+  padding: 0 36px;
   border-top: 1px solid var(--border);
   display: flex; align-items: center; justify-content: space-between;
-  color: var(--muted); font-size: 10px;
+  color: var(--muted); font-size: 11px; font-weight: 600;
 }
 
 .release-dialog {
-  width: min(450px, calc(100% - 32px));
-  padding: 25px;
+  width: min(470px, calc(100% - 32px));
+  padding: 27px;
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: 22px;
   background: var(--dialog);
   color: var(--text);
-  box-shadow: 0 18px 60px rgba(0,0,0,.22);
+  box-shadow: 0 24px 70px rgba(0,0,0,.25);
+  animation: dialog-in .3s cubic-bezier(.2, .9, .3, 1.1);
 }
-.release-dialog::backdrop { background: rgba(0,0,0,.38); backdrop-filter: blur(2px); }
+.release-dialog.is-closing { animation: dialog-out .18s ease forwards; }
+@keyframes dialog-in {
+  from { opacity: 0; transform: translateY(16px) scale(.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes dialog-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(10px) scale(.96); }
+}
+.release-dialog::backdrop {
+  background: rgba(8,12,18,.44);
+  backdrop-filter: blur(4px);
+  animation: backdrop-in .3s ease;
+}
+@keyframes backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .release-dialog, .release-dialog.is-closing, .release-dialog::backdrop { animation: none; }
+}
 .dialog-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
-.dialog-head h2 { margin: 5px 0 0; font: 600 24px "Google Sans", sans-serif; }
-.close { width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--surface); color: var(--text); cursor: pointer; font-size: 21px; }
-.close:hover { background: var(--surface-hover); }
-.release-date { margin: 4px 0 16px; color: var(--muted); font-size: 12px; }
+.dialog-head h2 { margin: 6px 0 0; font: 800 26px "Plus Jakarta Sans", sans-serif; letter-spacing: -1px; }
+.close { width: 34px; height: 34px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface); color: var(--text); cursor: pointer; font-size: 20px; transition: background .15s, transform .15s; }
+.close:hover { background: var(--surface-hover); transform: rotate(4deg); }
+.release-date { margin: 5px 0 17px; color: var(--muted); font-size: 12px; }
 .release-dialog ul { margin: 0 0 22px; padding-left: 19px; color: var(--muted); font-size: 13px; line-height: 1.8; }
-.github-release { color: var(--accent); font-size: 13px; font-weight: 500; }
+.github-release { color: var(--accent); font-size: 13px; font-weight: 800; }
 
 @media (max-width: 600px) {
   body { overflow: auto; }
-  .topbar { padding: 0 18px; }
-  .app-shell { min-height: calc(100vh - 110px); }
-  .hero { transform: none; }
-  .hero h1 { letter-spacing: -2px; }
+  .topbar { height: 62px; flex-basis: 62px; padding: 0 18px; }
+  .app-shell { min-height: calc(100vh - 114px); padding: 38px 0; }
+  .hero { padding: 40px 26px 34px; border-radius: 26px; }
+  .hero h1 { letter-spacing: -2.4px; }
+  .description { padding: 0 6px; }
   .actions { flex-direction: column; }
-  .download, .release-button { width: min(270px, 100%); }
-  footer { width: calc(100% - 32px); }
+  .download, .release-button { width: min(280px, 100%); }
+  footer { width: calc(100% - 32px); height: auto; min-height: 52px; gap: 8px; font-size: 9px; }
+}
+
+
+/* Aircraft photo slideshow */
+.photo-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: #111820;
+  pointer-events: none;
+}
+.photo-layer {
+  position: absolute;
+  inset: -24px;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  opacity: 0;
+  filter: blur(10px) brightness(.78) saturate(.92);
+  transform: scale(1.06);
+  transition: opacity 2.2s ease-in-out, transform 10s ease;
+}
+.photo-layer.is-visible {
+  opacity: 1;
+  transform: scale(1.12);
+}
+.photo-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(6, 10, 16, .58) 0%, rgba(6, 10, 16, .22) 24%, rgba(6, 10, 16, .22) 76%, rgba(6, 10, 16, .58) 100%),
+    rgba(6, 10, 16, .28);
+}
+
+/* Site content stays above the photos. */
+.topbar, .app-shell, footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* Transparent glass surfaces so the photos remain visible. */
+body {
+  background: transparent;
+}
+.topbar {
+  background: rgba(255,255,255,.72);
+  backdrop-filter: blur(14px);
+}
+footer {
+  background: rgba(255,255,255,.72);
+  backdrop-filter: blur(14px);
+}
+.github-link, .brand-mark {
+  background: rgba(255,255,255,.82);
+  backdrop-filter: blur(12px);
 }
