@@ -1,0 +1,6 @@
+1 - Clique no ícone de extensões do seu navegador
+2 - Ative o modo desenvolvedor
+3 - Vá em carregar sem compactação
+4 - Selecione a pasta da extensão (essa que você extraiu) e confirme.
+
+Basta depois ir no site, ir na aba "photos" do perfil do usuário que você queira curtir as fotos, e clicar no botão de curtir todas.
