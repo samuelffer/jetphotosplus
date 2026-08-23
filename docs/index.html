@@ -71,9 +71,9 @@
       <p class="hero-disclaimer" data-i18n="heroDisclaimer">JetPhotos+ is an independent, unofficial browser extension. Not affiliated with, endorsed by, or connected to JetPhotos.net.</p>
 
       <div class="actions">
-        <a class="download" id="downloadButton" href="https://github.com/samuelffer/jetphotosplus/releases/tag/1.9.3-BETA" target="_blank" rel="noreferrer">
+        <a class="download" id="downloadButton" href="https://github.com/samuelffer/jetphotosplus/releases/latest" target="_blank" rel="noreferrer">
           <span class="download-icon">↓</span>
-          <span id="downloadLabel" data-i18n="installButton">Install v1.9.3</span>
+          <span id="downloadLabel" data-i18n="installButton">Install v1.9.4</span>
         </a>
         <button class="release-button" id="openReleases" data-i18n="releaseNotesButton">Release notes</button>
       </div>
@@ -147,18 +147,18 @@ Object.entries(BROWSER_ICON_URLS).forEach(([name, url]) => {
     <div class="dialog-head">
       <div>
         <p class="eyebrow" data-i18n="releaseNotesEyebrow">RELEASE NOTES</p>
-        <h2 id="releaseVersion">v1.9.3</h2>
+        <h2 id="releaseVersion">v1.9.4</h2>
       </div>
       <button id="closeReleases" class="close" aria-label="Close" data-i18n-attr="aria-label:close">×</button>
     </div>
-    <p class="release-date" id="releaseDate" data-i18n="currentRelease">Current release · BETA</p>
+    <p class="release-date" id="releaseDate" data-i18n="currentRelease">Current release</p>
     <ul id="releaseNotes">
-      <li data-i18n="releaseFallback1">Updated JetPhotos+ project identity and logo.</li>
-      <li data-i18n="releaseFallback2">Improved header and settings-menu behavior.</li>
-      <li data-i18n="releaseFallback3">Removed unused legacy code and old UI logic.</li>
-      <li data-i18n="releaseFallback4">UI fixes and stability improvements.</li>
+      <li data-i18n="releaseFallback1">Fixed already-liked photo detection, which was showing every photo as missing.</li>
+      <li data-i18n="releaseFallback2">Fixed the flash of the light theme when navigating pages with site dark mode enabled.</li>
+      <li data-i18n="releaseFallback3">Fixed several low-contrast text and icon colors in site dark mode.</li>
+      <li data-i18n="releaseFallback4">General stability improvements.</li>
     </ul>
-    <a class="github-release" id="releaseLink" href="https://github.com/samuelffer/jetphotosplus/releases/tag/1.9.3-BETA" target="_blank" rel="noreferrer" data-i18n="viewRelease">View release on GitHub ↗</a>
+    <a class="github-release" id="releaseLink" href="https://github.com/samuelffer/jetphotosplus/releases/latest" target="_blank" rel="noreferrer" data-i18n="viewRelease">View release on GitHub ↗</a>
   </dialog>
 
 
@@ -176,7 +176,7 @@ Object.entries(BROWSER_ICON_URLS).forEach(([name, url]) => {
       browserExtension: 'Browser Extension',
       heroDescription: 'A lightweight community extension that adds useful tools directly where you need them — without changing the JetPhotos experience you already know.',
       heroDisclaimer: 'JetPhotos+ is an independent, unofficial browser extension. Not affiliated with, endorsed by, or connected to JetPhotos.net.',
-      installButton: 'Install v1.9.3',
+      installButton: 'Install v1.9.4',
       releaseNotesButton: 'Release notes',
       supportedBrowsers: 'Supported browsers',
       comingSoonText: 'More features are on the way — this project is constantly evolving.',
@@ -195,15 +195,15 @@ Object.entries(BROWSER_ICON_URLS).forEach(([name, url]) => {
       footerDisclaimer: 'Unofficial community extension · Not affiliated with JetPhotos',
       releaseNotesEyebrow: 'RELEASE NOTES',
       close: 'Close',
-      currentRelease: 'Current release · BETA',
+      currentRelease: 'Current release',
       viewRelease: 'View release on GitHub ↗',
       stable: 'STABLE',
       beta: 'BETA',
       currentReleaseFallback: 'Current release',
-      releaseFallback1: 'Updated JetPhotos+ project identity and logo.',
-      releaseFallback2: 'Improved header and settings-menu behavior.',
-      releaseFallback3: 'Removed unused legacy code and old UI logic.',
-      releaseFallback4: 'UI fixes and stability improvements.'
+      releaseFallback1: 'Fixed already-liked photo detection, which was showing every photo as missing.',
+      releaseFallback2: 'Fixed the flash of the light theme when navigating pages with site dark mode enabled.',
+      releaseFallback3: 'Fixed several low-contrast text and icon colors in site dark mode.',
+      releaseFallback4: 'General stability improvements.'
     },
     pt: {
       brandHome: 'Página inicial do JetPhotos+',
@@ -211,7 +211,7 @@ Object.entries(BROWSER_ICON_URLS).forEach(([name, url]) => {
       browserExtension: 'Extensão para navegador',
       heroDescription: 'Uma extensão leve e feita pela comunidade que adiciona ferramentas úteis exatamente onde você precisa — sem mudar a experiência do JetPhotos que você já conhece.',
       heroDisclaimer: 'JetPhotos+ é uma extensão de navegador independente e não oficial. Não possui afiliação, endosso ou vínculo com o JetPhotos.net.',
-      installButton: 'Instalar v1.9.3',
+      installButton: 'Instalar v1.9.4',
       releaseNotesButton: 'Notas da versão',
       supportedBrowsers: 'Navegadores compatíveis',
       comingSoonText: 'Mais funcionalidades estão a caminho — este projeto está em constante evolução.',
@@ -230,15 +230,15 @@ Object.entries(BROWSER_ICON_URLS).forEach(([name, url]) => {
       footerDisclaimer: 'Extensão comunitária não oficial · Não afiliada ao JetPhotos',
       releaseNotesEyebrow: 'NOTAS DA VERSÃO',
       close: 'Fechar',
-      currentRelease: 'Versão atual · BETA',
+      currentRelease: 'Versão atual',
       viewRelease: 'Ver versão no GitHub ↗',
       stable: 'ESTÁVEL',
       beta: 'BETA',
       currentReleaseFallback: 'Versão atual',
-      releaseFallback1: 'Identidade visual e logo do JetPhotos+ atualizados.',
-      releaseFallback2: 'Cabeçalho e comportamento do menu de configurações aprimorados.',
-      releaseFallback3: 'Código legado e lógica antiga de interface removidos.',
-      releaseFallback4: 'Correções de interface e melhorias de estabilidade.'
+      releaseFallback1: 'Corrigida a detecção de fotos já curtidas, que mostrava tudo como faltando.',
+      releaseFallback2: 'Corrigido o flash do tema claro ao trocar de página com o modo escuro ligado.',
+      releaseFallback3: 'Corrigidos vários textos e ícones com baixo contraste no modo escuro do site.',
+      releaseFallback4: 'Melhorias gerais de estabilidade.'
     }
   };
 
@@ -417,8 +417,8 @@ const dialog = document.querySelector('#releasesDialog');
 const openReleases = document.querySelector('#openReleases');
 const closeReleases = document.querySelector('#closeReleases');
 
-const RELEASE_API = 'https://api.github.com/repos/samuelffer/jetphotosplus/releases/tags/1.9.3-BETA';
-const FALLBACK_RELEASE = 'https://github.com/samuelffer/jetphotosplus/releases/tag/1.9.3-BETA';
+const RELEASE_API = 'https://api.github.com/repos/samuelffer/jetphotosplus/releases/latest';
+const FALLBACK_RELEASE = 'https://github.com/samuelffer/jetphotosplus/releases/latest';
 
 openReleases.addEventListener('click', () => {
   dialog.showModal();
@@ -452,7 +452,7 @@ async function loadRelease() {
     if (!response.ok) throw new Error('Release not found');
     const release = await response.json();
 
-    const version = release.tag_name || '1.9.3-BETA';
+    const version = release.tag_name || 'v1.9.4';
     const cleanVersion = version.replace(/^v/i, '');
     const asset = (release.assets || []).find(file => /\.zip$/i.test(file.name));
     const lang = window.JPP_LANG || 'en';
