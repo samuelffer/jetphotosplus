@@ -102,52 +102,6 @@ Object.entries(BROWSER_ICON_URLS).forEach(([name, url]) => {
     </section>
   </main>
 
-  <section class="showcase" aria-labelledby="showcase-title">
-    <div class="showcase-inner">
-      <div class="showcase-heading">
-        <h2 id="showcase-title" data-i18n="showcaseTitle">See it in action</h2>
-        <p data-i18n="showcaseDescription">A quick preview of how the extension adds useful tools directly to JetPhotos.</p>
-      </div>
-
-      <div class="showcase-content">
-        <div class="browser-mockup" aria-label="JetPhotos+ preview" data-i18n-attr="aria-label:previewLabel">
-          <div class="browser-chrome">
-            <div class="browser-dots" aria-hidden="true"><span></span><span></span><span></span></div>
-            <div class="browser-address"><span class="address-lock">⌁</span><span>jetphotos.com</span></div>
-            <div class="browser-space" aria-hidden="true"></div>
-          </div>
-          <div class="browser-screen">
-            <!-- ===== CAROUSEL ===== -->
-            <div class="preview-carousel" data-carousel aria-label="JetPhotos+ screenshots" data-i18n-attr="aria-label:carouselLabel">
-              <div class="preview-slides">
-                <figure class="preview-slide is-active">
-                  <img src="assets/preview-1.png" alt="JetPhotos+ icon shown next to the user's email on JetPhotos" data-i18n-attr="alt:carousel1Alt">
-                  <figcaption data-i18n="carousel1Caption">Faster interactions with useful actions right where you need them.</figcaption>
-                </figure>
-                <figure class="preview-slide">
-                  <img src="assets/preview-2.png" alt="Queue time estimator integrated into the JetPhotos website" data-i18n-attr="alt:carousel2Alt">
-                  <figcaption data-i18n="carousel2Caption">A simple workflow that keeps the interface out of your way.</figcaption>
-                </figure>
-                <figure class="preview-slide">
-                  <img src="assets/preview-3.png" alt="Experimental dark theme (beta) applied to JetPhotos" data-i18n-attr="alt:carousel3Alt">
-                  <figcaption data-i18n="carousel3Caption">Community-focused tools designed for a better JetPhotos experience.</figcaption>
-                </figure>
-              </div>
-              <div class="carousel-dots" role="tablist" aria-label="Choose preview" data-i18n-attr="aria-label:carouselNavigationLabel">
-                <button type="button" class="carousel-dot is-active" role="tab" aria-selected="true" aria-label="Preview 1" data-slide="0" data-i18n-attr="aria-label:carouselDot1"></button>
-                <button type="button" class="carousel-dot" role="tab" aria-selected="false" aria-label="Preview 2" data-slide="1" data-i18n-attr="aria-label:carouselDot2"></button>
-                <button type="button" class="carousel-dot" role="tab" aria-selected="false" aria-label="Preview 3" data-slide="2" data-i18n-attr="aria-label:carouselDot3"></button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="coming-soon" role="note" data-i18n="comingSoonText">More features are on the way — this project is constantly evolving.</div>
-    </div>
-  </section>
-
-
   <section class="faq" aria-labelledby="faq-title">
     <div class="faq-inner">
       <div class="faq-heading">
@@ -208,81 +162,7 @@ Object.entries(BROWSER_ICON_URLS).forEach(([name, url]) => {
   </dialog>
 
 
-<script>
-// ===== CAROUSEL =====
-(() => {
-  const carousel = document.querySelector('[data-carousel]');
-  if (!carousel) return;
 
-  const slides = [...carousel.querySelectorAll('.preview-slide')];
-  const dots = [...carousel.querySelectorAll('.carousel-dot')];
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const intervalMs = 4500;
-  let activeIndex = 0;
-  let timer = null;
-  let paused = false;
-
-  function showSlide(index) {
-    activeIndex = (index + slides.length) % slides.length;
-
-    slides.forEach((slide, i) => {
-      const active = i === activeIndex;
-      slide.classList.toggle('is-active', active);
-      slide.setAttribute('aria-hidden', String(!active));
-    });
-
-    dots.forEach((dot, i) => {
-      const active = i === activeIndex;
-      dot.classList.toggle('is-active', active);
-      dot.setAttribute('aria-selected', String(active));
-    });
-  }
-
-  function stopTimer() {
-    if (timer) {
-      clearInterval(timer);
-      timer = null;
-    }
-  }
-
-  function startTimer() {
-    stopTimer();
-    if (reducedMotion.matches || paused || slides.length < 2) return;
-    timer = setInterval(() => showSlide(activeIndex + 1), intervalMs);
-  }
-
-  dots.forEach((dot) => {
-    dot.addEventListener('click', () => {
-      showSlide(Number(dot.dataset.slide));
-      startTimer();
-    });
-  });
-
-  carousel.addEventListener('mouseenter', () => {
-    paused = true;
-    stopTimer();
-  });
-
-  carousel.addEventListener('mouseleave', () => {
-    paused = false;
-    startTimer();
-  });
-
-  carousel.addEventListener('focusin', stopTimer);
-  carousel.addEventListener('focusout', (event) => {
-    if (!carousel.contains(event.relatedTarget)) startTimer();
-  });
-
-  if (typeof reducedMotion.addEventListener === 'function') {
-    reducedMotion.addEventListener('change', startTimer);
-  } else if (typeof reducedMotion.addListener === 'function') {
-    reducedMotion.addListener(startTimer);
-  }
-
-  showSlide(0);
-  startTimer();
-})();
-</script>
 
 <script>
 // ===== I18N SYSTEM =====
@@ -299,21 +179,6 @@ Object.entries(BROWSER_ICON_URLS).forEach(([name, url]) => {
       installButton: 'Install v1.9.3',
       releaseNotesButton: 'Release notes',
       supportedBrowsers: 'Supported browsers',
-      showcaseTitle: 'See it in action',
-      showcaseDescription: 'A quick preview of how the extension adds useful tools directly to JetPhotos.',
-      previewLabel: 'JetPhotos+ preview',
-      previewTitle: 'JetPhotos+ preview',
-      carouselLabel: 'JetPhotos+ screenshots',
-      carouselNavigationLabel: 'Choose preview',
-      carouselDot1: 'Preview 1',
-      carouselDot2: 'Preview 2',
-      carouselDot3: 'Preview 3',
-      carousel1Alt: "JetPhotos+ icon shown next to the user's email on JetPhotos",
-      carousel2Alt: 'Queue time estimator integrated into the JetPhotos website',
-      carousel3Alt: 'Experimental dark theme (beta) applied to JetPhotos',
-      carousel1Caption: 'Quick access icon right next to your account',
-      carousel2Caption: 'Estimated queue time, built right into the page',
-      carousel3Caption: 'Dark theme — experimental, beta',
       comingSoonText: 'More features are on the way — this project is constantly evolving.',
       faqTitle: 'Frequently asked questions',
       faqDescription: 'Some important information about the project, its maintenance and how the extension works.',
@@ -349,21 +214,6 @@ Object.entries(BROWSER_ICON_URLS).forEach(([name, url]) => {
       installButton: 'Instalar v1.9.3',
       releaseNotesButton: 'Notas da versão',
       supportedBrowsers: 'Navegadores compatíveis',
-      showcaseTitle: 'Veja em ação',
-      showcaseDescription: 'Uma prévia rápida de como a extensão adiciona ferramentas úteis diretamente ao JetPhotos.',
-      previewLabel: 'Prévia do JetPhotos+',
-      previewTitle: 'Prévia do JetPhotos+',
-      carouselLabel: 'Capturas de tela do JetPhotos+',
-      carouselNavigationLabel: 'Escolher prévia',
-      carouselDot1: 'Prévia 1',
-      carouselDot2: 'Prévia 2',
-      carouselDot3: 'Prévia 3',
-      carousel1Alt: 'Ícone do JetPhotos+ ao lado do e-mail do usuário no JetPhotos',
-      carousel2Alt: 'Estimador de filas integrado ao site do JetPhotos',
-      carousel3Alt: 'Tema escuro experimental (beta) aplicado ao JetPhotos',
-      carousel1Caption: 'Ícone de acesso rápido direto ao lado da sua conta',
-      carousel2Caption: 'Tempo de fila estimado, direto na página',
-      carousel3Caption: 'Tema escuro — experimental, beta',
       comingSoonText: 'Mais funcionalidades estão a caminho — este projeto está em constante evolução.',
       faqTitle: 'Perguntas frequentes',
       faqDescription: 'Algumas informações importantes sobre o projeto, sua manutenção e como a extensão funciona.',
@@ -489,7 +339,7 @@ Object.entries(BROWSER_ICON_URLS).forEach(([name, url]) => {
 <script>
 (() => {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const sections = document.querySelectorAll('.showcase, .faq');
+  const sections = document.querySelectorAll('.faq');
 
   if (reducedMotion.matches || !('IntersectionObserver' in window)) {
     sections.forEach(section => section.classList.add('visible'));
