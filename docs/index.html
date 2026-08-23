@@ -31,20 +31,41 @@
   <main class="app-shell">
     <section class="hero" aria-labelledby="title">
       <div class="hero-mark"><img src="assets/jetphotosplus-logo.png" alt="JetPhotos+ logo"></div>
+      <div class="ext-badge">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5a2.5 2.5 0 0 0 0-5Z"></path></svg>
+        <span>Browser Extension</span>
+      </div>
       <h1 id="title">JetPhotos<span>+</span></h1>
       <p class="description">A lightweight community extension that adds useful tools directly where you need them — without changing the JetPhotos experience you already know.</p>
 
       <div class="actions">
         <a class="download" id="downloadButton" href="https://github.com/samuelffer/jetphotosplus/releases/tag/1.9.3-BETA" target="_blank" rel="noreferrer">
           <span class="download-icon">↓</span>
-          <span id="downloadLabel">Download v1.9.3</span>
+          <span id="downloadLabel">Install v1.9.3</span>
         </a>
         <button class="release-button" id="openReleases">Release notes</button>
       </div>
-      <div class="release-badge" aria-live="polite">
-        <span class="status-dot"></span>
-        <span id="releaseStatus">v1.9.3 · BETA</span>
-      </div>
+
+      <!-- BROWSER ICON LINKS: paste/replace the image URLs below whenever you want -->
+<script>
+const BROWSER_ICON_URLS = {
+  chrome: "https://upload.wikimedia.org/wikipedia/commons/e/e1/Google_Chrome_icon_%28February_2022%29.svg",
+  edge: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Microsoft_Edge_logo_%282019%29.svg/960px-Microsoft_Edge_logo_%282019%29.svg.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail&_=20220108180202",
+  brave: "https://www.svgrepo.com/show/378778/brave.svg",
+  opera: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Opera_2015_icon.svg/960px-Opera_2015_icon.svg.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail&_=20210325220019"
+};
+</script>
+<div class="browser-row" aria-label="Supported browsers">
+  <span class="browser-badge" title="Google Chrome"><img id="icon-chrome" src="" alt="Google Chrome" width="20" height="20"></span>
+  <span class="browser-badge" title="Microsoft Edge"><img id="icon-edge" src="" alt="Microsoft Edge" width="20" height="20"></span>
+  <span class="browser-badge" title="Brave"><img id="icon-brave" src="" alt="Brave" width="20" height="20"></span>
+  <span class="browser-badge" title="Opera"><img id="icon-opera" src="" alt="Opera" width="20" height="20"></span>
+</div>
+<script>
+Object.entries(BROWSER_ICON_URLS).forEach(([name, url]) => {
+  document.getElementById(`icon-${name}`).src = url;
+});
+</script>
 
     </section>
   </main>
@@ -183,12 +204,12 @@ async function loadRelease() {
       downloadButton.removeAttribute('target');
       downloadButton.removeAttribute('rel');
       downloadButton.setAttribute('download', asset.name);
-      downloadLabel.textContent = `Download ${cleanVersion}`;
+      downloadLabel.textContent = `Install ${cleanVersion}`;
     } else {
       downloadButton.href = release.html_url || FALLBACK_RELEASE;
       downloadButton.target = '_blank';
       downloadButton.rel = 'noreferrer';
-      downloadLabel.textContent = `Download ${cleanVersion}`;
+      downloadLabel.textContent = `Install ${cleanVersion}`;
     }
 
     if (typeof release.body === 'string' && release.body.trim()) {

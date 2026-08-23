@@ -1,3 +1,4 @@
+// Generated automatically. Run update_photos.bat (Windows) or `node build-photo-manifest.mjs` (Mac/Linux) after editing assets/photos/.
 window.JPP_PHOTOS = [
   "assets/photos/1062694_1710041359.jpg",
   "assets/photos/367796_1719283968.jpg",

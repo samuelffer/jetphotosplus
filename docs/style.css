@@ -101,6 +101,17 @@ button { font: inherit; }
 }
 .hero-mark img { width: 54px; height: 54px; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,.1)); }
 
+.ext-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin: 0 auto 14px;
+  padding: 5px 12px 5px 10px;
+  border: 1px solid var(--border); border-radius: 999px;
+  background: var(--surface-strong);
+  color: var(--muted);
+  font-size: 10.5px; font-weight: 800; letter-spacing: .3px;
+}
+.ext-badge svg { color: var(--accent); flex: none; }
+
 .eyebrow { margin: 0; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: 1.35px; }
 .hero h1 {
   margin: 0; color: var(--text);
@@ -132,8 +143,21 @@ button { font: inherit; }
 .release-button:hover { background: rgba(255,255,255,.85); border-color: color-mix(in srgb, var(--accent) 28%, var(--border)); transform: translateY(-2px); }
 .release-button:active { transform: translateY(0) scale(.96); }
 .download-icon { font-size: 18px; line-height: 1; }
+
+.browser-row { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 18px; }
+.browser-badge {
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 10px rgba(20,30,50,.08);
+  transition: transform .15s, box-shadow .15s;
+}
+.browser-badge:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(20,30,50,.14); }
+
 .release-badge {
-  display: inline-flex; align-items: center; gap: 8px; margin-top: 18px;
+  display: inline-flex; align-items: center; gap: 8px; margin-top: 16px;
   padding: 6px 12px; border: 1px solid var(--border); border-radius: 999px;
   background: rgba(255,255,255,.55); color: var(--muted); font-size: 10px; font-weight: 700;
 }
@@ -251,3 +275,4 @@ footer {
   background: rgba(255,255,255,.82);
   backdrop-filter: blur(12px);
 }
+.browser-badge img { display: block; width: 20px; height: 20px; object-fit: contain; }
