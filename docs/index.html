@@ -1,9 +1,37 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <!-- Basic Meta -->
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="JetPhotos+ — small tools that make JetPhotos better to use.">
+  <meta name="description" content="JetPhotos+ is a free, unofficial browser extension that adds useful tools directly to JetPhotos.net — install for Chrome, Edge, Brave and Opera.">
+  <meta name="keywords" content="JetPhotos, JetPhotos+, browser extension, aviation, plane spotting, aircraft spotting, aviation photography, Chrome extension, Edge extension, Brave extension, Opera extension">
+  <meta name="author" content="samuelffer">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://samuelffer.github.io/jetphotosplus/">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="JetPhotos+ — Browser Extension">
+  <meta property="og:description" content="A lightweight community extension that adds useful tools directly to JetPhotos.">
+  <meta property="og:image" content="https://samuelffer.github.io/jetphotosplus/assets/og-image.png">
+  <meta property="og:url" content="https://samuelffer.github.io/jetphotosplus/">
+  <meta property="og:site_name" content="JetPhotos+">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:locale:alternate" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="JetPhotos+ — Browser Extension">
+  <meta name="twitter:description" content="A lightweight community extension that adds useful tools directly to JetPhotos.">
+  <meta name="twitter:image" content="https://samuelffer.github.io/jetphotosplus/assets/og-image.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="manifest" href="assets/site.webmanifest">
+
   <title>JetPhotos+</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,12 +45,15 @@
     <div class="photo-overlay"></div>
   </div>
   <header class="topbar">
-    <a class="brand" href="#" aria-label="JetPhotos+ home">
+    <a class="brand" href="#" aria-label="JetPhotos+ home" data-i18n-attr="aria-label:brandHome">
       <span class="brand-mark"><img src="assets/jetphotosplus-logo.png" alt=""></span>
       <span>JetPhotos+</span>
     </a>
     <div class="top-actions">
-      <a class="github-link" href="https://github.com/samuelffer/jetphotosplus" target="_blank" rel="noreferrer" aria-label="View on GitHub" title="View on GitHub">
+      <div class="language-switcher">
+        <button type="button" class="language-toggle" id="languageToggle" aria-label="Switch language" title="Switch language">EN</button>
+      </div>
+      <a class="github-link" href="https://github.com/samuelffer/jetphotosplus" target="_blank" rel="noreferrer" aria-label="View on GitHub" title="View on GitHub" data-i18n-attr="aria-label:githubView|title:githubView">
         <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path></svg>
       </a>
     </div>
@@ -33,17 +64,18 @@
       <div class="hero-mark"><img src="assets/jetphotosplus-logo.png" alt="JetPhotos+ logo"></div>
       <div class="ext-badge">
         <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5a2.5 2.5 0 0 0 0-5Z"></path></svg>
-        <span>Browser Extension</span>
+        <span data-i18n="browserExtension">Browser Extension</span>
       </div>
       <h1 id="title">JetPhotos<span>+</span></h1>
-      <p class="description">A lightweight community extension that adds useful tools directly where you need them — without changing the JetPhotos experience you already know.</p>
+      <p class="description" data-i18n="heroDescription">A lightweight community extension that adds useful tools directly where you need them — without changing the JetPhotos experience you already know.</p>
+      <p class="hero-disclaimer" data-i18n="heroDisclaimer">JetPhotos+ is an independent, unofficial browser extension. Not affiliated with, endorsed by, or connected to JetPhotos.net.</p>
 
       <div class="actions">
         <a class="download" id="downloadButton" href="https://github.com/samuelffer/jetphotosplus/releases/tag/1.9.3-BETA" target="_blank" rel="noreferrer">
           <span class="download-icon">↓</span>
-          <span id="downloadLabel">Install v1.9.3</span>
+          <span id="downloadLabel" data-i18n="installButton">Install v1.9.3</span>
         </a>
-        <button class="release-button" id="openReleases">Release notes</button>
+        <button class="release-button" id="openReleases" data-i18n="releaseNotesButton">Release notes</button>
       </div>
 
       <!-- BROWSER ICON LINKS: paste/replace the image URLs below whenever you want -->
@@ -55,7 +87,7 @@ const BROWSER_ICON_URLS = {
   opera: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Opera_2015_icon.svg/960px-Opera_2015_icon.svg.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail&_=20210325220019"
 };
 </script>
-<div class="browser-row" aria-label="Supported browsers">
+<div class="browser-row" aria-label="Supported browsers" data-i18n-attr="aria-label:supportedBrowsers">
   <span class="browser-badge" title="Google Chrome"><img id="icon-chrome" src="" alt="Google Chrome" width="20" height="20"></span>
   <span class="browser-badge" title="Microsoft Edge"><img id="icon-edge" src="" alt="Microsoft Edge" width="20" height="20"></span>
   <span class="browser-badge" title="Brave"><img id="icon-brave" src="" alt="Brave" width="20" height="20"></span>
@@ -70,28 +102,410 @@ Object.entries(BROWSER_ICON_URLS).forEach(([name, url]) => {
     </section>
   </main>
 
+  <section class="showcase" aria-labelledby="showcase-title">
+    <div class="showcase-inner">
+      <div class="showcase-heading">
+        <h2 id="showcase-title" data-i18n="showcaseTitle">See it in action</h2>
+        <p data-i18n="showcaseDescription">A quick preview of how the extension adds useful tools directly to JetPhotos.</p>
+      </div>
+
+      <div class="showcase-content">
+        <div class="browser-mockup" aria-label="JetPhotos+ preview" data-i18n-attr="aria-label:previewLabel">
+          <div class="browser-chrome">
+            <div class="browser-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+            <div class="browser-address"><span class="address-lock">⌁</span><span>jetphotos.com</span></div>
+            <div class="browser-space" aria-hidden="true"></div>
+          </div>
+          <div class="browser-screen">
+            <!-- ===== CAROUSEL ===== -->
+            <div class="preview-carousel" data-carousel aria-label="JetPhotos+ screenshots" data-i18n-attr="aria-label:carouselLabel">
+              <div class="preview-slides">
+                <figure class="preview-slide is-active">
+                  <img src="assets/preview-1.png" alt="JetPhotos+ icon shown next to the user's email on JetPhotos" data-i18n-attr="alt:carousel1Alt">
+                  <figcaption data-i18n="carousel1Caption">Faster interactions with useful actions right where you need them.</figcaption>
+                </figure>
+                <figure class="preview-slide">
+                  <img src="assets/preview-2.png" alt="Queue time estimator integrated into the JetPhotos website" data-i18n-attr="alt:carousel2Alt">
+                  <figcaption data-i18n="carousel2Caption">A simple workflow that keeps the interface out of your way.</figcaption>
+                </figure>
+                <figure class="preview-slide">
+                  <img src="assets/preview-3.png" alt="Experimental dark theme (beta) applied to JetPhotos" data-i18n-attr="alt:carousel3Alt">
+                  <figcaption data-i18n="carousel3Caption">Community-focused tools designed for a better JetPhotos experience.</figcaption>
+                </figure>
+              </div>
+              <div class="carousel-dots" role="tablist" aria-label="Choose preview" data-i18n-attr="aria-label:carouselNavigationLabel">
+                <button type="button" class="carousel-dot is-active" role="tab" aria-selected="true" aria-label="Preview 1" data-slide="0" data-i18n-attr="aria-label:carouselDot1"></button>
+                <button type="button" class="carousel-dot" role="tab" aria-selected="false" aria-label="Preview 2" data-slide="1" data-i18n-attr="aria-label:carouselDot2"></button>
+                <button type="button" class="carousel-dot" role="tab" aria-selected="false" aria-label="Preview 3" data-slide="2" data-i18n-attr="aria-label:carouselDot3"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="coming-soon" role="note" data-i18n="comingSoonText">More features are on the way — this project is constantly evolving.</div>
+    </div>
+  </section>
+
+
+  <section class="faq" aria-labelledby="faq-title">
+    <div class="faq-inner">
+      <div class="faq-heading">
+        <h2 id="faq-title" data-i18n="faqTitle">Frequently asked questions</h2>
+        <p data-i18n="faqDescription">Some important information about the project, its maintenance and how the extension works.</p>
+      </div>
+
+      <div class="faq-list">
+        <details class="faq-item">
+          <summary><span data-i18n="faq1Question">Is JetPhotos+ an official JetPhotos product?</span><span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p data-i18n="faq1Answer">No. JetPhotos+ is an independent, community-created project and has no affiliation with, sponsorship from, or endorsement by JetPhotos.net.</p></div>
+        </details>
+
+        <details class="faq-item">
+          <summary><span data-i18n="faq2Question">Is it safe to install?</span><span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p data-i18n="faq2Answer">The project source code is open and publicly available on GitHub, allowing anyone to inspect and audit it before installing.</p></div>
+        </details>
+
+        <details class="faq-item">
+          <summary><span data-i18n="faq4Question">How do I report a bug or suggest a feature?</span><span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p data-i18n-html="faq4Answer">Você pode abrir uma sugestão ou relatar um problema na aba <a href="https://github.com/samuelffer/jetphotosplus/issues" target="_blank" rel="noreferrer">Issues do repositório no GitHub</a>.</p></div>
+        </details>
+
+        <details class="faq-item">
+          <summary><span data-i18n="faq5Question">Does the extension collect my data?</span><span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p data-i18n="faq5Answer">JetPhotos+ does not send your personal data to its own or third-party servers. Preferences and history needed for some features are stored locally in your browser, and the extension accesses JetPhotos pages only when necessary to provide its features.</p></div>
+        </details>
+
+        <details class="faq-item">
+          <summary><span data-i18n="faq6Question">Who is behind JetPhotos+?</span><span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p data-i18n="faq6Answer">JetPhotos+ is developed and maintained by Samuel Ferreira. The project is supported by the Amigos do JetPhotos community, who contribute ideas and help test the extension.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
   <footer>
     <span>JetPhotos+</span>
-    <span>Unofficial community extension · Not affiliated with JetPhotos</span>
+    <span data-i18n="footerDisclaimer">Unofficial community extension · Not affiliated with JetPhotos</span>
   </footer>
 
   <dialog id="releasesDialog" class="release-dialog">
     <div class="dialog-head">
       <div>
-        <p class="eyebrow">RELEASE NOTES</p>
+        <p class="eyebrow" data-i18n="releaseNotesEyebrow">RELEASE NOTES</p>
         <h2 id="releaseVersion">v1.9.3</h2>
       </div>
-      <button id="closeReleases" class="close" aria-label="Close">×</button>
+      <button id="closeReleases" class="close" aria-label="Close" data-i18n-attr="aria-label:close">×</button>
     </div>
-    <p class="release-date" id="releaseDate">Current release · BETA</p>
+    <p class="release-date" id="releaseDate" data-i18n="currentRelease">Current release · BETA</p>
     <ul id="releaseNotes">
-      <li>Updated JetPhotos+ project identity and logo.</li>
-      <li>Improved header and settings-menu behavior.</li>
-      <li>Removed unused legacy code and old UI logic.</li>
-      <li>UI fixes and stability improvements.</li>
+      <li data-i18n="releaseFallback1">Updated JetPhotos+ project identity and logo.</li>
+      <li data-i18n="releaseFallback2">Improved header and settings-menu behavior.</li>
+      <li data-i18n="releaseFallback3">Removed unused legacy code and old UI logic.</li>
+      <li data-i18n="releaseFallback4">UI fixes and stability improvements.</li>
     </ul>
-    <a class="github-release" id="releaseLink" href="https://github.com/samuelffer/jetphotosplus/releases/tag/1.9.3-BETA" target="_blank" rel="noreferrer">View release on GitHub ↗</a>
+    <a class="github-release" id="releaseLink" href="https://github.com/samuelffer/jetphotosplus/releases/tag/1.9.3-BETA" target="_blank" rel="noreferrer" data-i18n="viewRelease">View release on GitHub ↗</a>
   </dialog>
+
+
+<script>
+// ===== CAROUSEL =====
+(() => {
+  const carousel = document.querySelector('[data-carousel]');
+  if (!carousel) return;
+
+  const slides = [...carousel.querySelectorAll('.preview-slide')];
+  const dots = [...carousel.querySelectorAll('.carousel-dot')];
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const intervalMs = 4500;
+  let activeIndex = 0;
+  let timer = null;
+  let paused = false;
+
+  function showSlide(index) {
+    activeIndex = (index + slides.length) % slides.length;
+
+    slides.forEach((slide, i) => {
+      const active = i === activeIndex;
+      slide.classList.toggle('is-active', active);
+      slide.setAttribute('aria-hidden', String(!active));
+    });
+
+    dots.forEach((dot, i) => {
+      const active = i === activeIndex;
+      dot.classList.toggle('is-active', active);
+      dot.setAttribute('aria-selected', String(active));
+    });
+  }
+
+  function stopTimer() {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+  }
+
+  function startTimer() {
+    stopTimer();
+    if (reducedMotion.matches || paused || slides.length < 2) return;
+    timer = setInterval(() => showSlide(activeIndex + 1), intervalMs);
+  }
+
+  dots.forEach((dot) => {
+    dot.addEventListener('click', () => {
+      showSlide(Number(dot.dataset.slide));
+      startTimer();
+    });
+  });
+
+  carousel.addEventListener('mouseenter', () => {
+    paused = true;
+    stopTimer();
+  });
+
+  carousel.addEventListener('mouseleave', () => {
+    paused = false;
+    startTimer();
+  });
+
+  carousel.addEventListener('focusin', stopTimer);
+  carousel.addEventListener('focusout', (event) => {
+    if (!carousel.contains(event.relatedTarget)) startTimer();
+  });
+
+  if (typeof reducedMotion.addEventListener === 'function') {
+    reducedMotion.addEventListener('change', startTimer);
+  } else if (typeof reducedMotion.addListener === 'function') {
+    reducedMotion.addListener(startTimer);
+  }
+
+  showSlide(0);
+  startTimer();
+})();
+</script>
+
+<script>
+// ===== I18N SYSTEM =====
+(() => {
+  const STORAGE_KEY = 'jetphotosplus_lang';
+
+  const translations = {
+    en: {
+      brandHome: 'JetPhotos+ home',
+      githubView: 'View on GitHub',
+      browserExtension: 'Browser Extension',
+      heroDescription: 'A lightweight community extension that adds useful tools directly where you need them — without changing the JetPhotos experience you already know.',
+      heroDisclaimer: 'JetPhotos+ is an independent, unofficial browser extension. Not affiliated with, endorsed by, or connected to JetPhotos.net.',
+      installButton: 'Install v1.9.3',
+      releaseNotesButton: 'Release notes',
+      supportedBrowsers: 'Supported browsers',
+      showcaseTitle: 'See it in action',
+      showcaseDescription: 'A quick preview of how the extension adds useful tools directly to JetPhotos.',
+      previewLabel: 'JetPhotos+ preview',
+      previewTitle: 'JetPhotos+ preview',
+      carouselLabel: 'JetPhotos+ screenshots',
+      carouselNavigationLabel: 'Choose preview',
+      carouselDot1: 'Preview 1',
+      carouselDot2: 'Preview 2',
+      carouselDot3: 'Preview 3',
+      carousel1Alt: "JetPhotos+ icon shown next to the user's email on JetPhotos",
+      carousel2Alt: 'Queue time estimator integrated into the JetPhotos website',
+      carousel3Alt: 'Experimental dark theme (beta) applied to JetPhotos',
+      carousel1Caption: 'Quick access icon right next to your account',
+      carousel2Caption: 'Estimated queue time, built right into the page',
+      carousel3Caption: 'Dark theme — experimental, beta',
+      comingSoonText: 'More features are on the way — this project is constantly evolving.',
+      faqTitle: 'Frequently asked questions',
+      faqDescription: 'Some important information about the project, its maintenance and how the extension works.',
+      faq1Question: 'Is JetPhotos+ an official JetPhotos product?',
+      faq1Answer: 'No. JetPhotos+ is an independent, community-created project and has no affiliation with, sponsorship from, or endorsement by JetPhotos.net.',
+      faq2Question: 'Is it safe to install?',
+      faq2Answer: 'The project source code is open and publicly available on GitHub, allowing anyone to inspect and audit it before installing.',
+      faq4Question: 'How do I report a bug or suggest a feature?',
+      faq4Answer: 'You can open a suggestion or report a problem in the <a href="https://github.com/samuelffer/jetphotosplus/issues" target="_blank" rel="noreferrer">Issues section of the GitHub repository</a>.',
+      faq5Question: 'Does the extension collect my data?',
+      faq5Answer: 'JetPhotos+ does not send your personal data to its own or third-party servers. Preferences and history needed for some features are stored locally in your browser, and the extension accesses JetPhotos pages only when necessary to provide its features.',
+      faq6Question: 'Who is behind JetPhotos+?',
+      faq6Answer: 'JetPhotos+ is developed and maintained by Samuel Ferreira. The project is supported by the Amigos do JetPhotos community, who contribute ideas and help test the extension.',
+      footerDisclaimer: 'Unofficial community extension · Not affiliated with JetPhotos',
+      releaseNotesEyebrow: 'RELEASE NOTES',
+      close: 'Close',
+      currentRelease: 'Current release · BETA',
+      viewRelease: 'View release on GitHub ↗',
+      stable: 'STABLE',
+      beta: 'BETA',
+      currentReleaseFallback: 'Current release',
+      releaseFallback1: 'Updated JetPhotos+ project identity and logo.',
+      releaseFallback2: 'Improved header and settings-menu behavior.',
+      releaseFallback3: 'Removed unused legacy code and old UI logic.',
+      releaseFallback4: 'UI fixes and stability improvements.'
+    },
+    pt: {
+      brandHome: 'Página inicial do JetPhotos+',
+      githubView: 'Ver no GitHub',
+      browserExtension: 'Extensão para navegador',
+      heroDescription: 'Uma extensão leve e feita pela comunidade que adiciona ferramentas úteis exatamente onde você precisa — sem mudar a experiência do JetPhotos que você já conhece.',
+      heroDisclaimer: 'JetPhotos+ é uma extensão de navegador independente e não oficial. Não possui afiliação, endosso ou vínculo com o JetPhotos.net.',
+      installButton: 'Instalar v1.9.3',
+      releaseNotesButton: 'Notas da versão',
+      supportedBrowsers: 'Navegadores compatíveis',
+      showcaseTitle: 'Veja em ação',
+      showcaseDescription: 'Uma prévia rápida de como a extensão adiciona ferramentas úteis diretamente ao JetPhotos.',
+      previewLabel: 'Prévia do JetPhotos+',
+      previewTitle: 'Prévia do JetPhotos+',
+      carouselLabel: 'Capturas de tela do JetPhotos+',
+      carouselNavigationLabel: 'Escolher prévia',
+      carouselDot1: 'Prévia 1',
+      carouselDot2: 'Prévia 2',
+      carouselDot3: 'Prévia 3',
+      carousel1Alt: 'Ícone do JetPhotos+ ao lado do e-mail do usuário no JetPhotos',
+      carousel2Alt: 'Estimador de filas integrado ao site do JetPhotos',
+      carousel3Alt: 'Tema escuro experimental (beta) aplicado ao JetPhotos',
+      carousel1Caption: 'Ícone de acesso rápido direto ao lado da sua conta',
+      carousel2Caption: 'Tempo de fila estimado, direto na página',
+      carousel3Caption: 'Tema escuro — experimental, beta',
+      comingSoonText: 'Mais funcionalidades estão a caminho — este projeto está em constante evolução.',
+      faqTitle: 'Perguntas frequentes',
+      faqDescription: 'Algumas informações importantes sobre o projeto, sua manutenção e como a extensão funciona.',
+      faq1Question: 'O JetPhotos+ é oficial do JetPhotos?',
+      faq1Answer: 'Não. O JetPhotos+ é um projeto independente, criado pela comunidade, e não possui vínculo, patrocínio ou endosso da JetPhotos.net.',
+      faq2Question: 'É seguro instalar?',
+      faq2Answer: 'O código do projeto é aberto e está disponível publicamente no GitHub, permitindo que qualquer pessoa o inspecione e audite antes de instalar.',
+      faq4Question: 'Como reporto um bug ou sugiro uma funcionalidade?',
+      faq4Answer: 'Você pode abrir uma sugestão ou relatar um problema na aba <a href="https://github.com/samuelffer/jetphotosplus/issues" target="_blank" rel="noreferrer">Issues do repositório no GitHub</a>.',
+      faq5Question: 'A extensão coleta meus dados?',
+      faq5Answer: 'O JetPhotos+ não envia seus dados pessoais para servidores próprios ou de terceiros. As preferências e o histórico necessários para algumas funcionalidades são armazenados localmente no navegador, e a extensão acessa páginas do JetPhotos apenas quando isso é necessário para fornecer seus recursos.',
+      faq6Question: 'Quem está por trás do JetPhotos+?',
+      faq6Answer: 'JetPhotos+ é desenvolvido e mantido por Samuel Ferreira. O projeto conta com o apoio da comunidade Amigos do JetPhotos, que contribui com ideias e ajuda a testar a extensão no dia a dia.',
+      footerDisclaimer: 'Extensão comunitária não oficial · Não afiliada ao JetPhotos',
+      releaseNotesEyebrow: 'NOTAS DA VERSÃO',
+      close: 'Fechar',
+      currentRelease: 'Versão atual · BETA',
+      viewRelease: 'Ver versão no GitHub ↗',
+      stable: 'ESTÁVEL',
+      beta: 'BETA',
+      currentReleaseFallback: 'Versão atual',
+      releaseFallback1: 'Identidade visual e logo do JetPhotos+ atualizados.',
+      releaseFallback2: 'Cabeçalho e comportamento do menu de configurações aprimorados.',
+      releaseFallback3: 'Código legado e lógica antiga de interface removidos.',
+      releaseFallback4: 'Correções de interface e melhorias de estabilidade.'
+    }
+  };
+
+  function getBrowserLanguage() {
+    const languages = Array.isArray(navigator.languages) && navigator.languages.length
+      ? navigator.languages
+      : [navigator.language || 'en'];
+    return languages.some(lang => String(lang).toLowerCase().startsWith('pt')) ? 'pt' : 'en';
+  }
+
+  function getSavedLanguage() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved === 'pt' || saved === 'en' ? saved : null;
+    } catch (error) {
+      console.warn('JetPhotos+ i18n: unable to read saved language preference.', error);
+      return null;
+    }
+  }
+
+  function getInitialLanguage() {
+    return getSavedLanguage() || getBrowserLanguage();
+  }
+
+  function saveLanguagePreference(lang) {
+    try {
+      localStorage.setItem(STORAGE_KEY, lang);
+      return localStorage.getItem(STORAGE_KEY) === lang;
+    } catch (error) {
+      console.warn('JetPhotos+ i18n: unable to save language preference.', error);
+      return false;
+    }
+  }
+
+  function applyLanguage(lang, persist = false) {
+    const active = translations[lang] ? lang : 'en';
+
+    document.documentElement.lang = active === 'pt' ? 'pt-BR' : 'en';
+    document.querySelectorAll('[data-i18n]').forEach(element => {
+      const key = element.dataset.i18n;
+      if (translations[active][key] !== undefined) element.textContent = translations[active][key];
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(element => {
+      const key = element.dataset.i18nHtml;
+      if (translations[active][key] !== undefined) element.innerHTML = translations[active][key];
+    });
+    document.querySelectorAll('[data-i18n-attr]').forEach(element => {
+      element.dataset.i18nAttr.split('|').forEach(pair => {
+        const [attribute, key] = pair.split(':');
+        if (attribute && key && translations[active][key] !== undefined) {
+          element.setAttribute(attribute, translations[active][key]);
+        }
+      });
+    });
+
+    const languageToggle = document.getElementById('languageToggle');
+    if (languageToggle) {
+      languageToggle.style.opacity = '0.35';
+      languageToggle.textContent = active === 'pt' ? 'PT' : 'EN';
+      languageToggle.setAttribute('aria-label', active === 'pt' ? 'Switch to English' : 'Mudar para português');
+      languageToggle.setAttribute('title', active === 'pt' ? 'Switch to English' : 'Mudar para português');
+      requestAnimationFrame(() => { languageToggle.style.opacity = '1'; });
+    }
+
+    document.title = 'JetPhotos+';
+    const description = document.querySelector('meta[name="description"]');
+    if (description) {
+      description.content = active === 'pt'
+        ? 'JetPhotos+ — ferramentas simples que tornam o JetPhotos melhor de usar.'
+        : 'JetPhotos+ — small tools that make JetPhotos better to use.';
+    }
+
+    window.JPP_LANG = active;
+    window.JPP_TRANSLATIONS = translations;
+
+    if (persist) {
+      const saved = saveLanguagePreference(active);
+      if (!saved) console.warn('JetPhotos+ i18n: language preference could not be persisted.');
+    }
+
+    window.dispatchEvent(new CustomEvent('jpp:languagechange', { detail: { lang: active } }));
+  }
+
+  const languageToggle = document.getElementById('languageToggle');
+  if (languageToggle) {
+    languageToggle.addEventListener('click', () => {
+      const nextLanguage = window.JPP_LANG === 'pt' ? 'en' : 'pt';
+      applyLanguage(nextLanguage, true);
+    });
+  }
+
+  // The script is placed after the page markup, so the DOM is already available.
+  // A saved manual preference always wins; browser detection is only the fallback.
+  applyLanguage(getInitialLanguage(), false);
+</script>
+
+<script>
+(() => {
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const sections = document.querySelectorAll('.showcase, .faq');
+
+  if (reducedMotion.matches || !('IntersectionObserver' in window)) {
+    sections.forEach(section => section.classList.add('visible'));
+    return;
+  }
+
+  const observer = new IntersectionObserver((entries, currentObserver) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('visible');
+      currentObserver.unobserve(entry.target);
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+
+  sections.forEach(section => observer.observe(section));
+})();
+</script>
 
 <script src="assets/photos.js"></script>
 <script>
@@ -190,11 +604,14 @@ async function loadRelease() {
     const version = release.tag_name || '1.9.3-BETA';
     const cleanVersion = version.replace(/^v/i, '');
     const asset = (release.assets || []).find(file => /\.zip$/i.test(file.name));
+    const lang = window.JPP_LANG || 'en';
+    const t = window.JPP_TRANSLATIONS?.[lang] || {};
     const published = release.published_at
-      ? new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(release.published_at))
-      : 'Current release';
+      ? new Intl.DateTimeFormat(lang === 'pt' ? 'pt-BR' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(release.published_at))
+      : (t.currentReleaseFallback || 'Current release');
+    window.JPP_RELEASE_META = { release, cleanVersion, publishedAt: release.published_at };
 
-    releaseStatus.textContent = `${cleanVersion} · ${release.prerelease ? 'BETA' : 'STABLE'}`;
+    if (releaseStatus) releaseStatus.textContent = `${cleanVersion} · ${release.prerelease ? (t.beta || 'BETA') : (t.stable || 'STABLE')}`;
     releaseVersion.textContent = cleanVersion;
     releaseDate.textContent = published;
     releaseLink.href = release.html_url || FALLBACK_RELEASE;
@@ -204,12 +621,12 @@ async function loadRelease() {
       downloadButton.removeAttribute('target');
       downloadButton.removeAttribute('rel');
       downloadButton.setAttribute('download', asset.name);
-      downloadLabel.textContent = `Install ${cleanVersion}`;
+      downloadLabel.textContent = `${t.installButton ? t.installButton.replace(/v?1\.9\.3/i, cleanVersion) : `Install ${cleanVersion}`}`;
     } else {
       downloadButton.href = release.html_url || FALLBACK_RELEASE;
       downloadButton.target = '_blank';
       downloadButton.rel = 'noreferrer';
-      downloadLabel.textContent = `Install ${cleanVersion}`;
+      downloadLabel.textContent = `${t.installButton ? t.installButton.replace(/v?1\.9\.3/i, cleanVersion) : `Install ${cleanVersion}`}`;
     }
 
     if (typeof release.body === 'string' && release.body.trim()) {
@@ -231,6 +648,26 @@ async function loadRelease() {
 }
 
 loadRelease();
+
+window.addEventListener('jpp:languagechange', () => {
+  const meta = window.JPP_RELEASE_META;
+  if (!meta) return;
+  const lang = window.JPP_LANG || 'en';
+  const t = window.JPP_TRANSLATIONS?.[lang] || {};
+  const release = meta.release;
+  const releaseDate = document.querySelector('#releaseDate');
+  const downloadLabel = document.querySelector('#downloadLabel');
+  if (releaseDate) {
+    releaseDate.textContent = release.published_at
+      ? new Intl.DateTimeFormat(lang === 'pt' ? 'pt-BR' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(release.published_at))
+      : (t.currentReleaseFallback || 'Current release');
+  }
+  if (downloadLabel) {
+    downloadLabel.textContent = t.installButton
+      ? t.installButton.replace(/v?1\.9\.3/i, meta.cleanVersion)
+      : `Install ${meta.cleanVersion}`;
+  }
+});
 </script>
 </body>
 </html>
