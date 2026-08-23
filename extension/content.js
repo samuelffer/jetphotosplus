@@ -105,6 +105,7 @@
       languageHelp: 'Escolha o idioma da extensão.',
       portugueseBrazil: 'Português (Brasil)', english: 'English',
       queueEstimate: 'Estimativa da fila JetPhotos+',
+      likeWidgetLabel: 'JetPhotos+ Curtidas',
       screenedToday: 'Analisadas hoje:',
       dailyAverage: 'Média diária:',
       estimatedQueueTime: 'Tempo estimado:',
@@ -116,6 +117,8 @@
       noPhotosQueue: 'Nenhuma foto sua na fila no momento.',
       photosAhead: (n, eta) => `${n.toLocaleString('pt-BR')} fotos à frente — ${eta}`,
       noRate: 'sem dados de ritmo ainda',
+      queueReadError: 'Não consegui ler os dados da fila nesta página.',
+      buildingHistory: 'Ainda estou construindo o histórico automático do ritmo da fila. Por enquanto, uso o maior Total Screened observado hoje; depois de alguns dias, passo a usar a média dos dias fechados.',
       rateToday: 'maior Total Screened observado hoje',
       rateClosed: (n) => `média dos últimos ${n} dia${n === 1 ? '' : 's'} fechados`,
       ratePeriod: 'Total Screened de hoje (ainda calibrando histórico)',
@@ -125,26 +128,29 @@
       generalEta: (eta) => `Estimativa geral de dias em espera: <b>${eta}</b>`,
       queueTotal: (n) => `Fila total no site: ${n.toLocaleString('pt-BR')} fotos.`,
       timezoneAhead: (n) => ` Fuso do site ${Math.abs(n)} dia(s) à frente do seu computador.`,
-      timezoneBehind: (n) => ` Fuso do site ${Math.abs(n)} dia(s) atrás do seu computador.`
+      timezoneBehind: (n) => ` Fuso do site ${Math.abs(n)} dia(s) atrás do seu computador.`,
+      aroundDate: 'por volta de'
     },
     en: {
       settings: 'Settings', close: 'Close', viewReleases: "See what's new", reportIssue: 'Report an issue', aboutJetPhotosPlus: 'About JetPhotos+', analyzing: 'Analyzing page...',
-      likeMissing: 'Like missing',
+      likeMissing: 'Like missing photos',
       noneFound: 'No photos found yet (waiting for the page to load)...',
       missing: 'missing', liked: 'already liked',
       experimental: 'Experimental', siteDarkMode: 'Site dark mode (beta)', siteDarkModeHelp: 'Darkens JetPhotos backgrounds and light text. Photos and brand colors are not changed.',
       queueEstimator: 'Queue days estimator (beta)', queueEstimatorHelp: 'Estimates how long your photo may take to be reviewed on queue.php. Reload the page after changing.',
       language: 'Language', languageHelp: 'Choose the extension language.', portugueseBrazil: 'Português (Brasil)', english: 'English',
-      queueEstimate: 'Queue estimate', screenedToday: 'Screened today:', dailyAverage: 'Daily average:', estimatedQueueTime: 'Estimated time:', lastCollection: 'Last collection:',
+      queueEstimate: 'Queue estimate', likeWidgetLabel: 'JetPhotos+ Likes', screenedToday: 'Screened today:', dailyAverage: 'Daily average:', estimatedQueueTime: 'Estimated time:', lastCollection: 'Last collection:',
       collectingHistory: 'Collecting...', noHistoryNote: 'The average will be calculated after the first completed day.',
       avgClosed: (n) => `Average of the last ${n} completed day${n === 1 ? '' : 's'}`,
-      collectNow: 'Coletar agora', collecting: 'Coletando...', noPhotosQueue: 'You have no photos in the queue right now.',
+      collectNow: 'Collect now', collecting: 'Collecting...', noPhotosQueue: 'You have no photos in the queue right now.',
       photosAhead: (n, eta) => `${n.toLocaleString('en-US')} photos ahead — ${eta}`, noRate: 'no queue rate data yet',
+      queueReadError: 'I could not read the queue data on this page.',
+      buildingHistory: "I’m still building the automatic queue-rate history. For now, I use the highest Total Screened observed today; after a few days, I’ll use the average of completed days.",
       rateToday: 'highest Total Screened observed today', rateClosed: (n) => `average of the last ${n} completed day${n === 1 ? '' : 's'}`,
       ratePeriod: "today's Total Screened (history still calibrating)", rateSnapshot: (n) => `${n} tracked queue day${n === 1 ? '' : 's'}`, rateFallback: 'provisional estimate while calibrating',
       currentRate: (n, basis) => `Current rate: <b>~${Math.round(n).toLocaleString('en-US')} photos/day</b>${basis ? ` (${basis})` : ''}`,
       generalEta: (eta) => `General waiting estimate: <b>${eta}</b>`, queueTotal: (n) => `Total site queue: ${n.toLocaleString('en-US')} photos.`,
-      timezoneAhead: (n) => ` Site time is ${Math.abs(n)} day(s) ahead of your computer.`, timezoneBehind: (n) => ` Site time is ${Math.abs(n)} day(s) behind your computer.`
+      timezoneAhead: (n) => ` Site time is ${Math.abs(n)} day(s) ahead of your computer.`, timezoneBehind: (n) => ` Site time is ${Math.abs(n)} day(s) behind your computer.`, aroundDate: 'around'
     }
   };
 
@@ -778,6 +784,25 @@
   // ---------------------------------------------------------------------
   // Preferências (chrome.storage.local)
   // ---------------------------------------------------------------------
+  // Define o idioma inicial a partir do idioma preferido do navegador.
+  // Português (incluindo pt-PT/pt-XX) usa a tradução pt-BR; inglês usa
+  // English. Qualquer outro idioma cai para English, que é o fallback
+  // universal da extensão. Se o usuário já escolheu manualmente um idioma,
+  // a preferência salva em chrome.storage.local continua tendo prioridade.
+  function getBrowserLanguage() {
+    try {
+      const languages = Array.isArray(navigator.languages) && navigator.languages.length
+        ? navigator.languages
+        : [navigator.language || ''];
+      for (const raw of languages) {
+        const lang = String(raw).toLowerCase();
+        if (lang === 'pt' || lang.startsWith('pt-')) return 'pt-BR';
+        if (lang === 'en' || lang.startsWith('en-')) return 'en';
+      }
+    } catch (_) {}
+    return 'en';
+  }
+
   function getSettings() {
     return new Promise(resolve => {
       chrome.storage.local.get(
@@ -786,7 +811,7 @@
           resolve({
             siteDarkMode: result[STORAGE_KEY_SITE_DARK_MODE] === true, // padrão: false
             queueEstimatorEnabled: result[STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED] !== false, // padrão: true (EXPERIMENTAL)
-            language: result[STORAGE_KEY_LANGUAGE] || 'pt-BR'
+            language: result[STORAGE_KEY_LANGUAGE] || getBrowserLanguage()
           });
         }
       );
@@ -1375,7 +1400,7 @@
     if (isPhotoContext && !isQueueMode) {
       const widget = document.createElement('section');
       widget.id = 'jp-like-context-widget';
-      widget.setAttribute('aria-label', 'JetPhotos+ Curtidas');
+      widget.setAttribute('aria-label', t('likeWidgetLabel'));
       if (currentSettings.siteDarkMode) widget.classList.add('jp-dark');
       widget.innerHTML = `
         <div class="jp-like-widget-head">JETPHOTOS+ · Curtidas</div>
@@ -1601,6 +1626,9 @@
   }
 
   function formatDateShort(d) {
+    if (currentSettings.language === 'en') {
+      return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+    }
     return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
   }
 
@@ -1767,7 +1795,7 @@
     } else {
       duration = currentSettings.language === 'en' ? `${hours}h` : `${hours}h`;
     }
-    return `≈ ${duration} (${currentSettings.language === 'en' ? 'around' : 'por volta de'} ${formatDateShort(target)})`;
+    return `≈ ${duration} (${t('aroundDate')} ${formatDateShort(target)})`;
   }
 
   // Injeta (ou atualiza, se já existir) um pequeno texto de estimativa
@@ -2147,7 +2175,7 @@
     }
 
     if (rate == null) {
-      rateEl.textContent = 'Ainda estou construindo o histórico automático do ritmo da fila. Por enquanto, uso o maior Total Screened observado hoje; depois de alguns dias, passo a usar a média dos dias fechados.';
+      rateEl.textContent = t('buildingHistory');
       if (generalEl) generalEl.textContent = '';
       if (noteEl) noteEl.textContent = '';
       return;
@@ -2238,7 +2266,7 @@
   async function runQueueScan() {
     const parsed = parseOverallQueueSection();
     if (!parsed) {
-      renderQueueRate(null, null, 'Não consegui ler os dados da fila nesta página.');
+      renderQueueRate(null, null, t('queueReadError'));
       return;
     }
 

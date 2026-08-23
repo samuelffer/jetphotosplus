@@ -4,3 +4,6 @@
 4 - Selecione a pasta da extensão (essa que você extraiu) e confirme.
 
 Basta depois ir no site, ir na aba "photos" do perfil do usuário que você queira curtir as fotos, e clicar no botão de curtir todas.
+
+Idioma: a extensão oferece Português (Brasil) e English em Configurações > Idioma. O idioma inicial segue o idioma do navegador; outros idiomas usam English como fallback. Uma escolha manual em Configurações tem prioridade.
+Versão atual: 1.9.4.

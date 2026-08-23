@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "JetPhotos+",
   "version": "1.9.4",
-  "description": "Adiciona ferramentas integradas ao JetPhotos: ferramentas integradas e estimador experimental de dias até avaliação na fila (queue.php).",
+  "description": "__MSG_extensionDescription__",
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",
@@ -32,7 +32,7 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     },
-    "default_title": "JetPhotos+"
+    "default_title": "__MSG_extensionName__"
   },
   "content_scripts": [
     {
@@ -54,5 +54,6 @@
         "https://www.jetphotos.com/*"
       ]
     }
-  ]
+  ],
+  "default_locale": "en"
 }

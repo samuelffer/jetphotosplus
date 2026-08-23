@@ -1,0 +1,8 @@
+{
+  "extensionName": {
+    "message": "JetPhotos+"
+  },
+  "extensionDescription": {
+    "message": "Adds integrated tools to JetPhotos, including photo likes and an experimental queue review-time estimator."
+  }
+}
