@@ -324,6 +324,85 @@
         -webkit-text-fill-color: #ffffff !important;
       }
 
+      /* Queue estimator: this is extension-owned DOM and is refreshed in
+         place when the live queue data changes. Keep its dark-mode colors
+         here instead of letting the generic page recolor observer touch its
+         table cells after every refresh (which caused a visible white flash). */
+      html.jp-site-dark-active #jp-site-queue-tracker,
+      html.jp-site-dark-active #jp-site-queue-tracker .jp-plus-queue-table,
+      html.jp-site-dark-active #jp-site-queue-tracker .jp-plus-queue-table tbody {
+        background: transparent !important;
+        background-color: transparent !important;
+      }
+
+      /* O Period Totals original usa zebra striping: a segunda fileira
+         recebe fundo elevado e a primeira permanece integrada ao fundo da página.
+         O estimador replica exatamente esse comportamento no dark mode. */
+      html.jp-site-dark-active #jp-site-queue-tracker .jp-plus-queue-table tbody tr:nth-child(even),
+      html.jp-site-dark-active #jp-site-queue-tracker .jp-plus-queue-table tbody tr:nth-child(even) td {
+        background: #2d2e31 !important;
+        background-color: #2d2e31 !important;
+        color: #e8eaed !important;
+        border-color: #3c4043 !important;
+      }
+
+      html.jp-site-dark-active #jp-site-queue-tracker .jp-plus-queue-table tbody tr:nth-child(odd),
+      html.jp-site-dark-active #jp-site-queue-tracker .jp-plus-queue-table tbody tr:nth-child(odd) td {
+        background: transparent !important;
+        background-color: transparent !important;
+        color: #e8eaed !important;
+        border-color: transparent !important;
+      }
+
+      html.jp-site-dark-active #jp-site-queue-tracker .jp-plus-queue-table td,
+      html.jp-site-dark-active #jp-site-queue-tracker .jp-plus-metric {
+        background: transparent !important;
+        background-color: transparent !important;
+        color: #e8eaed !important;
+        border-color: #3c4043 !important;
+      }
+
+      /* Period Totals nativo do JetPhotos: preserva o zebra striping do site.
+         A segunda fileira fica levemente elevada; a primeira permanece com
+         o fundo do próprio dark mode, como no layout original. */
+      html.jp-site-dark-active .jp-plus-dark-native-table tbody > .table__row:nth-child(even),
+      html.jp-site-dark-active .jp-plus-dark-native-table tbody > .table__row:nth-child(even) td {
+        background: #2d2e31 !important;
+        background-color: #2d2e31 !important;
+        color: #e8eaed !important;
+        border-color: #3c4043 !important;
+      }
+
+      html.jp-site-dark-active .jp-plus-dark-native-table tbody > .table__row:nth-child(odd),
+      html.jp-site-dark-active .jp-plus-dark-native-table tbody > .table__row:nth-child(odd) td {
+        background: transparent !important;
+        background-color: transparent !important;
+        color: #e8eaed !important;
+        border-color: transparent !important;
+      }
+
+      html.jp-site-dark-active #jp-site-queue-tracker .jp-plus-queue-table caption,
+      html.jp-site-dark-active #jp-site-queue-tracker .jp-plus-metric strong {
+        color: #e8eaed !important;
+      }
+
+      html.jp-site-dark-active #jp-site-queue-tracker .jp-plus-metric span {
+        color: rgb(224 224 224) !important;
+      }
+
+      html.jp-site-dark-active #jp-site-queue-tracker .jp-plus-queue-note {
+        color: #9aa0a6 !important;
+      }
+
+      html.jp-site-dark-active #jp-site-queue-tracker .jp-plus-experimental {
+        color: #9aa0a6 !important;
+      }
+
+      html.jp-site-dark-active #jp-site-queue-tracker button {
+        color: #9aa0a6 !important;
+        background: transparent !important;
+      }
+
       /* JetPhotos+ UI: intentionally follows the visual language of JetPhotos
          instead of looking like a separate Material-style application. */
       #jp-plus-launcher-host {
@@ -774,7 +853,7 @@
     bgElevated: '#2d2e31', // fundos que eram cinza-claro (cards, inputs)
     border: '#3c4043',     // bordas/divisores que eram cinza-claro
     textPrimary: '#e8eaed',   // texto que era quase preto
-    textSecondary: '#9aa0a6'  // texto que era cinza médio (labels, legendas)
+    textSecondary: 'rgb(224 224 224)'  // texto secundário no modo escuro: #e0e0e0
   };
 
   // Extrai saturação (0-1) e luminosidade (0-1) em HSL a partir de uma
@@ -859,9 +938,12 @@
   }
 
   function recolorElement(el) {
-    // Nunca mexe no próprio painel da extensão (ele já tem seu dark mode
-    // independente via .jp-dark).
-    if (el.closest('#jp-like-context-widget, #jp-plus-submenu, #jp-plus-launcher-host')) return;
+    // Nunca mexe nas UIs próprias da extensão. Elas têm regras de tema
+    // próprias e não devem passar pelo recolor genérico do site.
+    // Em especial, o estimador da fila é reconstruído durante atualizações
+    // de dados; se o observer de dark mode recolorisse seus <td>s depois da
+    // reconstrução, haveria um flash branco antes do próximo scan.
+    if (el.closest('#jp-like-context-widget, #jp-plus-submenu, #jp-plus-launcher-host, #jp-site-queue-tracker')) return;
 
     // Ícones pretos fixos (Album/Like/Share etc.): inverte pra virar
     // branco sobre o novo fundo escuro. Não passa pelo resto da função
@@ -1800,6 +1882,7 @@
           const caption = table.querySelector('caption');
           return caption && /^Period Totals$/i.test((caption.textContent || '').trim());
         });
+        if (totalsTable) totalsTable.classList.add('jp-plus-dark-native-table');
 
         if (totalsTable) {
           totalsTable.insertAdjacentElement('afterend', card);
@@ -1872,7 +1955,7 @@
       <table class="table table--statistics jp-plus-queue-table" style="width:100%;margin:0;table-layout:fixed;">
         <caption style="text-align:left;">${t('queueEstimate')} <span class="jp-plus-experimental">${t('experimental')}</span></caption>
         <tbody>
-          <tr class="table__row">
+          <tr class="table__row jp-plus-queue-row">
             <td class="table__cell jp-plus-metric">
               <div class="jp-plus-metric-inner"><span>${t('screenedToday')}</span><strong>${todayText}</strong></div>
             </td>
