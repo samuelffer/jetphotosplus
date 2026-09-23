@@ -111,6 +111,11 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Não-curtido segue o padrão de cada tema (claro: nativo do site; escuro: cinza claro, branco no hover).
 - Joinha injetado pela extensão nos cards mobile acompanha: verde quando curtido (tom por tema).
 
+### Like verde exato + barrinha do mobile (TESTE)
+- Verde desbotado corrigido: o JS agora troca o joinha curtido pela máscara verde no tom exato do rótulo (#3ddc84 no escuro, #188038 no claro) — vale pro site (resultados + foto, PC + mobile) e pro botão injetado nos cards.
+- Barrinha da foto no mobile: seletores expandidos (ícone como filho direto, aninhado no rótulo ou ::before; i/svg por cor exata) pra pegar o formato que escapava e ficava preto.
+- Filtros verdes do CSS viraram fallback pra arquivos de ícone desconhecidos.
+
 ---
 
 ## [2.0.0]
