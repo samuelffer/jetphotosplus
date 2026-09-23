@@ -67,6 +67,13 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - queue.php: as tabelas nativas da fila agora herdam o zebra escuro (linhas alternadas legíveis, sem fileira branca com texto branco); vale no carregamento e no toggle.
 - Links sobre fundos que já eram escuros (header, popups, dropdowns) herdam o branco do contexto em vez de forçar o azul.
 
+### Modo escuro: cobertura da auditoria (home, perfil, membros, upload, stats)
+- Home: coluna lateral (.index-col) e cards do carrossel de perfis (.slick-profile__layout) escurecidos; títulos e textos da sidebar voltam a ser legíveis.
+- Perfil: nome sobre a foto de capa volta a ser branco.
+- Área de membros: painel das abas (.tabnav__content) e botões das abas (.tabnav__btn, ativa em destaque) escurecidos.
+- Upload: dropdowns Chosen (.chosen-drop, opções e destaque) e pílulas de checkbox/radio escurecidos; pílula ativa ganha borda azul pra manter a distinção.
+- Zebra escuro generalizado: todas as tabelas nativas (fila, photostats, Period Totals...) herdam o striping escuro, não só a fila.
+
 ---
 
 ## [2.0.0]

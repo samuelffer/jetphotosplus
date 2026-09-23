@@ -1374,6 +1374,33 @@
     html.jp-site-dark-active td { border-color:#3a3d43 !important; }
     html.jp-site-dark-active th { color:#f2f2f2 !important; }
     html.jp-site-dark-active hr { border-color:#3a3d43 !important; background-color:#3a3d43 !important; }
+    /* Home: coluna lateral + cards do carrossel de perfis. */
+    html.jp-site-dark-active .index-col { background-color:#26272b !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
+    html.jp-site-dark-active .slick-profile__layout { background-color:#2b2d31 !important; color:#e8e8e8 !important; }
+    html.jp-site-dark-active .slick-profile__layout span { color:#e8e8e8 !important; }
+    /* Perfil: nome sobre a foto de capa fica branco (o "a" no seletor
+       empata a especificidade com a regra genérica de links e vence por vir
+       depois — sem ele, o nome continuaria azul). */
+    html.jp-site-dark-active a.hero__profile-name-link { color:#ffffff !important; }
+    /* Área de membros: painel das abas + botões das abas (mesmo motivo do
+       "a" acima nas cores; fundo/borda não competem com regra genérica). */
+    html.jp-site-dark-active .tabnav__content { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
+    html.jp-site-dark-active .tabnav__btn { background-color:#2b2d31 !important; border-color:#3a3d43 !important; }
+    html.jp-site-dark-active a.tabnav__btn { color:#e8e8e8 !important; }
+    html.jp-site-dark-active .tabnav__btn--active { background-color:#3a3d43 !important; }
+    html.jp-site-dark-active a.tabnav__btn--active { color:#ffffff !important; }
+    /* Upload: dropdowns Chosen + pílulas de checkbox/radio. A pílula ativa
+       ganha borda azul pra não perder a distinção (o tema uniformiza bg). */
+    html.jp-site-dark-active .chosen-drop { background-color:#2b2d31 !important; border-color:#4b4e55 !important; }
+    html.jp-site-dark-active .chosen-results li { color:#e8e8e8 !important; }
+    html.jp-site-dark-active .chosen-results li.highlighted { background-color:#1e659f !important; color:#ffffff !important; }
+    html.jp-site-dark-active .checkbox,
+    html.jp-site-dark-active .radio__pill { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#4b4e55 !important; }
+    html.jp-site-dark-active .radio__pill--active { border-color:#2c94e8 !important; }
+    html.jp-site-dark-active .checkbox span,
+    html.jp-site-dark-active .checkbox label,
+    html.jp-site-dark-active .radio__pill span,
+    html.jp-site-dark-active .radio__pill label { color:#e8e8e8 !important; }
   `;
 
   function ensureSiteDarkThemeStyle() {
@@ -1384,11 +1411,10 @@
     (document.head || document.documentElement).appendChild(style);
   }
 
-  // Fila: marca as tabelas nativas do site pra herdar o zebra escuro
-  // (mesma classe que o estimador usa nos Period Totals). Roda no init e
-  // no toggle — a página da fila é estática, sem conteúdo dinâmico.
-  function tagQueueTablesForDark() {
-    if (!isQueuePage()) return;
+  // Tabelas nativas do site (fila, photostats, Period Totals...): marca
+  // pra herdar o zebra escuro. Sem isso, fileiras brancas do zebra original
+  // ficam com texto claro (ilegível). Roda no init e no toggle.
+  function tagNativeTablesForDark() {
     document.querySelectorAll('table:not(.jp-plus-queue-table)').forEach(table => {
       table.classList.add('jp-plus-dark-native-table');
     });
@@ -1397,7 +1423,7 @@
   function applySiteDarkMode(isOn) {
     if (isOn) {
       ensureSiteDarkThemeStyle();
-      tagQueueTablesForDark();
+      tagNativeTablesForDark();
     }
     document.documentElement.classList.toggle(SITE_DARK_HTML_CLASS, isOn);
   }
