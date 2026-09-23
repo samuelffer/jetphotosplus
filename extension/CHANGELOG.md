@@ -96,6 +96,10 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Ícones de câmera do perfil (trocar avatar/capa) brancos no escuro — só nas páginas de fotógrafo, modo claro intocado.
 - Menu lateral mobile (.header__extended-section--navigation) escurecido + links (.nav__link) brancos.
 
+### Modo escuro: social cinza/branco + menu mobile azul
+- Album/Like/Share (resultados + foto): rótulos e ícones em cinza neutro (#9aa0a6, tom do joinha não-curtido); branco no hover e no Like curtido.
+- Links do menu lateral mobile (.nav__link) agora no azul padrão do JetPhotos (#2c94e8).
+
 ---
 
 ## [2.0.0]

@@ -1412,17 +1412,28 @@
     html.jp-site-dark-active .badge-overview__frame span { color:#e8e8e8 !important; }
     /* Títulos avulsos com cor escura explícita (ex: upload guidelines). */
     html.jp-site-dark-active .title { color:#f2f2f2 !important; }
-    /* Album/Like/Share (resultados + foto): cinza neutro nos rótulos e
+    /* Album/Like/Share (resultados + foto): cinza claro nos rótulos e
        ícones; branco no hover e no Like curtido (o texto desses dois
        estados já é branco nas regras acima — aqui vão o cinza padrão e os
-       filtros dos ícones). brightness(0) zera a cor original do arquivo e
-       invert(0.62) chega no tom do joinha não-curtido; opacidade 1 pra o
-       tom não variar. Modo claro: intocado (escopo dark). */
+       filtros dos ícones). brightness(0) zera a cor original e invert(0.78)
+       chega no cinza claro; vale pra img, svg e fonte de ícone (o mobile
+       pode usar qualquer um dos três). Opacidade 1 pra o tom não variar.
+       Modo claro: intocado (escopo dark). */
     html.jp-site-dark-active a.social__link,
-    html.jp-site-dark-active a.social__link .social__text { color:#9aa0a6 !important; -webkit-text-fill-color:#9aa0a6 !important; }
-    html.jp-site-dark-active a.social__link img { filter:brightness(0) invert(0.62) !important; opacity:1 !important; }
+    html.jp-site-dark-active a.social__link .social__text { color:#c3c9d2 !important; -webkit-text-fill-color:#c3c9d2 !important; }
+    html.jp-site-dark-active a.social__link img,
+    html.jp-site-dark-active a.social__link svg,
+    html.jp-site-dark-active a.social__link i { filter:brightness(0) invert(0.78) !important; opacity:1 !important; }
     html.jp-site-dark-active a.social__link:hover img,
-    html.jp-site-dark-active a.social__link.social__link--like.social__link--active img { filter:invert(1) !important; opacity:1 !important; }
+    html.jp-site-dark-active a.social__link:hover svg,
+    html.jp-site-dark-active a.social__link:hover i,
+    html.jp-site-dark-active a.social__link.social__link--like.social__link--active img,
+    html.jp-site-dark-active a.social__link.social__link--like.social__link--active svg,
+    html.jp-site-dark-active a.social__link.social__link--like.social__link--active i { filter:invert(1) !important; opacity:1 !important; }
+    /* Joinha injetado pela extensão nos cards do layout mobile: o arquivo
+       é preto, vira branco no escuro; a opacidade .4/1 (não-curtido x
+       curtido) segue valendo. Modo claro: intocado (escopo dark). */
+    html.jp-site-dark-active .jp-mobile-like-btn img { filter:invert(1) !important; }
     /* Ícones de câmera do perfil (trocar avatar/capa): brancos no escuro.
        Vale só nas páginas de fotógrafo (jp-on-profile). Cobre fonte de
        ícone, SVG e imagem (brightness zera a cor, invert vira branco). */
