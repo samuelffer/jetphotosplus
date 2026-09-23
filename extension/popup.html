@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JetPhotos+</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="popup">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">JETPHOTOS+</div>
+        <h1>Ritmo da fila</h1>
+      </div>
+      <div class="badge-pill" id="trackedBadge">0d</div>
+    </header>
+
+    <section class="summary-grid">
+      <div class="metric">
+        <span>Hoje</span>
+        <strong id="todayValue">—</strong>
+        <small>fotos analisadas</small>
+      </div>
+      <div class="metric">
+        <span>Média</span>
+        <strong id="averageValue">—</strong>
+        <small>últimos dias fechados</small>
+      </div>
+      <div class="metric">
+        <span>Fila</span>
+        <strong id="queueValue">—</strong>
+        <small>fotos no site</small>
+      </div>
+    </section>
+
+    <section class="chart-card">
+      <div class="section-title">
+        <span>Fotos analisadas por dia</span>
+        <span id="chartRange">—</span>
+      </div>
+      <div class="chart-wrap" id="chartWrap">
+        <svg id="chart" viewBox="0 0 360 145" preserveAspectRatio="none" aria-label="Gráfico do ritmo diário"></svg>
+        <div class="tooltip" id="tooltip"></div>
+      </div>
+      <div class="chart-empty" id="chartEmpty">O histórico aparece aqui conforme os dias são acompanhados.</div>
+    </section>
+
+    <div class="actions">
+      <button id="exportBtn" class="secondary">Exportar histórico</button>
+      <button id="importBtn" class="secondary">Importar histórico</button>
+      <input id="importInput" type="file" accept="application/json,.json" hidden>
+    </div>
+
+    <footer>
+      <span id="lastUpdate">Última coleta: —</span>
+      <button id="queueBtn" class="text-button">Abrir fila ↗</button>
+    </footer>
+    <div id="message" class="message" role="status"></div>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

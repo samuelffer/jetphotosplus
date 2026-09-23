@@ -9,6 +9,7 @@ const JP_QUEUE_ALARM = 'jp-queue-daily-tracker';
 const JP_QUEUE_POLL_MINUTES = 10;
 const JP_QUEUE_DAILY_KEY = 'jpQueueDailyStats';
 const JP_QUEUE_DAILY_MAX_DAYS = 60;
+const JP_BADGE_COLOR = '#4299dc';
 
 let queueCollectionInFlight = null;
 
@@ -72,6 +73,20 @@ function parseQueuePage(html) {
   return { totalScreened, totalInQueue, siteTodayKey };
 }
 
+function updateBadge(stats) {
+  try {
+    const keys = Object.keys(stats || {}).filter(key => key !== '__meta');
+    const text = keys.length ? String(Math.min(keys.length, 99)) : '';
+    chrome.action.setBadgeText({ text });
+    chrome.action.setBadgeBackgroundColor({ color: JP_BADGE_COLOR });
+    chrome.action.setTitle({
+      title: text
+        ? `JetPhotos+ — ${text} dia${text === '1' ? '' : 's'} acompanhados`
+        : 'JetPhotos+'
+    });
+  } catch (_) {}
+}
+
 function loadDailyStats() {
   return new Promise(resolve => {
     chrome.storage.local.get([JP_QUEUE_DAILY_KEY], result => {
@@ -91,7 +106,7 @@ function saveDailyStats(stats) {
   if (stats.__meta) trimmed.__meta = stats.__meta;
 
   return new Promise(resolve => {
-    chrome.storage.local.set({ [JP_QUEUE_DAILY_KEY]: trimmed }, () => resolve(trimmed));
+    chrome.storage.local.set({ [JP_QUEUE_DAILY_KEY]: trimmed }, () => { updateBadge(trimmed); resolve(trimmed); });
   });
 }
 
@@ -139,6 +154,9 @@ async function collectQueueStats() {
         closed: false
       };
 
+      // IMPORTANTE: Total Screened é a métrica usada pelo estimador original.
+      // Não transformamos esse valor em delta nem criamos uma nova métrica
+      // 'analyzed'. O dia acumula apenas o maior Total Screened observado.
       current.maxScreened = Math.max(current.maxScreened || 0, parsed.totalScreened);
       current.lastObserved = parsed.totalScreened;
       current.lastObservedAtMs = now;
@@ -184,11 +202,13 @@ function ensureQueueAlarm() {
 
 chrome.runtime.onInstalled.addListener(() => {
   ensureQueueAlarm();
+  loadDailyStats().then(updateBadge);
   collectQueueStats();
 });
 
 chrome.runtime.onStartup.addListener(() => {
   ensureQueueAlarm();
+  loadDailyStats().then(updateBadge);
 });
 
 chrome.alarms.onAlarm.addListener(alarm => {
@@ -203,3 +223,5 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
+
+loadDailyStats().then(updateBadge);

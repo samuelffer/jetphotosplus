@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "JetPhotos+",
-  "version": "1.9.4",
+  "version": "2.0.0",
   "description": "__MSG_extensionDescription__",
   "icons": {
     "16": "icons/icon16.png",
@@ -32,7 +32,8 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     },
-    "default_title": "__MSG_extensionName__"
+    "default_title": "__MSG_extensionName__",
+    "default_popup": "popup.html"
   },
   "content_scripts": [
     {
@@ -48,7 +49,8 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "icons/logo.png"
+        "icons/logo.png",
+        "content-hook.js"
       ],
       "matches": [
         "https://www.jetphotos.com/*"

@@ -23,6 +23,25 @@
   // ---------------------------------------------------------------------
   const LIKED_HINTS = ['liked', 'is-liked', 'thumbs-up-blue', 'thumbs-up-filled', 'unlike'];
 
+  // ---------------------------------------------------------------------
+  // Injeta o hook de rede (content-hook.js) no MUNDO DA PÁGINA. Precisa ser
+  // uma <script src> porque cada mundo (isolado vs. página) tem seu próprio
+  // window.fetch/XHR — sem isso não dá pra saber se um like realmente teve
+  // sucesso no servidor. Feito via tag em vez de "world":"MAIN" no manifest
+  // pra manter compatibilidade com versões mais antigas do Firefox.
+  // ---------------------------------------------------------------------
+  function injectNetworkHook() {
+    try {
+      const script = document.createElement('script');
+      script.src = chrome.runtime.getURL('content-hook.js');
+      script.onload = () => script.remove();
+      (document.head || document.documentElement).appendChild(script);
+    } catch (error) {
+      console.error('[JetPhotos+] Falha ao injetar o hook de rede (a sincronia de likes fica limitada ao que o próprio site mostrar no DOM):', error);
+    }
+  }
+  injectNetworkHook();
+
   // Chaves usadas no chrome.storage.local para lembrar as preferências
   // do usuário entre sessões/páginas.
   const STORAGE_KEY_SITE_DARK_MODE = 'jpSiteDarkMode'; // boolean, padrão false (EXPERIMENTAL)
@@ -105,7 +124,7 @@
       languageHelp: 'Escolha o idioma da extensão.',
       portugueseBrazil: 'Português (Brasil)', english: 'English',
       queueEstimate: 'Estimativa da fila JetPhotos+',
-      likeWidgetLabel: 'JetPhotos+ Curtidas',
+      likeWidgetLabel: 'JETPHOTOS+ · Likes',
       screenedToday: 'Analisadas hoje:',
       dailyAverage: 'Média diária:',
       estimatedQueueTime: 'Tempo estimado:',
@@ -129,7 +148,11 @@
       queueTotal: (n) => `Fila total no site: ${n.toLocaleString('pt-BR')} fotos.`,
       timezoneAhead: (n) => ` Fuso do site ${Math.abs(n)} dia(s) à frente do seu computador.`,
       timezoneBehind: (n) => ` Fuso do site ${Math.abs(n)} dia(s) atrás do seu computador.`,
-      aroundDate: 'por volta de'
+      aroundDate: 'por volta de',
+      historyChart: 'Ritmo diário da fila',
+      historyChartHint: 'Fotos analisadas por dia. Passe o mouse para ver os dados.',
+      historyNoData: 'Ainda não há dias suficientes para montar o gráfico.',
+      trackedDays: (n) => `${n} dia${n === 1 ? '' : 's'} acompanhado${n === 1 ? '' : 's'}`,
     },
     en: {
       settings: 'Settings', close: 'Close', viewReleases: "See what's new", reportIssue: 'Report an issue', aboutJetPhotosPlus: 'About JetPhotos+', analyzing: 'Analyzing page...',
@@ -139,7 +162,7 @@
       experimental: 'Experimental', siteDarkMode: 'Site dark mode (beta)', siteDarkModeHelp: 'Darkens JetPhotos backgrounds and light text. Photos and brand colors are not changed.',
       queueEstimator: 'Queue days estimator (beta)', queueEstimatorHelp: 'Estimates how long your photo may take to be reviewed on queue.php. Reload the page after changing.',
       language: 'Language', languageHelp: 'Choose the extension language.', portugueseBrazil: 'Português (Brasil)', english: 'English',
-      queueEstimate: 'Queue estimate', likeWidgetLabel: 'JetPhotos+ Likes', screenedToday: 'Screened today:', dailyAverage: 'Daily average:', estimatedQueueTime: 'Estimated time:', lastCollection: 'Last collection:',
+      queueEstimate: 'Queue estimate', likeWidgetLabel: 'JETPHOTOS+ · Likes', screenedToday: 'Screened today:', dailyAverage: 'Daily average:', estimatedQueueTime: 'Estimated time:', lastCollection: 'Last collection:',
       collectingHistory: 'Collecting...', noHistoryNote: 'The average will be calculated after the first completed day.',
       avgClosed: (n) => `Average of the last ${n} completed day${n === 1 ? '' : 's'}`,
       collectNow: 'Collect now', collecting: 'Collecting...', noPhotosQueue: 'You have no photos in the queue right now.',
@@ -150,7 +173,11 @@
       ratePeriod: "today's Total Screened (history still calibrating)", rateSnapshot: (n) => `${n} tracked queue day${n === 1 ? '' : 's'}`, rateFallback: 'provisional estimate while calibrating',
       currentRate: (n, basis) => `Current rate: <b>~${Math.round(n).toLocaleString('en-US')} photos/day</b>${basis ? ` (${basis})` : ''}`,
       generalEta: (eta) => `General waiting estimate: <b>${eta}</b>`, queueTotal: (n) => `Total site queue: ${n.toLocaleString('en-US')} photos.`,
-      timezoneAhead: (n) => ` Site time is ${Math.abs(n)} day(s) ahead of your computer.`, timezoneBehind: (n) => ` Site time is ${Math.abs(n)} day(s) behind your computer.`, aroundDate: 'around'
+      timezoneAhead: (n) => ` Site time is ${Math.abs(n)} day(s) ahead of your computer.`, timezoneBehind: (n) => ` Site time is ${Math.abs(n)} day(s) behind your computer.`, aroundDate: 'around',
+      historyChart: 'Daily queue pace',
+      historyChartHint: 'Photos reviewed per day. Hover a point for details.',
+      historyNoData: 'Not enough tracked days to build the chart yet.',
+      trackedDays: (n) => `${n} tracked day${n === 1 ? '' : 's'}`,
     }
   };
 
@@ -160,14 +187,9 @@
     return typeof value === 'function' ? value(...args) : value;
   }
 
-  // Histórico persistido do ritmo de avaliação da fila (queue.php). O site
-  // só mostra os últimos 7 dias na tabela "Overall Queue Status", então
-  // guardamos cada dia visto em chrome.storage.local pra manter uma janela
-  // maior ao longo do tempo (útil pra média ficar mais estável e, no
-  // futuro, permitir pesos por dia da semana sem precisar esperar semanas
-  // do zero). Formato: { 'YYYY-MM-DD': fotosProcessadasNaqueleDia }.
   const STORAGE_KEY_QUEUE_DAILY_STATS = 'jpQueueDailyStats';
-  const QUEUE_RATE_SAMPLE_DAYS = 6;  // quantos dias completos (excluindo hoje) entram na média
+  const QUEUE_RATE_SAMPLE_DAYS = 6;
+  const QUEUE_CHART_MAX_DAYS = 60;
 
 
   // A página pode manter um content script antigo vivo depois que a extensão
@@ -182,7 +204,7 @@
     return /Extension context invalidated/i.test(String(error?.message || error || ''));
   }
 
-  function isAlreadyLiked(likeAnchor) {
+  function isAlreadyLiked(likeAnchor, card) {
     if (!likeAnchor) return false;
 
     // O JetPhotos atualmente representa o estado de curtida no próprio
@@ -199,7 +221,178 @@
     if (dataLiked === 'true' || dataLiked === '1') return true;
 
     const html = likeAnchor.outerHTML.toLowerCase();
-    return LIKED_HINTS.some(hint => html.includes(hint));
+    if (LIKED_HINTS.some(hint => html.includes(hint))) return true;
+
+    // Bug visual conhecido do JetPhotos: o like é salvo no servidor mas o
+    // próprio HTML às vezes não reflete isso (nem na hora, nem depois de um
+    // F5). Nossa cache local (ver bloco "Sincronia de likes" abaixo) só tem
+    // uma entrada quando o servidor CONFIRMOU sucesso, então é seguro usá-la
+    // como fonte de verdade extra e corrigir o ícone na hora.
+    const photoId = getPhotoId(likeAnchor, card);
+    if (photoId && isPhotoLikedInCache(photoId)) {
+      forceLikedVisual(likeAnchor);
+      return true;
+    }
+
+    return false;
+  }
+
+  // =======================================================================
+  // SINCRONIA DE LIKES — corrige o bug visual do JetPhotos e garante que
+  // o estado "curtido" sobrevive a um F5, tanto pra cliques da extensão
+  // quanto pra cliques manuais do usuário.
+  //
+  // Descoberta-chave (via DevTools): o like/unlike do JetPhotos é uma
+  // única requisição XHR pro endpoint
+  //   PostHandler.php?addFavorite=<ID>&doAjax=true    (curtir)
+  //   PostHandler.php?removeFavorite=<ID>&doAjax=true (descurtir)
+  // e <ID> é EXATAMENTE o mesmo número que já aparece no HTML em
+  // data-photo="<ID>" (card) / data-id="<ID>" (wrapper .social). Ou seja,
+  // não precisamos mais adivinhar qual clique corresponde a qual resposta
+  // (nada de fila/FIFO): a própria URL da requisição já entrega o ID da
+  // foto, e a gente casa direto com o elemento certo na página.
+  //
+  // Fluxo:
+  //   1. content-hook.js (mundo da página) intercepta fetch/XHR, extrai
+  //      {id, action} da URL e confirma sucesso lendo a resposta (o
+  //      PostHandler retorna o texto "true"/"false"), avisando o
+  //      content.js via CustomEvent('jpplus-like-net-result').
+  //   2. Aqui a gente só reage ao evento: se foi "add" e o servidor
+  //      confirmou, persiste o ID no cache local e força a classe que o
+  //      próprio JetPhotos usa pra pintar o ícone/rótulo de curtido
+  //      (".social__link--active") — a CSS do site já sabe estilizar isso
+  //      em qualquer tema, então não reinventamos cor. Se for "remove"
+  //      confirmado (o usuário descurtiu manualmente), fazemos o inverso.
+  //      Se o servidor não confirmar (falha real), NADA muda — a foto
+  //      continua "faltante" e será re-tentada normalmente.
+  // =======================================================================
+
+  const LIKE_CACHE_KEY = 'jpPlusLikedPhotoIds_v1';
+  const LIKE_CACHE_MAX = 20000; // teto de segurança pra não crescer sem fim em contas com muitos likes
+  let likeCache = null; // carregada 1x sob demanda e mantida em memória
+
+  function loadLikeCache() {
+    try {
+      const raw = localStorage.getItem(LIKE_CACHE_KEY);
+      const parsed = raw ? JSON.parse(raw) : {};
+      return (parsed && typeof parsed === 'object') ? parsed : {};
+    } catch (_) {
+      return {}; // localStorage corrompido/bloqueado (ex: modo privado) — segue sem cache, sem quebrar nada
+    }
+  }
+
+  function getLikeCache() {
+    if (!likeCache) likeCache = loadLikeCache();
+    return likeCache;
+  }
+
+  function saveLikeCache() {
+    try {
+      const cache = getLikeCache();
+      const keys = Object.keys(cache);
+      if (keys.length > LIKE_CACHE_MAX) {
+        // Poda as entradas mais antigas (menor timestamp), preservando as
+        // curtidas mais recentes. São só IDs numéricos (chave) + timestamp
+        // (valor), então mesmo 20 mil entradas ocupam poucos KB — não pesa
+        // no navegador mesmo curtindo centenas/milhares de fotos.
+        keys.sort((a, b) => cache[a] - cache[b]);
+        keys.slice(0, keys.length - LIKE_CACHE_MAX).forEach(k => delete cache[k]);
+      }
+      localStorage.setItem(LIKE_CACHE_KEY, JSON.stringify(cache));
+    } catch (_) { /* quota cheia ou storage bloqueado: falha silenciosa, não é crítico */ }
+  }
+
+  function isPhotoLikedInCache(photoId) {
+    return Boolean(photoId) && Boolean(getLikeCache()[photoId]);
+  }
+
+  function markPhotoLikedInCache(photoId) {
+    if (!photoId) return;
+    const cache = getLikeCache();
+    if (cache[photoId]) return; // já registrada, evita parse/write à toa
+    cache[photoId] = Date.now();
+    saveLikeCache();
+  }
+
+  function unmarkPhotoLikedInCache(photoId) {
+    if (!photoId || !(photoId in getLikeCache())) return;
+    delete likeCache[photoId];
+    saveLikeCache();
+  }
+
+  // Extrai o ID da foto a partir do card/âncora. Prioriza os atributos
+  // data-photo/data-id (o mesmo valor usado nas URLs addFavorite/
+  // removeFavorite — ver bloco acima), com um fallback pro link /photo/<id>
+  // caso algum layout não tenha esses atributos.
+  function getPhotoId(anchor, card) {
+    // Seletor restrito de propósito: NÃO usa "[data-id]" genérico. Um
+    // seletor genérico faria closest() poder subir a árvore e casar com o
+    // data-id de um componente qualquer alheio à foto (carrossel, anúncio,
+    // widget de terceiros) em algum layout diferente do padrão de busca —
+    // aí a foto ficaria associada a um ID errado, e se esse ID já existisse
+    // no cache de likes (por pertencer de verdade a OUTRA foto), a extensão
+    // mostraria essa foto como "curtida" sem realmente estar. Por isso só
+    // aceita os dois contêineres que o próprio JetPhotos usa de fato pra
+    // essa informação: o card (".result[data-photo]") e o wrapper dos
+    // links Album/Like/Share (".social[data-id]").
+    const withData = (card || anchor)?.closest?.('.result[data-photo], .social[data-id]');
+    const fromData = withData?.dataset?.photo || withData?.dataset?.id;
+    if (fromData) return String(fromData);
+
+    const scope = card || anchor;
+    const photoLink = scope?.querySelector?.('a[href*="/photo/"]');
+    const fromHref = photoLink?.getAttribute('href')?.match(/\/photo\/(\d+)/);
+    if (fromHref) return fromHref[1];
+
+    return null;
+  }
+
+  function forceLikedVisual(anchor) {
+    if (!anchor || anchor.classList.contains('social__link--active')) return;
+    anchor.classList.add('social__link--active');
+    anchor.setAttribute('aria-pressed', 'true');
+  }
+
+  function revokeLikedVisual(anchor) {
+    if (!anchor) return;
+    anchor.classList.remove('social__link--active');
+    anchor.removeAttribute('aria-pressed');
+  }
+
+  // Aplica o estado confirmado (liked/unliked) em toda âncora de Like
+  // visível cujo ID bata com o da resposta de rede. Normalmente é só uma
+  // (a foto que gerou a requisição), mas percorrer todas é barato e cobre
+  // o caso raro da mesma foto aparecer 2x na mesma página.
+  function syncPhotoVisualById(photoId, liked) {
+    if (!photoId) return;
+    findPhotoCards().forEach(({ anchor, card }) => {
+      if (getPhotoId(anchor, card) !== photoId) return;
+      if (liked) forceLikedVisual(anchor); else revokeLikedVisual(anchor);
+    });
+  }
+
+  function handleLikeNetResult(event) {
+    const { id, action, ok } = event.detail || {};
+    if (!id || !action || !ok) return; // sem ID/ação reconhecidos, ou o servidor não confirmou: não mexe em nada
+
+    if (action === 'add') {
+      markPhotoLikedInCache(id);
+      syncPhotoVisualById(id, true);
+    } else if (action === 'remove') {
+      unmarkPhotoLikedInCache(id);
+      syncPhotoVisualById(id, false);
+    }
+
+    // Atualiza contador/realce na hora — cobre tanto a leva em massa quanto
+    // um clique manual avulso do usuário, sem esperar o debounce normal.
+    refresh();
+  }
+
+  let likeSyncWired = false;
+  function wireLikeSync() {
+    if (likeSyncWired) return;
+    likeSyncWired = true;
+    window.addEventListener('jpplus-like-net-result', handleLikeNetResult);
   }
 
   // Detecta em qual página estamos pra mostrar um rótulo de contexto no
@@ -226,23 +419,193 @@
     const likeImgs = document.querySelectorAll('img[alt="Like"], img[title="Like"]');
     const cards = [];
     const seenAnchors = new Set();
+    const seenPhotoIds = new Set();
     likeImgs.forEach(img => {
       const anchor = img.closest('a');
       if (!anchor || seenAnchors.has(anchor)) return;
       seenAnchors.add(anchor);
 
-      // Ignora templates/itens invisíveis que possam existir no DOM sem
-      // representar uma foto efetivamente exibida ao usuário.
-      const rect = anchor.getBoundingClientRect();
-      const style = getComputedStyle(anchor);
-      if (rect.width === 0 && rect.height === 0) return;
-      if (style.display === 'none' || style.visibility === 'hidden') return;
+      // O JetPhotos renderiza os dois layouts (desktop e mobile) no mesmo
+      // HTML e alterna qual aparece via classe (".desktop-only"/".mobile-only"),
+      // escondendo o outro com display:none — não removendo do DOM. Então,
+      // dentro desses wrappers, um elemento "invisível" ainda é o link de
+      // Like de verdade (só escondido pelo breakpoint atual), e clicar nele
+      // via JS continua funcionando normalmente. Só filtramos por
+      // visibilidade fora desse caso, pra não contar templates/lixo de DOM.
+      const insideResponsiveToggle = !!anchor.closest('.desktop-only, .mobile-only');
+      if (!insideResponsiveToggle) {
+        const rect = anchor.getBoundingClientRect();
+        const style = getComputedStyle(anchor);
+        if (rect.width === 0 && rect.height === 0) return;
+        if (style.display === 'none' || style.visibility === 'hidden') return;
+      }
 
       const card = anchor.closest('div, li') || anchor.parentElement;
       cards.push({ anchor, card });
+      const photoId = getPhotoId(anchor, card);
+      if (photoId) seenPhotoIds.add(photoId);
     });
+
+    // Botão de Like injetado pro layout mobile (ver injectMobileLikeButtons):
+    // conta como âncora própria — é assim que "Curtir faltantes" e o
+    // contador do widget passam a enxergar essas fotos também. Só pula se
+    // já existir um link nativo detectado pra essa mesma foto acima (evita
+    // duplicar caso a página tenha acabado de trocar de layout, ex. uma
+    // janela sendo redimensionada em tempo real).
+    document.querySelectorAll('.' + MOBILE_LIKE_BTN_CLASS).forEach(btn => {
+      if (seenAnchors.has(btn)) return;
+      const card = btn.closest('.result[data-photo]') || btn.parentElement;
+      const photoId = getPhotoId(btn, card);
+      if (photoId && seenPhotoIds.has(photoId)) return; // já coberto pelo link nativo
+      seenAnchors.add(btn);
+      cards.push({ anchor: btn, card });
+    });
+
     return cards;
   }
+
+  // =======================================================================
+  // LIKE NO LAYOUT MOBILE — abaixo de um certo breakpoint de largura, o
+  // JetPhotos esconde o link de Like inteiro (fica só a contagem em
+  // estrela, sem ação nenhuma) via a classe ".desktop-only" citada acima.
+  // O elemento continua no DOM, então em vez de reinventar a requisição a
+  // gente injeta um botão visível em ".result__stats" que só REPASSA o
+  // clique pro link nativo escondido — o content-hook.js confirma a
+  // requisição exatamente como já fazia no desktop, sem sistema paralelo.
+  // Só cai num fallback de requisição própria (performLikeRequest) se por
+  // algum motivo o link nativo não existir de fato nesse card.
+  // =======================================================================
+
+  const MOBILE_LIKE_STAT_CLASS = 'jp-mobile-like-stat';
+  const MOBILE_LIKE_BTN_CLASS = 'jp-mobile-like-btn';
+  const MOBILE_LIKE_BTN_LIKED_CLASS = 'jp-mobile-like-btn--liked';
+  const MOBILE_LIKE_ICON_URL = 'https://www.jetphotos.com/assets/img/thumbs-up-black.svg';
+
+  // Confirma sucesso pelo TEXTO da resposta ("true"/"false" ou JSON), não só
+  // pelo status HTTP — mesmo critério do content-hook.js (ver comentário lá
+  // sobre por que o 200 sozinho não basta). Só é usado no fallback abaixo.
+  function parseLikeSuccessText(bodyText, httpOk) {
+    if (typeof bodyText === 'string' && bodyText.trim()) {
+      const trimmed = bodyText.trim().toLowerCase();
+      if (trimmed === 'true') return true;
+      if (trimmed === 'false') return false;
+      try {
+        const json = JSON.parse(trimmed);
+        if (typeof json === 'boolean') return json;
+        if (json && typeof json.success === 'boolean') return json.success;
+        if (json && typeof json.ok === 'boolean') return json.ok;
+      } catch (_) { /* não é JSON, cai no fallback do status abaixo */ }
+    }
+    return httpOk;
+  }
+
+  // Fallback: só roda se o card não tiver NENHUM link nativo de Like (nem
+  // escondido). Dispara a mesma requisição que o site faria.
+  async function performLikeRequest(photoId, action) {
+    const param = action === 'remove' ? 'removeFavorite' : 'addFavorite';
+    const url = `${location.origin}/PostHandler.php?${param}=${encodeURIComponent(photoId)}&doAjax=true`;
+    try {
+      const res = await fetch(url, { method: 'GET', credentials: 'same-origin' });
+      const text = await res.text().catch(() => '');
+      return parseLikeSuccessText(text, res.ok);
+    } catch (_) {
+      return false; // falha de rede: não conta como curtida, igual ao fluxo desktop
+    }
+  }
+
+  function applyMobileButtonState(button, liked) {
+    button.classList.toggle(MOBILE_LIKE_BTN_LIKED_CLASS, liked);
+    button.setAttribute('aria-pressed', liked ? 'true' : 'false');
+  }
+
+  async function handleMobileLikeClick(button, photoId, nativeAnchor) {
+    if (button.disabled) return; // evita duplo-toque disparar duas requisições
+    button.disabled = true;
+    button.classList.add('jp-mobile-like-btn--pending');
+
+    if (nativeAnchor) {
+      // Aciona o link nativo do JetPhotos (existe no DOM, só escondido pelo
+      // layout mobile). O content-hook.js confirma via rede e
+      // handleLikeNetResult já cuida do cache + realce + contador — aqui só
+      // reabilitamos o botão depois, dando tempo da resposta chegar.
+      nativeAnchor.click();
+      setTimeout(() => {
+        button.disabled = false;
+        button.classList.remove('jp-mobile-like-btn--pending');
+      }, 500);
+      return;
+    }
+
+    // Sem link nativo disponível nesse card (não deveria acontecer no
+    // layout atual do site, mas evita deixar o botão sem função caso o
+    // JetPhotos mude a estrutura): usa o mesmo endpoint diretamente.
+    const alreadyLiked = button.classList.contains(MOBILE_LIKE_BTN_LIKED_CLASS);
+    const action = alreadyLiked ? 'remove' : 'add';
+    const ok = await performLikeRequest(photoId, action);
+    button.disabled = false;
+    button.classList.remove('jp-mobile-like-btn--pending');
+    if (!ok) return;
+    if (action === 'add') markPhotoLikedInCache(photoId); else unmarkPhotoLikedInCache(photoId);
+    applyMobileButtonState(button, action === 'add');
+    refresh();
+  }
+
+  // Varre os cards e injeta o botão como último ".result__stat" só onde o
+  // layout atual não mostra nenhum controle de Like visível. Idempotente:
+  // já sai se o botão já existir ali, então pode rodar a cada refresh().
+  function injectMobileLikeButtons() {
+    document.querySelectorAll('.result[data-photo]').forEach(card => {
+      if (card.classList.contains('result--adv')) return; // pula anúncios
+
+      const nativeImg = card.querySelector('img[alt="Like"], img[title="Like"]');
+      const nativeAnchor = nativeImg?.closest('a') || null;
+      const nativeVisible = !!nativeAnchor && (() => {
+        const rect = nativeAnchor.getBoundingClientRect();
+        return !(rect.width === 0 && rect.height === 0) && getComputedStyle(nativeAnchor).display !== 'none';
+      })();
+
+      const existingStat = card.querySelector('.' + MOBILE_LIKE_STAT_CLASS);
+      if (nativeVisible) {
+        // A janela pode ter voltado pro layout desktop em tempo real
+        // (redimensionamento) — se sobrou um botão nosso injetado antes,
+        // remove, já que o like nativo visível cobre a foto sozinho agora.
+        if (existingStat) existingStat.remove();
+        return;
+      }
+      if (existingStat) return; // já injetado e ainda necessário nesse layout
+
+      const statsRow = card.querySelector('.result__stats');
+      if (!statsRow) return; // estrutura diferente do esperado: não sabemos onde encaixar, não injeta
+
+      const photoId = card.dataset.photo;
+      if (!photoId) return;
+
+      const stat = document.createElement('div');
+      stat.className = 'result__stat ' + MOBILE_LIKE_STAT_CLASS;
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = MOBILE_LIKE_BTN_CLASS;
+      button.setAttribute('aria-label', t('likeWidgetLabel'));
+
+      const icon = document.createElement('img');
+      icon.src = MOBILE_LIKE_ICON_URL;
+      icon.alt = 'Like';
+      icon.className = 'mobile-only icon';
+      button.appendChild(icon);
+      stat.appendChild(button);
+      statsRow.appendChild(stat);
+
+      applyMobileButtonState(button, nativeAnchor ? isAlreadyLiked(nativeAnchor, card) : isPhotoLikedInCache(photoId));
+
+      button.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        handleMobileLikeClick(button, photoId, nativeAnchor);
+      });
+    });
+  }
+
 
   // ---------------------------------------------------------------------
   // UI: ícones simples em SVG inline (sem depender de assets externos)
@@ -532,99 +895,86 @@
         position: fixed;
         right: 18px;
         bottom: 18px;
-        width: 292px;
+        width: min(524px, calc(100vw - 28px));
+        min-height: 84px;
         box-sizing: border-box;
-        background: #ffffff;
-        color: #222222;
-        border: 1px solid #bdbdbd;
-        border-radius: 0;
-        box-shadow: 0 3px 12px rgba(0,0,0,.26);
-        opacity: 0;
-        transform: translateY(6px);
-        transition: opacity .18s ease, transform .18s ease, box-shadow .18s ease;
-        animation: jpLikeWidgetIn .18s ease forwards;
-        z-index: 999999;
-        font-family: inherit !important;
-        overflow: hidden;
+        display:flex;
+        align-items:center;
+        gap:18px;
+        padding:12px 14px 12px 16px;
+        background:#1c1c1c;
+        color:#eeeeee;
+        border:1px solid #464646;
+        border-radius:10px;
+        box-shadow:0 5px 20px rgba(0,0,0,.30);
+        opacity:0;
+        transform:translateY(6px);
+        transition:opacity .18s ease, transform .18s ease, box-shadow .18s ease;
+        animation:jpLikeWidgetIn .18s ease forwards;
+        z-index:999999;
+        font-family:inherit !important;
+        overflow:hidden;
       }
+      #jp-like-context-widget .jp-like-widget-main { flex:1 1 auto; min-width:0; }
       #jp-like-context-widget .jp-like-widget-head {
-        padding: 9px 12px;
-        background: #282828;
-        color: #ffffff;
-        font-size: 13px;
-        font-weight: 600;
-        line-height: 1.2;
+        margin:0 0 5px;
+        color:#f3f5f7;
+        font-size:15px;
+        font-weight:700;
+        line-height:1.15;
+        letter-spacing:.1px;
       }
-      #jp-like-context-widget .jp-like-widget-body {
-        padding: 12px;
-        background: #ffffff;
-      }
-      @keyframes jpLikeWidgetIn {
-        from { opacity: 0; transform: translateY(6px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
+      #jp-like-context-widget .jp-like-widget-body { padding:0; background:transparent; min-width:0; }
       #jp-like-context-widget .jp-like-widget-status {
-        margin-bottom: 8px;
-        color: #333333;
-        font-size: 12px;
-        line-height: 1.35;
-        transition: opacity .12s ease;
+        margin:0;
+        color:#b6b6b6;
+        font-size:12px;
+        line-height:1.35;
+        transition:opacity .12s ease;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
       }
       #jp-like-context-widget .jp-like-widget-progress {
-        display: none;
-        height: 3px;
-        margin: 0 0 11px;
-        background: #d7d7d7;
-        overflow: hidden;
+        display:none;
+        height:3px;
+        margin:7px 0 0;
+        background:#343434;
+        border-radius:999px;
+        overflow:hidden;
       }
-      #jp-like-context-widget .jp-like-widget-progress-bar {
-        width: 0;
-        height: 100%;
-        background: #4299dc;
-        transition: width .12s ease;
-      }
-      #jp-like-context-widget .jp-like-widget-confirm {
-        display: none;
-        margin: 0 0 10px;
-        color: #2d7a3e;
-        font-size: 12px;
-        font-weight: 600;
-      }
+      #jp-like-context-widget .jp-like-widget-progress-bar { width:0; height:100%; background:#8a8a8a; border-radius:999px; transition:width .12s ease; }
+      #jp-like-context-widget .jp-like-widget-confirm { display:none; margin:6px 0 0; color:#a9a9a9; font-size:12px; font-weight:600; }
       #jp-like-context-widget .jp-like-widget-button {
-        display: block;
-        width: 100%;
-        min-height: 36px;
-        padding: 8px 10px;
-        border: 1px solid #b8b8b8;
-        border-radius: 0;
-        background: #eeeeee;
-        color: #222222;
-        font: inherit;
-        font-size: 13px;
-        font-weight: 600;
-        text-align: center;
-        cursor: pointer;
+        flex:0 0 auto;
+        min-width:162px;
+        min-height:42px;
+        padding:9px 12px;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        gap:9px;
+        border:1px solid #555555;
+        border-radius:8px;
+        background:linear-gradient(#303030,#292929);
+        color:#eeeeee;
+        font:inherit;
+        font-size:14px;
+        font-weight:600;
+        text-align:center;
+        cursor:pointer;
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
       }
       #jp-like-context-widget .jp-like-widget-button:hover,
-      #jp-like-context-widget .jp-like-widget-button:focus-visible {
-        background: #dedede;
-        outline: none;
-      }
-      #jp-like-context-widget.jp-dark,
-      #jp-like-context-widget.jp-dark .jp-like-widget-body {
-        background: #292929;
-        color: #eeeeee;
-        border-color: #505050;
-      }
-      #jp-like-context-widget.jp-dark .jp-like-widget-status { color: #dddddd; }
-      #jp-like-context-widget.jp-dark .jp-like-widget-progress { background: #4a4a4a; }
-      #jp-like-context-widget.jp-dark .jp-like-widget-confirm { color: #82c995; }
-      #jp-like-context-widget.jp-dark .jp-like-widget-button {
-        background: #383838;
-        color: #eeeeee;
-        border-color: #5a5a5a;
-      }
-      #jp-like-context-widget.jp-dark .jp-like-widget-button:hover { background: #454545; }
+      #jp-like-context-widget .jp-like-widget-button:focus-visible { background:#363636; border-color:#686868; outline:none; }
+      #jp-like-context-widget .jp-like-widget-heart { width:21px; height:21px; flex:0 0 auto; }
+      #jp-like-context-widget .jp-like-widget-chevron { width:16px; height:16px; opacity:.72; margin-left:1px; }
+      #jp-like-context-widget.jp-dark { background:#1c1c1c; color:#eeeeee; border-color:#464646; }
+      #jp-like-context-widget.jp-dark .jp-like-widget-status { color:#b6b6b6; }
+      #jp-like-context-widget.jp-dark .jp-like-widget-progress { background:#343434; }
+      #jp-like-context-widget.jp-dark .jp-like-widget-confirm { color:#a9a9a9; }
+      #jp-like-context-widget.jp-dark .jp-like-widget-button { background:linear-gradient(#303030,#292929); color:#eeeeee; border-color:#555555; }
+      @keyframes jpLikeWidgetIn { from {opacity:0; transform:translateY(6px)} to {opacity:1; transform:translateY(0)} }
 
       #jp-like-settings-menu {
         position: absolute !important;
@@ -767,7 +1117,10 @@
         #jp-plus-launcher .jp-launcher-logo { width: 25px; height: 27px; }
         #jp-plus-submenu { width: 170px !important; }
         #jp-plus-settings-panel { width: min(360px, calc(100vw - 18px)) !important; }
-        #jp-like-context-widget { right: 10px; bottom: 10px; width: min(292px, calc(100vw - 20px)); }
+        #jp-like-context-widget { right:10px; bottom:10px; width:calc(100vw - 20px); min-height:0; padding:11px; gap:10px; }
+        #jp-like-context-widget .jp-like-widget-button { min-width:48px; padding:9px; }
+        #jp-like-context-widget .jp-like-widget-button span { display:none; }
+        #jp-like-context-widget .jp-like-widget-chevron { display:none; }
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -777,6 +1130,26 @@
           transition-duration: .001ms !important;
         }
       }
+
+      /* Botão de Like injetado como último ".result__stat" no layout
+         mobile do JetPhotos (ver injectMobileLikeButtons). Usa o mesmo
+         ícone .svg do site; a diferença entre curtida/não-curtida é só
+         opacidade (o arquivo é preto fixo nos dois estados, então isso é
+         suficiente e funciona igual em qualquer tema, sem depender do
+         filtro de dark mode automático — por isso essa classe fica de
+         fora da recoloração genérica, ver recolorElement()). */
+      .${MOBILE_LIKE_STAT_CLASS} { cursor:pointer; }
+      .${MOBILE_LIKE_BTN_CLASS} {
+        display:inline-flex; align-items:center; justify-content:center;
+        width:28px; height:28px; margin:-6px -4px; padding:0;
+        border:0; background:transparent; border-radius:50%;
+        cursor:pointer; transition:background .15s ease, opacity .15s ease, transform .1s ease;
+      }
+      .${MOBILE_LIKE_BTN_CLASS} img { width:16px; height:16px; opacity:.4; pointer-events:none; }
+      .${MOBILE_LIKE_BTN_CLASS}.${MOBILE_LIKE_BTN_LIKED_CLASS} img { opacity:1; }
+      .${MOBILE_LIKE_BTN_CLASS}:active { transform:scale(.9); }
+      .${MOBILE_LIKE_BTN_CLASS}:hover { background:rgba(0,0,0,.06); }
+      .${MOBILE_LIKE_BTN_CLASS}.jp-mobile-like-btn--pending { opacity:.6; pointer-events:none; }
     `;
     document.head.appendChild(style);
   }
@@ -968,7 +1341,7 @@
     // Em especial, o estimador da fila é reconstruído durante atualizações
     // de dados; se o observer de dark mode recolorisse seus <td>s depois da
     // reconstrução, haveria um flash branco antes do próximo scan.
-    if (el.closest('#jp-like-context-widget, #jp-plus-submenu, #jp-plus-launcher-host, #jp-site-queue-tracker')) return;
+    if (el.closest('#jp-like-context-widget, #jp-plus-submenu, #jp-plus-launcher-host, #jp-site-queue-tracker, .' + MOBILE_LIKE_BTN_CLASS)) return;
 
     // Ícones pretos fixos (Album/Like/Share etc.): inverte pra virar
     // branco sobre o novo fundo escuro. Não passa pelo resto da função
@@ -1403,15 +1776,21 @@
       widget.setAttribute('aria-label', t('likeWidgetLabel'));
       if (currentSettings.siteDarkMode) widget.classList.add('jp-dark');
       widget.innerHTML = `
-        <div class="jp-like-widget-head">JETPHOTOS+ · Curtidas</div>
-        <div class="jp-like-widget-body">
-          <div class="jp-like-widget-status" id="jp-like-widget-status">${t('analyzing')}</div>
-          <div class="jp-like-widget-progress" id="jp-like-widget-progress" aria-hidden="true">
-            <div class="jp-like-widget-progress-bar" id="jp-like-widget-progress-bar"></div>
+        <div class="jp-like-widget-main">
+          <div class="jp-like-widget-head">${t('likeWidgetLabel')}</div>
+          <div class="jp-like-widget-body">
+            <div class="jp-like-widget-status" id="jp-like-widget-status">${t('analyzing')}</div>
+            <div class="jp-like-widget-progress" id="jp-like-widget-progress" aria-hidden="true">
+              <div class="jp-like-widget-progress-bar" id="jp-like-widget-progress-bar"></div>
+            </div>
+            <div class="jp-like-widget-confirm" id="jp-like-widget-confirm" aria-live="polite"></div>
           </div>
-          <div class="jp-like-widget-confirm" id="jp-like-widget-confirm" aria-live="polite"></div>
-          <button class="jp-like-widget-button" id="jp-like-all-btn" type="button">${t('likeMissing')}</button>
         </div>
+        <button class="jp-like-widget-button" id="jp-like-all-btn" type="button">
+          <svg class="jp-like-widget-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.9c0 5.2-8.8 10.1-8.8 10.1S3.2 14.1 3.2 8.9A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          <span>${t('likeMissing').replace(' faltantes',' todas').replace(' missing photos',' all')}</span>
+          <svg class="jp-like-widget-chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
       `;
       document.body.appendChild(widget);
       likeWidgetEl = widget;
@@ -1479,11 +1858,20 @@
     if (observerRef) observerRef.disconnect();
 
     try {
+      injectMobileLikeButtons();
       const cards = findPhotoCards();
       let missing = 0;
       cards.forEach(({ anchor, card }) => {
-        const liked = isAlreadyLiked(anchor);
+        const liked = isAlreadyLiked(anchor, card);
         highlightCard(card, liked);
+        // O botão injetado no layout mobile também é um "anchor" normal
+        // aqui (ver findPhotoCards) — só precisa, além da classe de
+        // destaque do card, ter seu próprio ícone sincronizado a cada
+        // scan. Isso corrige o ícone sozinho mesmo que uma confirmação de
+        // rede anterior não tenha atualizado ele por qualquer motivo.
+        if (anchor?.classList?.contains(MOBILE_LIKE_BTN_CLASS)) {
+          applyMobileButtonState(anchor, liked);
+        }
         if (!liked) missing++;
       });
 
@@ -1525,7 +1913,7 @@
     if (isLiking) return 0; // já tem uma leva rodando, ignora clique duplo
     const cards = findPhotoCards();
     const targets = cards
-      .filter(({ anchor }) => !isAlreadyLiked(anchor))
+      .filter(({ anchor, card }) => !isAlreadyLiked(anchor, card))
       .map(({ anchor }) => anchor);
 
     if (!targets.length) {
@@ -1829,7 +2217,7 @@
   // v1.8.6 — Histórico automático do Total Screened
   //
   // O background.js observa o contador periodicamente e guarda o maior
-  // valor visto em cada dia do JetPhotos. Aqui o painel só lê esse histórico.
+  // Total Screened visto em cada dia do JetPhotos. Aqui o painel só lê esse histórico.
   // Dias fechados são usados para a média; enquanto ainda não há histórico
   // fechado suficiente, o valor máximo observado do dia atual serve como
   // estimativa provisória.
@@ -1851,17 +2239,32 @@
     });
   }
 
+  function getDailyAnalyzedValue(stats, key) {
+    const item = stats?.[key];
+    if (!item) return null;
+    // Total Screened é a métrica canônica do estimador.
+    // O histórico diário representa o maior valor observado naquele dia.
+    return Number.isFinite(item.maxScreened) ? item.maxScreened : null;
+  }
+
+  function getHistoryDays(stats) {
+    return Object.keys(stats || {})
+      .filter(key => key !== '__meta' && /^\d{4}-\d{2}-\d{2}$/.test(key))
+      .sort();
+  }
+
   function getClosedDailyRates(stats, excludeKey) {
-    return Object.keys(stats)
-      .filter(key => key !== '__meta' && key !== excludeKey)
-      .filter(key => {
-        const item = stats[key];
-        return item && item.closed && Number.isFinite(item.maxScreened) && item.maxScreened > 0;
-      })
-      .sort()
-      .reverse()
-      .slice(0, QUEUE_RATE_SAMPLE_DAYS)
-      .map(key => stats[key].maxScreened);
+    const keys = getHistoryDays(stats);
+    const values = [];
+    for (let i = keys.length - 1; i >= 0 && values.length < QUEUE_RATE_SAMPLE_DAYS; i--) {
+      const key = keys[i];
+      if (key === excludeKey) continue;
+      const item = stats[key];
+      if (!item?.closed) continue;
+      const value = getDailyAnalyzedValue(stats, key);
+      if (Number.isFinite(value) && value > 0) values.push(value);
+    }
+    return values;
   }
 
   function computeDailyTrackerRate(stats, siteTodayKey) {
@@ -1873,8 +2276,99 @@
     };
   }
 
+  function getChartSeries(stats, siteTodayKey) {
+    const keys = getHistoryDays(stats);
+    return keys.slice(-QUEUE_CHART_MAX_DAYS).map(key => {
+      const item = stats[key] || {};
+      const value = getDailyAnalyzedValue(stats, key);
+      return {
+        key,
+        analyzed: Number.isFinite(value) ? value : 0,
+        closed: Boolean(item.closed),
+        today: key === siteTodayKey,
+        samples: Number(item.samples || 0)
+      };
+    });
+  }
+
   let lastQueueRate = null; // guardado pra reaproveitar no cálculo por linha (fotos à frente / ritmo)
 
+
+  function renderQueueHistoryChart(stats, siteTodayKey) {
+    const host = document.getElementById('jp-queue-history');
+    if (!host) return;
+    const series = getChartSeries(stats, siteTodayKey);
+    const meaningful = series.filter(item => item.analyzed > 0);
+    if (!meaningful.length) {
+      host.innerHTML = `<div style="font-size:10px;opacity:.6;padding:8px 0;">${t('historyNoData')}</div>`;
+      return;
+    }
+
+    const W = 420, H = 176;
+    const pad = { left: 42, right: 8, top: 10, bottom: 28 };
+    const plotW = W - pad.left - pad.right;
+    const plotH = H - pad.top - pad.bottom;
+    const maxValue = Math.max(1, ...series.map(item => item.analyzed));
+    const tickCount = 4;
+    const barGap = series.length > 35 ? 2 : 5;
+    const barW = Math.max(2, (plotW / Math.max(1, series.length)) - barGap);
+    const fmt = value => value.toLocaleString(currentSettings.language === 'en' ? 'en-US' : 'pt-BR');
+    const shortDate = key => {
+      const [y,m,d] = key.split('-');
+      return `${d}/${m}`;
+    };
+
+    const yTicks = Array.from({length: tickCount + 1}, (_, i) => Math.round((maxValue / tickCount) * i));
+    const grid = yTicks.map(value => {
+      const y = pad.top + plotH - (value / maxValue) * plotH;
+      return `<line class="jp-queue-grid" x1="${pad.left}" y1="${y.toFixed(1)}" x2="${W-pad.right}" y2="${y.toFixed(1)}"></line><text class="jp-queue-axis" x="${pad.left-5}" y="${(y+3).toFixed(1)}" text-anchor="end">${fmt(value)}</text>`;
+    }).join('');
+
+    const bars = series.map((item, i) => {
+      const x = pad.left + i * (plotW / series.length) + barGap / 2;
+      const height = (item.analyzed / maxValue) * plotH;
+      const y = pad.top + plotH - height;
+      const cls = item.today ? 'jp-queue-bar jp-today' : 'jp-queue-bar';
+      const title = item.closed ? '' : ' • ' + (currentSettings.language === 'en' ? 'today / partial' : 'hoje / parcial');
+      return `<rect class="${cls}" data-index="${i}" x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${Math.max(2,barW).toFixed(2)}" height="${Math.max(0.8,height).toFixed(2)}" rx="2"><title>${shortDate(item.key)} — ${fmt(item.analyzed)} ${currentSettings.language === 'en' ? 'photos' : 'fotos'}${title}</title></rect>`;
+    }).join('');
+
+    const labelIndexes = series.length <= 10
+      ? series.map((_, i) => i)
+      : [0, Math.floor((series.length-1)/2), series.length-1];
+    const labels = labelIndexes.map(i => {
+      const x = pad.left + i * (plotW / series.length) + (plotW / series.length)/2;
+      return `<text class="jp-queue-axis" x="${x.toFixed(1)}" y="${H-7}" text-anchor="middle">${shortDate(series[i].key)}</text>`;
+    }).join('');
+
+    host.innerHTML = `
+      <div class="jp-queue-history-title"><span>${t('historyChart')}</span><span class="jp-queue-history-hint">${t('historyChartHint')}</span></div>
+      <div class="jp-queue-history-chart">
+        <svg class="jp-queue-history-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" aria-label="${t('historyChart')}">${grid}${bars}${labels}</svg>
+        <div class="jp-queue-tooltip" id="jp-queue-history-tooltip"></div>
+      </div>`;
+
+    const svg = host.querySelector('.jp-queue-history-svg');
+    const tooltip = host.querySelector('.jp-queue-tooltip');
+    const chart = host.querySelector('.jp-queue-history-chart');
+    if (!svg || !tooltip || !chart) return;
+    svg.querySelectorAll('.jp-queue-bar').forEach(bar => {
+      const show = event => {
+        const index = Number(bar.dataset.index);
+        const item = series[index];
+        tooltip.innerHTML = `<strong>${fmt(item.analyzed)} ${currentSettings.language === 'en' ? 'photos' : 'fotos'}</strong>${shortDate(item.key)}${item.today ? ` · ${currentSettings.language === 'en' ? 'today' : 'hoje'}` : ''}`;
+        tooltip.style.display = 'block';
+        const rect = chart.getBoundingClientRect();
+        const b = bar.getBoundingClientRect();
+        const left = Math.max(4, Math.min(rect.width - 145, b.left - rect.left + b.width / 2 - 66));
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${Math.max(0, b.top - rect.top - 42)}px`;
+      };
+      bar.addEventListener('mouseenter', show);
+      bar.addEventListener('mousemove', show);
+      bar.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+    });
+  }
 
   // Mostra o estado do coletor automático diretamente na página do JetPhotos.
   // Isso é apenas uma interface de diagnóstico/experimental: a fonte dos
@@ -2001,12 +2495,15 @@
           </tr>
         </tbody>
       </table>
+      <div class="jp-queue-history" id="jp-queue-history"></div>
 
       <div class="jp-plus-queue-note">
         <span>${basisText}</span>
         <button id="jp-site-queue-tracker-refresh" type="button">${t('collectNow')}</button>
       </div>
     `;
+
+    renderQueueHistoryChart(dailyStats, siteTodayKey);
 
     const styleId = 'jp-plus-queue-native-style';
     if (!document.getElementById(styleId)) {
@@ -2110,6 +2607,44 @@
         #jp-site-queue-tracker button:hover {
           opacity: .7;
         }
+
+        #jp-site-queue-tracker .jp-queue-history {
+          margin-top: 14px;
+          padding-top: 10px;
+          border-top: 1px solid currentColor;
+          opacity: .92;
+        }
+        #jp-site-queue-tracker .jp-queue-history-title {
+          display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+          margin-bottom:8px; font-size:12px; font-weight:600;
+        }
+        #jp-site-queue-tracker .jp-queue-history-hint {
+          font-size:10px; font-weight:400; opacity:.62;
+        }
+        #jp-site-queue-tracker .jp-queue-history-chart {
+          position:relative; width:100%; overflow:visible;
+        }
+        #jp-site-queue-tracker .jp-queue-history-svg {
+          display:block; width:100%; height:176px; overflow:visible;
+        }
+        #jp-site-queue-tracker .jp-queue-grid {
+          stroke: currentColor; stroke-width:1; opacity:.14; vector-effect:non-scaling-stroke;
+        }
+        #jp-site-queue-tracker .jp-queue-axis {
+          fill:currentColor; opacity:.62; font-size:10px;
+        }
+        #jp-site-queue-tracker .jp-queue-bar {
+          fill:#4299dc; opacity:.84; rx:2;
+        }
+        #jp-site-queue-tracker .jp-queue-bar.jp-today { opacity:1; }
+        #jp-site-queue-tracker .jp-queue-tooltip {
+          position:absolute; z-index:5; pointer-events:none; display:none;
+          min-width:132px; padding:7px 9px; box-sizing:border-box;
+          border:1px solid rgba(255,255,255,.18); border-radius:5px;
+          background:#202124; color:#fff; box-shadow:0 3px 12px rgba(0,0,0,.28);
+          font-size:10px; line-height:1.35; white-space:nowrap;
+        }
+        #jp-site-queue-tracker .jp-queue-tooltip strong { display:block; font-size:12px; margin-bottom:2px; }
 
         @media (max-width: 700px) {
           #jp-site-queue-tracker .jp-plus-queue-note {
@@ -2303,7 +2838,7 @@
       meta.basis = 'daily_tracker';
       meta.sampleSize = closedRate.sampleSize;
       meta.isFallback = false;
-    } else if (trackedToday && trackedToday.maxScreened > 0) {
+    } else if (trackedToday && Number(trackedToday.maxScreened || 0) > 0) {
       rate = trackedToday.maxScreened;
       meta.basis = 'daily_tracker_today';
       meta.sampleSize = 1;
@@ -2460,6 +2995,7 @@
     // O widget contextual só passa a ser funcional quando encontra fotos
     // com ação de Like. Em páginas sem fotos, ele permanece oculto.
     if (isPhotoContext) {
+      wireLikeSync();
       scheduleRefresh();
 
       const likeButton = document.getElementById('jp-like-all-btn');
