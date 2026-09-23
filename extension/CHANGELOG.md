@@ -42,6 +42,11 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Corrigido pontinho verde no topo do anel com progresso zerado (arco de comprimento 0 com ponta redonda ainda renderizava) — o arco some de verdade no zero.
 - Tamanho responsivo: maior no celular (54px, fonte 15px), cresce no tablet (58px) e no desktop (62px + rótulo "faltando", ex: "10 faltando").
 
+### Bolha: UI único de curtidas (widget grande removido)
+- O widget grande e todo o sistema de expandir/minimizar foram removidos — a bolha é agora o único UI de curtidas em qualquer tela, sem exceção.
+- Tocar na bolha curte todas as fotos faltantes de uma vez (quando há algo faltando); sem nada faltando, o toque não faz nada.
+- Removida a preferência salva de recolhido/expandido e o maquinário de colapso (menos código, sem mudança no visual da bolha).
+
 ---
 
 ## [2.0.0]

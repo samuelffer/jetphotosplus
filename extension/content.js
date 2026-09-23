@@ -47,7 +47,6 @@
   const STORAGE_KEY_SITE_DARK_MODE = 'jpSiteDarkMode'; // boolean, padrão false (EXPERIMENTAL)
   const STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED = 'jpQueueEstimatorEnabled'; // boolean, padrão true (EXPERIMENTAL)
   const STORAGE_KEY_LANGUAGE = 'jpLanguage'; // 'pt-BR' | 'en'
-  const STORAGE_KEY_WIDGET_COLLAPSED = 'jpLikeWidgetCollapsed'; // boolean, padrão true (a bolha é o UI principal)
 
   // ---------------------------------------------------------------------
   // Preload anti-FOUC: evita o "flash" do tema claro original do JetPhotos
@@ -110,12 +109,11 @@
 
   const I18N = {
     'pt-BR': {
-      settings: 'Configurações', close: 'Fechar', minimize: 'Minimizar', expand: 'Expandir',
+      settings: 'Configurações', close: 'Fechar',
       viewReleases: 'Ver novidades', reportIssue: 'Reportar um problema', aboutJetPhotosPlus: 'Sobre o JetPhotos+',
       analyzing: 'Analisando página...',
       likeMissing: 'Curtir faltantes',
-      noneFound: 'Nenhuma foto encontrada ainda (aguardando carregar)...',
-      missing: 'faltando', liked: 'já curtidas',
+      missing: 'faltando',
       experimental: 'Experimental',
       siteDarkMode: 'Modo escuro (beta)',
       siteDarkModeHelp: 'Escurece o JetPhotos e também a interface da extensão (painel, submenu e widget). Fotos e cores de marca não são alteradas.',
@@ -156,10 +154,9 @@
       trackedDays: (n) => `${n} dia${n === 1 ? '' : 's'} acompanhado${n === 1 ? '' : 's'}`,
     },
     en: {
-      settings: 'Settings', close: 'Close', minimize: 'Minimize', expand: 'Expand', viewReleases: "See what's new", reportIssue: 'Report an issue', aboutJetPhotosPlus: 'About JetPhotos+', analyzing: 'Analyzing page...',
+      settings: 'Settings', close: 'Close', viewReleases: "See what's new", reportIssue: 'Report an issue', aboutJetPhotosPlus: 'About JetPhotos+', analyzing: 'Analyzing page...',
       likeMissing: 'Like missing photos',
-      noneFound: 'No photos found yet (waiting for the page to load)...',
-      missing: 'missing', liked: 'already liked',
+      missing: 'missing',
       experimental: 'Experimental', siteDarkMode: 'Site dark mode (beta)', siteDarkModeHelp: 'Darkens JetPhotos backgrounds and light text. Photos and brand colors are not changed.',
       queueEstimator: 'Queue days estimator (beta)', queueEstimatorHelp: 'Estimates how long your photo may take to be reviewed on queue.php. Reload the page after changing.',
       language: 'Language', languageHelp: 'Choose the extension language.', portugueseBrazil: 'Português (Brasil)', english: 'English',
@@ -941,113 +938,19 @@
         outline: none !important;
       }
 
-      /* Ferramenta contextual de curtidas: aparece somente em páginas que
-         realmente possuem links/ícones de Like. Não é launcher. */
-      #jp-like-context-widget {
-        position: fixed;
-        right: 18px;
-        bottom: 18px;
-        width: min(524px, calc(100vw - 28px));
-        min-height: 84px;
-        box-sizing: border-box;
-        display:flex;
-        align-items:center;
-        gap:18px;
-        padding:12px 14px 12px 16px;
-        background:#1c1c1c;
-        color:#eeeeee;
-        border:1px solid #464646;
-        border-radius:10px;
-        box-shadow:0 5px 20px rgba(0,0,0,.30);
-        opacity:0;
-        transform:translateY(6px);
-        transition:opacity .18s ease, transform .18s ease, box-shadow .18s ease;
-        animation:jpLikeWidgetIn .18s ease forwards;
-        z-index:999999;
-        font-family:inherit !important;
-        overflow:hidden;
-      }
-      #jp-like-context-widget .jp-like-widget-main { flex:1 1 auto; min-width:0; }
-      #jp-like-context-widget .jp-like-widget-head {
-        margin:0 0 5px;
-        color:#f3f5f7;
-        font-size:15px;
-        font-weight:700;
-        line-height:1.15;
-        letter-spacing:.1px;
-      }
-      #jp-like-context-widget .jp-like-widget-body { padding:0; background:transparent; min-width:0; }
-      #jp-like-context-widget .jp-like-widget-status {
-        margin:0;
-        color:#b6b6b6;
-        font-size:12px;
-        line-height:1.35;
-        transition:opacity .12s ease;
-        white-space:nowrap;
-        overflow:hidden;
-        text-overflow:ellipsis;
-      }
-      #jp-like-context-widget .jp-like-widget-progress {
-        display:none;
-        height:3px;
-        margin:7px 0 0;
-        background:#343434;
-        border-radius:999px;
-        overflow:hidden;
-      }
-      #jp-like-context-widget .jp-like-widget-progress-bar { width:0; height:100%; background:#8a8a8a; border-radius:999px; transition:width .12s ease; }
-      #jp-like-context-widget .jp-like-widget-confirm { display:none; margin:6px 0 0; color:#a9a9a9; font-size:12px; font-weight:600; }
-      #jp-like-context-widget .jp-like-widget-button {
-        flex:0 0 auto;
-        min-width:162px;
-        min-height:42px;
-        padding:9px 12px;
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        gap:9px;
-        border:1px solid #555555;
-        border-radius:8px;
-        background:linear-gradient(#303030,#292929);
-        color:#eeeeee;
-        font:inherit;
-        font-size:14px;
-        font-weight:600;
-        text-align:center;
-        cursor:pointer;
-        box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
-      }
-      #jp-like-context-widget .jp-like-widget-button:hover,
-      #jp-like-context-widget .jp-like-widget-button:focus-visible { background:#363636; border-color:#686868; outline:none; }
-      #jp-like-context-widget .jp-like-widget-heart { width:21px; height:21px; flex:0 0 auto; }
-      #jp-like-context-widget .jp-like-widget-chevron { width:16px; height:16px; opacity:.72; margin-left:1px; }
-      #jp-like-context-widget.jp-dark { background:#1c1c1c; color:#eeeeee; border-color:#464646; }
-      #jp-like-context-widget.jp-dark .jp-like-widget-status { color:#b6b6b6; }
-      #jp-like-context-widget.jp-dark .jp-like-widget-progress { background:#343434; }
-      #jp-like-context-widget.jp-dark .jp-like-widget-confirm { color:#a9a9a9; }
-      #jp-like-context-widget.jp-dark .jp-like-widget-button { background:linear-gradient(#303030,#292929); color:#eeeeee; border-color:#555555; }
-      /* Botão de minimizar no canto do widget de curtidas. */
-      #jp-like-context-widget .jp-like-widget-min {
-        position:absolute; top:4px; right:6px;
-        width:28px; height:28px; padding:0;
-        display:inline-flex; align-items:center; justify-content:center;
-        border:0; border-radius:6px; background:transparent; color:#8a8a8a;
-        font-size:18px; line-height:1; cursor:pointer;
-      }
-      #jp-like-context-widget .jp-like-widget-min:hover { color:#ffffff; background:rgba(255,255,255,.08); }
-      /* Bolha recolhida do widget: mesma identidade (fundo/borda/sombra),
-         só que compacta — coração + faltantes. display:none por padrão; o
-         JS alterna pra flex quando recolhido (ver setWidgetCollapsed). */
+      /* Bolha de curtidas: o único UI de likes — aparece somente em páginas
+         que realmente possuem links/ícones de Like. Não é launcher.
+         Sempre visível; compacta — coração + faltantes. */
       #jp-like-widget-bubble {
         position:fixed; right:18px; bottom:18px; z-index:999999;
-        display:none; align-items:center; gap:9px;
+        display:flex; align-items:center; gap:9px;
         min-height:54px; padding:12px 18px 12px 16px; box-sizing:border-box;
         background:#1c1c1c; color:#eeeeee;
         border:1px solid #464646; border-radius:999px;
         box-shadow:0 5px 20px rgba(0,0,0,.30);
         font:inherit; font-size:15px; font-weight:700; line-height:1;
         cursor:pointer;
-        animation:jpLikeWidgetIn .18s ease;
+        animation:jpBubbleIn .18s ease;
       }
       #jp-like-widget-bubble:hover { background:#2a2a2a; border-color:#686868; }
       #jp-like-widget-bubble:focus-visible { outline:2px solid #669DF6; outline-offset:2px; }
@@ -1102,7 +1005,7 @@
         #jp-like-widget-bubble .jp-bubble-ring-fill { transition:none; }
         #jp-like-widget-bubble.jp-bubble-done .jp-bubble-check { animation:none; }
       }
-      @keyframes jpLikeWidgetIn { from {opacity:0; transform:translateY(6px)} to {opacity:1; transform:translateY(0)} }
+      @keyframes jpBubbleIn { from {opacity:0; transform:translateY(6px)} to {opacity:1; transform:translateY(0)} }
 
       #jp-like-settings-menu {
         position: absolute !important;
@@ -1245,15 +1148,10 @@
         #jp-plus-launcher .jp-launcher-logo { width: 25px; height: 27px; }
         #jp-plus-submenu { width: 170px !important; }
         #jp-plus-settings-panel { width: min(360px, calc(100vw - 18px)) !important; }
-        #jp-like-context-widget { right:10px; bottom:10px; width:calc(100vw - 20px); min-height:0; padding:11px; gap:10px; }
         #jp-like-widget-bubble { right:10px; bottom:10px; }
-        #jp-like-context-widget .jp-like-widget-button { min-width:48px; padding:9px; }
-        #jp-like-context-widget .jp-like-widget-button span { display:none; }
-        #jp-like-context-widget .jp-like-widget-chevron { display:none; }
       }
 
       @media (prefers-reduced-motion: reduce) {
-        #jp-like-context-widget { animation-duration:.001ms !important; transition-duration:.001ms !important; }
         #jp-like-widget-bubble { animation-duration:.001ms !important; transition-duration:.001ms !important; }
         #jp-plus-settings-panel { transition-duration:.001ms !important; }
         #jp-plus-launcher .jp-launcher-logo {
@@ -1333,13 +1231,12 @@
   function getSettings() {
     return new Promise(resolve => {
       chrome.storage.local.get(
-        [STORAGE_KEY_SITE_DARK_MODE, STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED, STORAGE_KEY_LANGUAGE, STORAGE_KEY_WIDGET_COLLAPSED],
+        [STORAGE_KEY_SITE_DARK_MODE, STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED, STORAGE_KEY_LANGUAGE],
         result => {
           resolve({
             siteDarkMode: result[STORAGE_KEY_SITE_DARK_MODE] === true, // padrão: false
             queueEstimatorEnabled: result[STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED] !== false, // padrão: true (EXPERIMENTAL)
-            language: result[STORAGE_KEY_LANGUAGE] || getBrowserLanguage(),
-            widgetCollapsed: result[STORAGE_KEY_WIDGET_COLLAPSED] !== false // padrão: true
+            language: result[STORAGE_KEY_LANGUAGE] || getBrowserLanguage()
           });
         }
       );
@@ -1496,7 +1393,7 @@
     // Em especial, o estimador da fila é reconstruído durante atualizações
     // de dados; se o observer de dark mode recolorisse seus <td>s depois da
     // reconstrução, haveria um flash branco antes do próximo scan.
-    if (el.closest('#jp-like-context-widget, #jp-plus-submenu, #jp-plus-launcher-host, #jp-site-queue-tracker, .' + MOBILE_LIKE_BTN_CLASS)) return;
+    if (el.closest('#jp-like-widget-bubble, #jp-plus-submenu, #jp-plus-launcher-host, #jp-site-queue-tracker, .' + MOBILE_LIKE_BTN_CLASS)) return;
 
     // Ícones pretos fixos (Album/Like/Share etc.): inverte pra virar
     // branco sobre o novo fundo escuro. Não passa pelo resto da função
@@ -1615,10 +1512,9 @@
   // Painel principal
   // ---------------------------------------------------------------------
   let panelEl = null;
-  let likeWidgetEl = null;
   let settingsMenuEl = null;
   let settingsPanelEl = null;
-  let currentSettings = { siteDarkMode: false, queueEstimatorEnabled: true, language: 'pt-BR', widgetCollapsed: true };
+  let currentSettings = { siteDarkMode: false, queueEstimatorEnabled: true, language: 'pt-BR' };
 
   function buildToggleSwitch(initialOn, onChange) {
     const wrapper = document.createElement('button');
@@ -1696,7 +1592,6 @@
       applySiteDarkMode(isOn);
       if (panelEl) panelEl.classList.toggle('jp-dark', isOn);
       if (settingsPanelEl) settingsPanelEl.classList.toggle('jp-dark', isOn);
-      if (likeWidgetEl) likeWidgetEl.classList.toggle('jp-dark', isOn);
       if (isOn) startBgObserverIfNeeded();
     });
 
@@ -1846,7 +1741,6 @@
     }
 
     document.querySelectorAll('#jp-plus-launcher-host').forEach(el => el.remove());
-    document.querySelectorAll('#jp-like-context-widget').forEach(el => el.remove());
     document.querySelectorAll('#jp-like-widget-bubble').forEach(el => el.remove());
     document.querySelectorAll('#jp-plus-settings-panel').forEach(el => el.remove());
 
@@ -1923,52 +1817,17 @@
 
     panelEl = submenu;
 
-    // A ferramenta de curtidas não fica mais no submenu do header. Ela é
-    // contextual e aparece no canto inferior direito somente quando a página
-    // realmente contém fotos com ação de Like.
+    // A ferramenta de curtidas é a bolha no canto inferior direito — o único
+    // UI de likes, em qualquer tela. Ela só existe nas páginas que realmente
+    // contêm fotos com ação de Like.
     if (isPhotoContext && !isQueueMode) {
-      const widget = document.createElement('section');
-      widget.id = 'jp-like-context-widget';
-      widget.setAttribute('aria-label', t('likeWidgetLabel'));
-      if (currentSettings.siteDarkMode) widget.classList.add('jp-dark');
-      widget.innerHTML = `
-        <div class="jp-like-widget-main">
-          <div class="jp-like-widget-head">${t('likeWidgetLabel')}</div>
-          <div class="jp-like-widget-body">
-            <div class="jp-like-widget-status" id="jp-like-widget-status">${t('analyzing')}</div>
-            <div class="jp-like-widget-progress" id="jp-like-widget-progress" aria-hidden="true">
-              <div class="jp-like-widget-progress-bar" id="jp-like-widget-progress-bar"></div>
-            </div>
-            <div class="jp-like-widget-confirm" id="jp-like-widget-confirm" aria-live="polite"></div>
-          </div>
-        </div>
-        <button class="jp-like-widget-button" id="jp-like-all-btn" type="button">
-          <svg class="jp-like-widget-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.9c0 5.2-8.8 10.1-8.8 10.1S3.2 14.1 3.2 8.9A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
-          <span>${t('likeMissing').replace(' faltantes',' todas').replace(' missing photos',' all')}</span>
-          <svg class="jp-like-widget-chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-      `;
-      const minBtn = document.createElement('button');
-      minBtn.type = 'button';
-      minBtn.id = 'jp-like-widget-min';
-      minBtn.className = 'jp-like-widget-min';
-      minBtn.textContent = '\u2212';
-      minBtn.title = t('minimize');
-      minBtn.setAttribute('aria-label', t('minimize'));
-      minBtn.addEventListener('click', () => setWidgetCollapsed(true));
-      widget.appendChild(minBtn);
-      document.body.appendChild(widget);
-      likeWidgetEl = widget;
-
-      // Bolha recolhida: começa escondida e aparece no lugar do widget quando
-      // recolhido. Criada junto pra já existir antes do primeiro refresh()
-      // tentar atualizar o contador.
+      // Criada aqui pra já existir antes do primeiro refresh() tentar
+      // atualizar o contador.
       const bubble = document.createElement('button');
       bubble.type = 'button';
       bubble.id = 'jp-like-widget-bubble';
-      bubble.title = t('expand');
+      bubble.title = t('likeMissing');
       bubble.setAttribute('aria-label', t('analyzing'));
-      bubble.setAttribute('aria-expanded', 'false');
       bubble.innerHTML = `
         <span class="jp-bubble-ring-wrap" aria-hidden="true">
           <svg class="jp-bubble-ring" viewBox="0 0 28 28"><circle class="jp-bubble-ring-track" cx="14" cy="14" r="12"></circle><circle class="jp-bubble-ring-fill" id="jp-bubble-ring-fill" cx="14" cy="14" r="12"></circle></svg>
@@ -1978,69 +1837,24 @@
         <span id="jp-like-widget-bubble-count">\u2026</span>
         <span id="jp-like-widget-bubble-label" class="jp-bubble-label"></span>`;
       bubble.addEventListener('click', () => {
-        // No celular a bolha é o único UI: o toque curte tudo direto (via o
-        // botão escondido). Expandir/recolher pelo toque não existe no
-        // celular a pedido — no desktop o toque continua expandindo.
-        if (isMobileLayout()) {
-          if (!isLiking && (lastBubbleMissing ?? 0) > 0) {
-            document.getElementById('jp-like-all-btn')?.click();
-          }
-          return;
-        }
-        setWidgetCollapsed(false);
+        // O toque curte tudo direto. Sem nada faltando (ou com leva em
+        // andamento), o toque não faz nada — não há mais expandir/minimizar.
+        if (isLiking || (lastBubbleMissing ?? 0) <= 0) return;
+        runLikeAllBatch();
       });
       bubble.addEventListener('animationend', event => {
         if (event.animationName === 'jpLikePop') bubble.classList.remove('jp-bubble-pop');
       });
       document.body.appendChild(bubble);
-
-      // Estado inicial: no celular a bolha já nasce como widget principal;
-      // no desktop vale o estado salvo. Sem regravar no storage.
-      setWidgetCollapsed(currentSettings.widgetCollapsed === true || isMobileLayout(), false);
-
-      // Reaplica ao girar/redimensionar (ex: celular deitado que passa dos
-      // 520px volta a mostrar o widget grande). Uma vez só por página.
-      if (!mobileViewWired && typeof window.matchMedia === 'function') {
-        mobileViewWired = true;
-        window.matchMedia('(max-width: 520px)').addEventListener('change', event => {
-          if (!document.getElementById('jp-like-context-widget')) return;
-          setWidgetCollapsed(currentSettings.widgetCollapsed === true || event.matches, false);
-        });
-      }
-    } else {
-      likeWidgetEl = null;
     }
 
     settingsMenuEl = null;
     return true;
   }
 
-  // Alterna widget aberto <-> bolha recolhida. O estado é persistido pra
-  // continuar igual ao trocar de página; o persist=false é só pra aplicar
-  // o valor salvo na montagem sem regravar à toa.
-  // Layout mobile = mesma largura onde o CSS troca o widget pra barra
-  // inferior (max-width: 520px). Mantido em JS também pra bolha virar o
-  // widget principal no celular (ver buildPanel).
-  function isMobileLayout() {
-    return typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 520px)').matches;
-  }
-
   // Última contagem vista pela bolha (null = ainda analisando). É o que o
-  // toque na bolha consulta pra decidir entre "curtir tudo" e "expandir".
+  // toque na bolha consulta pra decidir se há o que curtir.
   let lastBubbleMissing = null;
-  let mobileViewWired = false;
-
-  function setWidgetCollapsed(collapsed, persist = true) {
-    currentSettings.widgetCollapsed = collapsed;
-    if (persist) chrome.storage.local.set({ [STORAGE_KEY_WIDGET_COLLAPSED]: collapsed });
-    const widget = document.getElementById('jp-like-context-widget');
-    const bubble = document.getElementById('jp-like-widget-bubble');
-    if (widget) widget.style.display = collapsed ? 'none' : '';
-    if (bubble) {
-      bubble.style.display = collapsed ? 'flex' : 'none';
-      bubble.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-    }
-  }
 
   // Atualiza o contador da bolha. null = ainda analisando (mostra …).
   // Anel de progresso da bolha: 0 = vazio, 1 = fechado verde.
@@ -2087,7 +1901,9 @@
     bubble.setAttribute('aria-label', done
       ? (currentSettings.language === 'en' ? 'All liked!' : 'Tudo curtido!')
       : `${missingOrNull} ${t('missing')}`);
-    bubble.title = !isMobileLayout() ? t('expand') : (done ? '' : t('likeMissing'));
+    bubble.title = done
+      ? (currentSettings.language === 'en' ? 'All liked!' : 'Tudo curtido!')
+      : t('likeMissing');
     // Rótulo do desktop largo ("10 faltando"); some quando concluído (o selo basta).
     if (label) {
       label.textContent = done ? '' : t('missing');
@@ -2095,33 +1911,12 @@
     }
   }
 
+  // Placar das curtidas: a bolha é o único mostrador, então é só alimentá-la.
   function updateStatus(cards, missing) {
-    // Durante a leva de curtidas, o observer pode detectar cada mutação do
-    // site. Não deixe esses refreshes sobrescreverem o contador X/Y.
+    // Durante a leva, o clickNext já atualiza a bolha a cada clique — não
+    // deixe esses refreshes brigarem com a contagem regressiva.
     if (isLiking) return;
-
     updateBubble(cards.length ? missing : null);
-
-    const textEl = document.getElementById('jp-like-widget-status');
-    if (!textEl) return;
-
-    const likedCount = Math.max(0, cards.length - missing);
-    const html = !cards.length
-      ? t('noneFound')
-      : (currentSettings.language === 'en'
-          ? `${missing} ${t('missing')} / ${likedCount} ${t('liked')}`
-          : `${missing} ${t('missing')} / ${likedCount} ${t('liked')}`);
-
-    // Evita re-animar quando o texto não mudou (o observer roda com
-    // frequência e o conteúdo costuma ser o mesmo entre uma chamada e outra).
-    if (textEl.dataset.jpHtml === html) return;
-    textEl.dataset.jpHtml = html;
-
-    textEl.style.opacity = '0';
-    setTimeout(() => {
-      textEl.innerHTML = html;
-      textEl.style.opacity = '1';
-    }, 120);
   }
 
   function highlightCard(card, liked) {
@@ -2140,8 +1935,6 @@
   }
 
   let isRefreshing = false;
-  let likeConfirmationTimer = null;
-  let likeSafetyTimer = null;
 
   function refresh() {
     if (isRefreshing) return; // evita reentrância
@@ -2232,17 +2025,14 @@
         if (onDone) onDone(targets.length);
         return;
       }
-      targets[i].click();
-      i++;
-      const progressBarEl = document.getElementById('jp-like-widget-progress-bar');
-      const progressTextEl = document.getElementById('jp-like-widget-status');
-      if (progressBarEl) progressBarEl.style.width = `${Math.min(100, (i / targets.length) * 100)}%`;
-      if (progressTextEl) {
-        delete progressTextEl.dataset.jpHtml;
-        progressTextEl.textContent = currentSettings.language === 'en'
-          ? `Liking ${i}/${targets.length} photo(s)...`
-          : `Curtindo ${i}/${targets.length} foto(s)...`;
+      // Um .click() que lance (handler do próprio site) não pode quebrar a
+      // corrente da leva — essa foto fica pra próxima e o resto continua.
+      try {
+        targets[i].click();
+      } catch (clickError) {
+        console.error('[JetPhotos+] Clique ignorado (handler do site lançou):', clickError);
       }
+      i++;
       updateBubble(targets.length - i);
       setBubbleProgress(i / targets.length);
       const delay = LIKE_CLICK_DELAY_MS + Math.random() * LIKE_CLICK_JITTER_MS;
@@ -2251,6 +2041,26 @@
     clickNext();
 
     return targets.length;
+  }
+
+  // Dispara a leva de "curtir faltantes" a partir da bolha. Todo o feedback
+  // é na própria bolha (contagem regressiva + anel + pulso verde + selo).
+  function runLikeAllBatch() {
+    if (isLiking) return;
+    let total = 0;
+    try {
+      total = likeAllMissing(doneCount => {
+        // onDone: a leva terminou (doneCount=0 se não havia nada faltando).
+        updateBubble(0); // bolha mostra 0 + anel fechado (o refresh final confirma)
+        document.getElementById('jp-like-widget-bubble')?.classList.remove('jp-bubble-liking');
+        if (doneCount > 0) popBubbleDone(); // pop de conclusão (só quando curtiu algo de fato)
+      });
+    } catch (error) {
+      console.error('[JetPhotos+] Falha ao iniciar a leva de curtidas:', error);
+      document.getElementById('jp-like-widget-bubble')?.classList.remove('jp-bubble-liking');
+      return;
+    }
+    document.getElementById('jp-like-widget-bubble')?.classList.toggle('jp-bubble-liking', total > 0);
   }
 
   // =======================================================================
@@ -3183,8 +2993,8 @@
 
   function isJetPhotosPlusNode(node) {
     if (!(node instanceof Element)) return false;
-    return node.matches('#jp-site-queue-tracker, #jp-like-context-widget, #jp-plus-launcher-host, .jp-queue-eta-badge') ||
-      !!node.closest('#jp-site-queue-tracker, #jp-like-context-widget, #jp-plus-launcher-host, .jp-queue-eta-badge');
+    return node.matches('#jp-site-queue-tracker, #jp-like-widget-bubble, #jp-plus-launcher-host, .jp-queue-eta-badge') ||
+      !!node.closest('#jp-site-queue-tracker, #jp-like-widget-bubble, #jp-plus-launcher-host, .jp-queue-eta-badge');
   }
 
   function mutationComesOnlyFromExtension(mutation) {
@@ -3296,82 +3106,12 @@
     // O conteúdo de curtidas fica separado, no canto inferior direito, nas
     // páginas que realmente possuem fotos com ação de Like.
 
-    // O widget contextual só passa a ser funcional quando encontra fotos
-    // com ação de Like. Em páginas sem fotos, ele permanece oculto.
+    // A bolha só passa a ser funcional quando encontra fotos com ação de
+    // Like. Em páginas sem fotos ela nem é criada (ver buildPanel); o toque
+    // nela chama runLikeAllBatch() direto.
     if (isPhotoContext) {
       wireLikeSync();
       scheduleRefresh();
-
-      const likeButton = document.getElementById('jp-like-all-btn');
-      if (likeButton) likeButton.addEventListener('click', () => {
-        const btn = document.getElementById('jp-like-all-btn');
-        const textEl = document.getElementById('jp-like-widget-status');
-
-        const total = likeAllMissing((doneCount = 0) => {
-          // onDone: reabilita o botão quando a leva de cliques termina.
-          updateBubble(0); // a leva terminou: bolha mostra 0 + anel fechado (o refresh final confirma)
-          document.getElementById('jp-like-widget-bubble')?.classList.remove('jp-bubble-liking');
-          if (doneCount > 0) popBubbleDone(); // pop de conclusão (só quando curtiu algo de fato)
-          if (btn) {
-            btn.disabled = false;
-            btn.style.opacity = '1';
-            btn.style.cursor = 'pointer';
-          }
-
-          clearTimeout(likeSafetyTimer);
-          const confirmEl = document.getElementById('jp-like-widget-confirm');
-          const progressEl = document.getElementById('jp-like-widget-progress');
-          if (confirmEl && total > 0) {
-            confirmEl.textContent = currentSettings.language === 'en' ? '✓ All liked!' : '✓ Tudo curtido!';
-            confirmEl.style.display = 'block';
-            clearTimeout(likeConfirmationTimer);
-            likeConfirmationTimer = setTimeout(() => {
-              confirmEl.style.display = 'none';
-              refresh();
-            }, 2000);
-          }
-          if (progressEl) progressEl.style.display = 'none';
-        });
-
-        if (total > 0 && btn) {
-          btn.disabled = true;
-          btn.style.opacity = '.6';
-          btn.style.cursor = 'default';
-        }
-        // Feedback na bolha (principalmente no celular, onde o widget está escondido).
-        document.getElementById('jp-like-widget-bubble')?.classList.toggle('jp-bubble-liking', total > 0);
-
-        if (textEl) {
-          // O texto abaixo é escrito diretamente durante a leva. Invalide o
-          // cache usado por updateStatus(), para que o refresh final sempre
-          // possa substituir o estado "Curtindo X/Y..." pelo estado real.
-          delete textEl.dataset.jpHtml;
-          textEl.textContent = total > 0
-            ? (currentSettings.language === 'en' ? `Liking 0/${total} photo(s)...` : `Curtindo 0/${total} foto(s)...`)
-            : (currentSettings.language === 'en' ? 'Nothing missing here!' : 'Nada faltando por aqui!');
-        }
-
-        const progressEl = document.getElementById('jp-like-widget-progress');
-        const progressBarEl = document.getElementById('jp-like-widget-progress-bar');
-        if (total > 0 && progressEl && progressBarEl) {
-          progressEl.style.display = 'block';
-          progressBarEl.style.width = '0%';
-        }
-
-        // Rede de segurança: se o estado continuar preso em "Curtindo..." por
-        // aproximadamente 6s, força um refresh mesmo que o observer/debounce falhe.
-        if (total > 0) {
-          clearTimeout(likeSafetyTimer);
-          likeSafetyTimer = setTimeout(() => {
-            const currentText = textEl ? textEl.textContent : '';
-            if (currentText.includes('Curtindo') || currentText.includes('Liking')) {
-              refresh();
-            }
-          }, 6000);
-        }
-      });
-
-      // Tenta restringir a observação à área de resultados de fotos em vez
       // do <body> inteiro, pra reduzir o volume de mutações capturadas
       // (o body inteiro inclui spinners, menus, tudo). Se não achar uma
       // área específica, cai no body mesmo — com debounce isso já é seguro.
