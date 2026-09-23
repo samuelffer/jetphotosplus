@@ -1403,7 +1403,7 @@
     html.jp-site-dark-active .radio__pill label { color:#e8e8e8 !important; }
     /* Paginação (álbum, /new, resultados...): caixas brancas viram escuras;
        o número segue azul (regra genérica), legível no escuro. */
-    html.jp-site-dark-active a.paging__pager { background-color:#2b2d31 !important; border-color:#3a3d43 !important; }
+    html.jp-site-dark-active a.paging__pager { background-color:#2b2d31 !important; border-color:#3a3d43 !important; color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; }
     /* Barra de filtros dos resultados (contagem, Modify search, Sort by). */
     html.jp-site-dark-active .show-photos-header { background-color:#26272b !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
     html.jp-site-dark-active .show-photos-header span { color:#e8e8e8 !important; }
@@ -1419,6 +1419,17 @@
     html.jp-site-dark-active a.social__link--like,
     html.jp-site-dark-active a.social__link--like .social__text { color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; }
     html.jp-site-dark-active a.social__link--like img { filter:invert(1) !important; }
+    /* Ícones de câmera do perfil (trocar avatar/capa): brancos no escuro.
+       Vale só nas páginas de fotógrafo (jp-on-profile). Cobre fonte de
+       ícone, SVG e imagem (brightness zera a cor, invert vira branco). */
+    html.jp-site-dark-active.jp-on-profile i[class*=camera i],
+    html.jp-site-dark-active.jp-on-profile svg[class*=camera i],
+    html.jp-site-dark-active.jp-on-profile span[class*=camera i] { color:#ffffff !important; fill:#ffffff !important; }
+    html.jp-site-dark-active.jp-on-profile img[src*=camera i] { filter:brightness(0) invert(1) !important; }
+    /* Menu lateral mobile (hambúrguer): fundo escuro + links claros. */
+    html.jp-site-dark-active .header__extended-section--navigation { background-color:#26272b !important; }
+    html.jp-site-dark-active .header__extended-section--navigation span { color:#e8e8e8 !important; }
+    html.jp-site-dark-active a.nav__link { color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; }
   `;
 
   function ensureSiteDarkThemeStyle() {
@@ -1444,6 +1455,7 @@
       tagNativeTablesForDark();
     }
     document.documentElement.classList.toggle(SITE_DARK_HTML_CLASS, isOn);
+    document.documentElement.classList.toggle('jp-on-profile', location.pathname.startsWith('/photographer'));
   }
   // =======================================================================
   // Painel principal
