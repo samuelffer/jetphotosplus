@@ -63,6 +63,10 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Bolha e toast agora usam Fira Sans (a fonte do site) quando disponível.
 - Próximo passo: extrações da página de resultados e da página de foto pra completar a cobertura (linhas de resultado, paginação, comentários).
 
+### Modo escuro: zebra da fila + links em fundo escuro
+- queue.php: as tabelas nativas da fila agora herdam o zebra escuro (linhas alternadas legíveis, sem fileira branca com texto branco); vale no carregamento e no toggle.
+- Links sobre fundos que já eram escuros (header, popups, dropdowns) herdam o branco do contexto em vez de forçar o azul.
+
 ---
 
 ## [2.0.0]

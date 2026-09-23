@@ -780,19 +780,19 @@
         border-color: #3c4043 !important;
       }
 
-      /* Period Totals nativo do JetPhotos: preserva o zebra striping do site.
-         A segunda fileira fica levemente elevada; a primeira permanece com
-         o fundo do próprio dark mode, como no layout original. */
-      html.jp-site-dark-active .jp-plus-dark-native-table tbody > .table__row:nth-child(even),
-      html.jp-site-dark-active .jp-plus-dark-native-table tbody > .table__row:nth-child(even) td {
+      /* Tabelas nativas do site marcadas via JS (Period Totals, fila):
+         preserva o zebra striping com tons escuros. A segunda fileira fica
+         levemente elevada; a primeira integra ao fundo da página. */
+      html.jp-site-dark-active .jp-plus-dark-native-table tbody > tr:nth-child(even),
+      html.jp-site-dark-active .jp-plus-dark-native-table tbody > tr:nth-child(even) td {
         background: #2d2e31 !important;
         background-color: #2d2e31 !important;
         color: #e8eaed !important;
         border-color: #3c4043 !important;
       }
 
-      html.jp-site-dark-active .jp-plus-dark-native-table tbody > .table__row:nth-child(odd),
-      html.jp-site-dark-active .jp-plus-dark-native-table tbody > .table__row:nth-child(odd) td {
+      html.jp-site-dark-active .jp-plus-dark-native-table tbody > tr:nth-child(odd),
+      html.jp-site-dark-active .jp-plus-dark-native-table tbody > tr:nth-child(odd) td {
         background: transparent !important;
         background-color: transparent !important;
         color: #e8eaed !important;
@@ -1314,6 +1314,13 @@
     html.jp-site-dark-active a:not(.btn):not(.header__logo):not(.gallery-photo__frame) { color:#6fb1f0 !important; }
     /* Guarda: o tema nunca toca nos links do submenu da extensão. */
     html.jp-site-dark-active #jp-plus-submenu a { color:inherit !important; }
+    /* Links sobre fundos que já eram escuros (header, popups, dropdowns):
+       herdam o branco do contexto em vez de forçar o azul. */
+    html.jp-site-dark-active .header a:not(.btn):not(.header__logo):not(.gallery-photo__frame),
+    html.jp-site-dark-active .gallery-photo__popup a:not(.btn):not(.header__logo):not(.gallery-photo__frame),
+    html.jp-site-dark-active #quicksearch-dropdown a:not(.btn):not(.header__logo):not(.gallery-photo__frame),
+    html.jp-site-dark-active #overlay a:not(.btn):not(.header__logo):not(.gallery-photo__frame),
+    html.jp-site-dark-active .loader__mobile a:not(.btn):not(.header__logo):not(.gallery-photo__frame) { color:inherit !important; }
     /* Submenu desktop (era #fefefe). */
     html.jp-site-dark-active ul.nav-desktop__list--submenu { background-color:#2b2d31 !important; border-color:#3a3d43 !important; }
     /* Textos da galeria + rótulos de formulário. */
@@ -1377,8 +1384,21 @@
     (document.head || document.documentElement).appendChild(style);
   }
 
+  // Fila: marca as tabelas nativas do site pra herdar o zebra escuro
+  // (mesma classe que o estimador usa nos Period Totals). Roda no init e
+  // no toggle — a página da fila é estática, sem conteúdo dinâmico.
+  function tagQueueTablesForDark() {
+    if (!isQueuePage()) return;
+    document.querySelectorAll('table:not(.jp-plus-queue-table)').forEach(table => {
+      table.classList.add('jp-plus-dark-native-table');
+    });
+  }
+
   function applySiteDarkMode(isOn) {
-    if (isOn) ensureSiteDarkThemeStyle();
+    if (isOn) {
+      ensureSiteDarkThemeStyle();
+      tagQueueTablesForDark();
+    }
     document.documentElement.classList.toggle(SITE_DARK_HTML_CLASS, isOn);
   }
   // =======================================================================
