@@ -73,7 +73,7 @@
       <div class="actions">
         <a class="download" id="downloadButton" href="https://github.com/samuelffer/jetphotosplus/releases/latest" target="_blank" rel="noreferrer">
           <span class="download-icon">↓</span>
-          <span id="downloadLabel" data-i18n="installButton">Install v2.0.0</span>
+          <span id="downloadLabel" data-i18n="installButton">Install v1.9.4</span>
         </a>
         <button class="release-button" id="openReleases" data-i18n="releaseNotesButton">Release notes</button>
       </div>
@@ -147,7 +147,7 @@ Object.entries(BROWSER_ICON_URLS).forEach(([name, url]) => {
     <div class="dialog-head">
       <div>
         <p class="eyebrow" data-i18n="releaseNotesEyebrow">RELEASE NOTES</p>
-        <h2 id="releaseVersion">v2.0.0</h2>
+        <h2 id="releaseVersion">v1.9.4</h2>
       </div>
       <button id="closeReleases" class="close" aria-label="Close" data-i18n-attr="aria-label:close">×</button>
     </div>
@@ -176,7 +176,7 @@ Object.entries(BROWSER_ICON_URLS).forEach(([name, url]) => {
       browserExtension: 'Browser Extension',
       heroDescription: 'A lightweight community extension that adds useful tools directly where you need them — without changing the JetPhotos experience you already know.',
       heroDisclaimer: 'JetPhotos+ is an independent, unofficial browser extension. Not affiliated with, endorsed by, or connected to JetPhotos.net.',
-      installButton: 'Install v2.0.0',
+      installButton: 'Install v1.9.4',
       releaseNotesButton: 'Release notes',
       supportedBrowsers: 'Supported browsers',
       comingSoonText: 'More features are on the way — this project is constantly evolving.',
@@ -211,7 +211,7 @@ Object.entries(BROWSER_ICON_URLS).forEach(([name, url]) => {
       browserExtension: 'Extensão para navegador',
       heroDescription: 'Uma extensão leve e feita pela comunidade que adiciona ferramentas úteis exatamente onde você precisa — sem mudar a experiência do JetPhotos que você já conhece.',
       heroDisclaimer: 'JetPhotos+ é uma extensão de navegador independente e não oficial. Não possui afiliação, endosso ou vínculo com o JetPhotos.net.',
-      installButton: 'Instalar v2.0.0',
+      installButton: 'Instalar v1.9.4',
       releaseNotesButton: 'Notas da versão',
       supportedBrowsers: 'Navegadores compatíveis',
       comingSoonText: 'Mais funcionalidades estão a caminho — este projeto está em constante evolução.',
@@ -452,7 +452,7 @@ async function loadRelease() {
     if (!response.ok) throw new Error('Release not found');
     const release = await response.json();
 
-    const version = release.tag_name || 'v2.0.0';
+    const version = release.tag_name || 'v1.9.4';
     const cleanVersion = version.replace(/^v/i, '');
     const asset = (release.assets || []).find(file => /\.zip$/i.test(file.name));
     const lang = window.JPP_LANG || 'en';

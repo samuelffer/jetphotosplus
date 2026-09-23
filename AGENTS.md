@@ -56,7 +56,7 @@ ficaram divergentes uma vez e isso gerou confusão:
 | `extension/manifest.json` | `"version"` — é a fonte da verdade (o script de zip lê daqui) |
 | `extension/CHANGELOG.md` | nova entrada no topo + cabeçalho "Versão atual" |
 | `extension/leia-me.txt` | linha "Versão atual:" |
-| `docs/index.html` | textos `Install vX.Y.Z` (pt/en), `releaseVersion` e fallback de `tag_name` |
+| `docs/index.html` | textos `Install vX.Y.Z` (pt/en), `releaseVersion` e fallback de `tag_name` — **mas estes devem espelhar a última release PUBLICADA, não a versão em desenvolvimento** |
 
 O site em `docs/` busca `https://api.github.com/repos/samuelffer/jetphotosplus/releases/latest`.
 Ou seja: **o site só passa a exibir uma versão nova depois que a release é

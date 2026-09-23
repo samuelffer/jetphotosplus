@@ -22,6 +22,8 @@ Se a release tiver um arquivo `.zip`, o botão **Download** aponta diretamente p
 
 Para publicar uma nova versão, basta criar a nova Release no GitHub: como o site consulta `/releases/latest`, ela passa a ser exibida automaticamente. Os textos estáticos de `index.html` (`Install vX.Y.Z` e o fallback de `version`) são apenas o estado exibido antes de a API responder — atualize-os junto para manter o pré-carregamento coerente com a nova versão.
 
+> **Atenção:** enquanto a nova versão não estiver publicada, esses textos devem continuar apontando para a **última release publicada** (hoje `v1.9.4`). Senão o site anuncia uma versão que ainda não pode ser baixada e o número "pisca" trocando de valor assim que a API responde.
+
 ## Repositório
 
 `https://github.com/samuelffer/jetphotosplus`
