@@ -2,11 +2,19 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](https://semver.org/lang/pt-BR/).
 
-> **Versão atual: 2.0.0.**
+> **Versão atual: 2.0.1.**
 
 ---
 
-## [2.0.0] — Atual
+## [2.0.1]
+
+### Botão de Like no layout mobile
+- Aumentado o ícone do botão de Like injetado no layout mobile de 16px para 20px (caixa de toque de 28px para 30px, sem alterar a altura da fileira de estatísticas).
+- Alinhado o botão verticalmente com os demais ícones da fileira (remoção da folga de baseline do `<img>` + `vertical-align: middle` no stat).
+
+---
+
+## [2.0.0]
 
 Versão de reorganização do acompanhamento da fila: o histórico que antes só era visível
 dentro do `queue.php` passou a ter um painel próprio no ícone da extensão, com badge,

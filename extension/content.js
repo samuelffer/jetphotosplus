@@ -1137,15 +1137,21 @@
          opacidade (o arquivo é preto fixo nos dois estados, então isso é
          suficiente e funciona igual em qualquer tema, sem depender do
          filtro de dark mode automático — por isso essa classe fica de
-         fora da recoloração genérica, ver recolorElement()). */
-      .${MOBILE_LIKE_STAT_CLASS} { cursor:pointer; }
+         fora da recoloração genérica, ver recolorElement()).
+         Alinhamento: o <img> é display:block pra eliminar a folga de
+         baseline do inline (que deixava o ícone uns px acima dos vizinhos)
+         e o stat usa inline-flex + vertical-align:middle pra acompanhar a
+         altura dos outros ".result__stat" da fileira. A caixa do botão
+         cresceu junto com o ícone (30px) mas a margem negativa compensa na
+         mesma medida, então a altura da fileira continua igual à original. */
+      .${MOBILE_LIKE_STAT_CLASS} { cursor:pointer; display:inline-flex; align-items:center; vertical-align:middle; }
       .${MOBILE_LIKE_BTN_CLASS} {
         display:inline-flex; align-items:center; justify-content:center;
-        width:28px; height:28px; margin:-6px -4px; padding:0;
+        width:30px; height:30px; margin:-7px -4px; padding:0;
         border:0; background:transparent; border-radius:50%;
         cursor:pointer; transition:background .15s ease, opacity .15s ease, transform .1s ease;
       }
-      .${MOBILE_LIKE_BTN_CLASS} img { width:16px; height:16px; opacity:.4; pointer-events:none; }
+      .${MOBILE_LIKE_BTN_CLASS} img { width:20px; height:20px; display:block; opacity:.4; pointer-events:none; }
       .${MOBILE_LIKE_BTN_CLASS}.${MOBILE_LIKE_BTN_LIKED_CLASS} img { opacity:1; }
       .${MOBILE_LIKE_BTN_CLASS}:active { transform:scale(.9); }
       .${MOBILE_LIKE_BTN_CLASS}:hover { background:rgba(0,0,0,.06); }
