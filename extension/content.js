@@ -44,7 +44,8 @@
 
   // Chaves usadas no chrome.storage.local para lembrar as preferências
   // do usuário entre sessões/páginas.
-  const STORAGE_KEY_SITE_DARK_MODE = 'jpSiteDarkMode'; // boolean, padrão false (EXPERIMENTAL)
+  const STORAGE_KEY_SITE_DARK_MODE = 'jpSiteDarkMode';
+  const STORAGE_KEY_DARK_THEME = 'jpSiteDarkTheme'; // 'manual' | 'filter' (teste A/B, padrão: 'filter') // boolean, padrão false (EXPERIMENTAL)
   const STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED = 'jpQueueEstimatorEnabled'; // boolean, padrão true (EXPERIMENTAL)
   const STORAGE_KEY_LANGUAGE = 'jpLanguage'; // 'pt-BR' | 'en'
 
@@ -118,6 +119,8 @@
       experimental: 'Experimental',
       siteDarkMode: 'Modo escuro (beta)',
       siteDarkModeHelp: 'Escurece o JetPhotos e também a interface da extensão (painel, submenu e widget). Fotos e cores de marca não são alteradas.',
+      darkTheme: 'Método do modo escuro', darkThemeHelp: 'Manual = tema por página (r14). Filtro = inversão total (teste).',
+      darkThemeManual: 'Manual', darkThemeFilter: 'Filtro (teste)',
       queueEstimator: 'Estimador de dias na fila (beta)',
       queueEstimatorHelp: 'Estimativa de quanto falta pra sua foto ser avaliada, em queue.php. Requer recarregar a página após mudar.',
       language: 'Idioma',
@@ -160,6 +163,8 @@
       missing: 'missing',
       allLikedToast: 'All photos on this page are already liked',
       experimental: 'Experimental', siteDarkMode: 'Site dark mode (beta)', siteDarkModeHelp: 'Darkens JetPhotos backgrounds and light text. Photos and brand colors are not changed.',
+      darkTheme: 'Dark mode method', darkThemeHelp: 'Manual = per-page theme (r14). Filter = full inversion (test).',
+      darkThemeManual: 'Manual', darkThemeFilter: 'Filter (test)',
       queueEstimator: 'Queue days estimator (beta)', queueEstimatorHelp: 'Estimates how long your photo may take to be reviewed on queue.php. Reload the page after changing.',
       language: 'Language', languageHelp: 'Choose the extension language.', portugueseBrazil: 'Português (Brasil)', english: 'English',
       queueEstimate: 'Queue estimate', likeWidgetLabel: 'JETPHOTOS+ · Likes', screenedToday: 'Screened today:', dailyAverage: 'Daily average:', estimatedQueueTime: 'Estimated time:', lastCollection: 'Last collection:',
@@ -697,8 +702,8 @@
          light-theme CSS. In dark mode the label must stay white, matching
          the already-inverted Like icon. Keep this override scoped to the
          active Like link so normal/site light-mode colors are untouched. */
-      html.jp-site-dark-active a.social__link.social__link--like.social__link--active,
-      html.jp-site-dark-active a.social__link.social__link--like.social__link--active .social__text {
+      html.jp-site-dark-active:not(.jp-site-dark-filter) a.social__link.social__link--like.social__link--active,
+      html.jp-site-dark-active:not(.jp-site-dark-filter) a.social__link.social__link--like.social__link--active .social__text {
         color: #ffffff !important;
         -webkit-text-fill-color: #ffffff !important;
       }
@@ -709,7 +714,7 @@
          dark, so force all account submenu links to the same light text color
          in their normal state as well. The rule is scoped to dark mode and
          covers every item (Profile, Photos, Change password, Log out). */
-      html.jp-site-dark-active .nav-desktop__list--username .nav-desktop__list--submenu .nav-desktop__link {
+      html.jp-site-dark-active:not(.jp-site-dark-filter) .nav-desktop__list--username .nav-desktop__list--submenu .nav-desktop__link {
         color: #ffffff !important;
         -webkit-text-fill-color: #ffffff !important;
       }
@@ -718,11 +723,11 @@
          .slick-prev rule with a light #ececec gradient. Override both
          arrows only while extension dark mode is active, keeping the
          normal site appearance untouched outside dark mode. */
-      html.jp-site-dark-active .slick-next {
+      html.jp-site-dark-active:not(.jp-site-dark-filter) .slick-next {
         background: linear-gradient(86deg, hsl(0deg 0% 14.32% / 10%), #1c1b1b) !important;
       }
 
-      html.jp-site-dark-active .slick-prev {
+      html.jp-site-dark-active:not(.jp-site-dark-filter) .slick-prev {
         background: linear-gradient(274deg, hsl(0deg 0% 14.32% / 10%), #1c1b1b) !important;
       }
 
@@ -730,16 +735,16 @@
          dark color on hover. In dark mode that becomes unreadable, so keep
          every social action link light while hovered. This is intentionally
          separate from the active-state rule above. */
-      html.jp-site-dark-active a.social__link:hover,
-      html.jp-site-dark-active a.social__link:hover .social__text {
+      html.jp-site-dark-active:not(.jp-site-dark-filter) a.social__link:hover,
+      html.jp-site-dark-active:not(.jp-site-dark-filter) a.social__link:hover .social__text {
         color: #ffffff !important;
         -webkit-text-fill-color: #ffffff !important;
       }
 
       /* Explicitly cover the overlap: an already-active Like link while
          hovered must remain white as well, regardless of source specificity. */
-      html.jp-site-dark-active a.social__link.social__link--like.social__link--active:hover,
-      html.jp-site-dark-active a.social__link.social__link--like.social__link--active:hover .social__text {
+      html.jp-site-dark-active:not(.jp-site-dark-filter) a.social__link.social__link--like.social__link--active:hover,
+      html.jp-site-dark-active:not(.jp-site-dark-filter) a.social__link.social__link--like.social__link--active:hover .social__text {
         color: #ffffff !important;
         -webkit-text-fill-color: #ffffff !important;
       }
@@ -783,16 +788,16 @@
       /* Tabelas nativas do site marcadas via JS (Period Totals, fila):
          preserva o zebra striping com tons escuros. A segunda fileira fica
          levemente elevada; a primeira integra ao fundo da página. */
-      html.jp-site-dark-active .jp-plus-dark-native-table tbody > tr:nth-child(even),
-      html.jp-site-dark-active .jp-plus-dark-native-table tbody > tr:nth-child(even) td {
+      html.jp-site-dark-active:not(.jp-site-dark-filter) .jp-plus-dark-native-table tbody > tr:nth-child(even),
+      html.jp-site-dark-active:not(.jp-site-dark-filter) .jp-plus-dark-native-table tbody > tr:nth-child(even) td {
         background: #2d2e31 !important;
         background-color: #2d2e31 !important;
         color: #e8eaed !important;
         border-color: #3c4043 !important;
       }
 
-      html.jp-site-dark-active .jp-plus-dark-native-table tbody > tr:nth-child(odd),
-      html.jp-site-dark-active .jp-plus-dark-native-table tbody > tr:nth-child(odd) td {
+      html.jp-site-dark-active:not(.jp-site-dark-filter) .jp-plus-dark-native-table tbody > tr:nth-child(odd),
+      html.jp-site-dark-active:not(.jp-site-dark-filter) .jp-plus-dark-native-table tbody > tr:nth-child(odd) td {
         background: transparent !important;
         background-color: transparent !important;
         color: #e8eaed !important;
@@ -1243,12 +1248,13 @@
   function getSettings() {
     return new Promise(resolve => {
       chrome.storage.local.get(
-        [STORAGE_KEY_SITE_DARK_MODE, STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED, STORAGE_KEY_LANGUAGE],
+        [STORAGE_KEY_SITE_DARK_MODE, STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED, STORAGE_KEY_LANGUAGE, STORAGE_KEY_DARK_THEME],
         result => {
           resolve({
             siteDarkMode: result[STORAGE_KEY_SITE_DARK_MODE] === true, // padrão: false
             queueEstimatorEnabled: result[STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED] !== false, // padrão: true (EXPERIMENTAL)
-            language: result[STORAGE_KEY_LANGUAGE] || getBrowserLanguage()
+            language: result[STORAGE_KEY_LANGUAGE] || getBrowserLanguage(),
+            darkTheme: result[STORAGE_KEY_DARK_THEME] === 'manual' ? 'manual' : 'filter' // padrão: 'filter' (teste)
           });
         }
       );
@@ -1262,6 +1268,10 @@
 
   function setQueueEstimatorEnabled(value) {
     chrome.storage.local.set({ [STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED]: value });
+  }
+
+  function setDarkTheme(value) {
+    chrome.storage.local.set({ [STORAGE_KEY_DARK_THEME]: value });
   }
 
   function setLanguage(value) {
@@ -1288,120 +1298,153 @@
   // -----------------------------------------------------------------------
   const SITE_DARK_HTML_CLASS = 'jp-site-dark-active';
   const SITE_DARK_STYLE_ID = 'jp-site-dark-theme';
+  const SITE_DARK_FILTER_CLASS = 'jp-site-dark-filter';
+  const SITE_DARK_FILTER_STYLE_ID = 'jp-site-dark-filter-style';
 
   const SITE_DARK_THEME_CSS = `
-    html.jp-site-dark-active { color-scheme:dark; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) { color-scheme:dark; }
     /* Página: fundo + texto base (o #202124 casa com o preload anti-flash). */
-    html.jp-site-dark-active body,
-    html.jp-site-dark-active .page,
-    html.jp-site-dark-active div[class*="page--"],
-    html.jp-site-dark-active .main,
-    html.jp-site-dark-active .main__section { background-color:#202124 !important; color:#e8e8e8 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) body,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .page,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) div[class*="page--"],
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .main,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .main__section { background-color:#202124 !important; color:#e8e8e8 !important; }
     /* Cards brancos (resultados, painéis). */
-    html.jp-site-dark-active .box,
-    html.jp-site-dark-active div[class*="box--"] { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .box,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) div[class*="box--"] { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
     /* Títulos. */
-    html.jp-site-dark-active h1,
-    html.jp-site-dark-active h2,
-    html.jp-site-dark-active h3,
-    html.jp-site-dark-active h4,
-    html.jp-site-dark-active h5,
-    html.jp-site-dark-active h6,
-    html.jp-site-dark-active .head { color:#f2f2f2 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) h1,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) h2,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) h3,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) h4,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) h5,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) h6,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .head { color:#f2f2f2 !important; }
     /* Links: azul clareado pra leitura no escuro (o azul puro #2c94e8 e o
        azul-link padrão #0000ee somem no fundo escuro). Botões, logo e moldura
        de foto ficam de fora — têm estilo próprio. */
-    html.jp-site-dark-active a:not(.btn):not(.header__logo):not(.gallery-photo__frame) { color:#6fb1f0 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) a:not(.btn):not(.header__logo):not(.gallery-photo__frame) { color:#6fb1f0 !important; }
     /* Guarda: o tema nunca toca nos links do submenu da extensão. */
-    html.jp-site-dark-active #jp-plus-submenu a { color:inherit !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) #jp-plus-submenu a { color:inherit !important; }
     /* Links sobre fundos que já eram escuros (header, popups, dropdowns):
        herdam o branco do contexto em vez de forçar o azul. */
-    html.jp-site-dark-active .header a:not(.btn):not(.header__logo):not(.gallery-photo__frame),
-    html.jp-site-dark-active .gallery-photo__popup a:not(.btn):not(.header__logo):not(.gallery-photo__frame),
-    html.jp-site-dark-active #quicksearch-dropdown a:not(.btn):not(.header__logo):not(.gallery-photo__frame),
-    html.jp-site-dark-active #overlay a:not(.btn):not(.header__logo):not(.gallery-photo__frame),
-    html.jp-site-dark-active .loader__mobile a:not(.btn):not(.header__logo):not(.gallery-photo__frame) { color:inherit !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .header a:not(.btn):not(.header__logo):not(.gallery-photo__frame),
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .gallery-photo__popup a:not(.btn):not(.header__logo):not(.gallery-photo__frame),
+    html.jp-site-dark-active:not(.jp-site-dark-filter) #quicksearch-dropdown a:not(.btn):not(.header__logo):not(.gallery-photo__frame),
+    html.jp-site-dark-active:not(.jp-site-dark-filter) #overlay a:not(.btn):not(.header__logo):not(.gallery-photo__frame),
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .loader__mobile a:not(.btn):not(.header__logo):not(.gallery-photo__frame) { color:inherit !important; }
     /* Submenu desktop (era #fefefe). */
-    html.jp-site-dark-active ul.nav-desktop__list--submenu { background-color:#2b2d31 !important; border-color:#3a3d43 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) ul.nav-desktop__list--submenu { background-color:#2b2d31 !important; border-color:#3a3d43 !important; }
     /* Textos da galeria + rótulos de formulário. */
-    html.jp-site-dark-active .gallery-photo__info,
-    html.jp-site-dark-active .gallery-photo__text { color:#e8e8e8 !important; }
-    html.jp-site-dark-active label.form__label { color:#b0b0b0 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .gallery-photo__info,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .gallery-photo__text { color:#e8e8e8 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) label.form__label { color:#b0b0b0 !important; }
     /* Campos: wrappers brancos + os inputs. */
-    html.jp-site-dark-active .input-wrapper,
-    html.jp-site-dark-active #header__searchBoxInputWrapper { background-color:#2b2d31 !important; border-color:#4b4e55 !important; }
-    html.jp-site-dark-active input[type="text"],
-    html.jp-site-dark-active input[type="search"],
-    html.jp-site-dark-active input[type="email"],
-    html.jp-site-dark-active input[type="password"],
-    html.jp-site-dark-active input[type="url"],
-    html.jp-site-dark-active input[type="number"],
-    html.jp-site-dark-active input[type="tel"],
-    html.jp-site-dark-active .input-wrapper__field,
-    html.jp-site-dark-active .header__searchBoxInput,
-    html.jp-site-dark-active textarea { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#4b4e55 !important; }
-    html.jp-site-dark-active input::placeholder,
-    html.jp-site-dark-active textarea::placeholder { color:#8e8e8e !important; opacity:1 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .input-wrapper,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) #header__searchBoxInputWrapper { background-color:#2b2d31 !important; border-color:#4b4e55 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) input[type="text"],
+    html.jp-site-dark-active:not(.jp-site-dark-filter) input[type="search"],
+    html.jp-site-dark-active:not(.jp-site-dark-filter) input[type="email"],
+    html.jp-site-dark-active:not(.jp-site-dark-filter) input[type="password"],
+    html.jp-site-dark-active:not(.jp-site-dark-filter) input[type="url"],
+    html.jp-site-dark-active:not(.jp-site-dark-filter) input[type="number"],
+    html.jp-site-dark-active:not(.jp-site-dark-filter) input[type="tel"],
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .input-wrapper__field,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .header__searchBoxInput,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) textarea { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#4b4e55 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) input::placeholder,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) textarea::placeholder { color:#8e8e8e !important; opacity:1 !important; }
     /* Selects (busca avançada etc.) + as opções. */
-    html.jp-site-dark-active select,
-    html.jp-site-dark-active .select__control { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#4b4e55 !important; }
-    html.jp-site-dark-active option,
-    html.jp-site-dark-active optgroup { background-color:#2b2d31 !important; color:#e8e8e8 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) select,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .select__control { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#4b4e55 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) option,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) optgroup { background-color:#2b2d31 !important; color:#e8e8e8 !important; }
     /* Botões genéricos claros viram escuros; o azul picton e o transparente
        ficam intactos (já funcionam no escuro). */
-    html.jp-site-dark-active .btn:not(.btn--picton-blue):not(.btn--transparent) { background-color:#3a3d43 !important; color:#e8e8e8 !important; border-color:#4b4e55 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .btn:not(.btn--picton-blue):not(.btn--transparent) { background-color:#3a3d43 !important; color:#e8e8e8 !important; border-color:#4b4e55 !important; }
     /* Shares mantêm a cor de marca; só garante o texto branco. */
-    html.jp-site-dark-active .resp-sharing-button a { color:#ffffff !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .resp-sharing-button a { color:#ffffff !important; }
     /* Setas do carrossel: gradiente claro -> escuro (mesma direção). */
-    html.jp-site-dark-active .slick-prev { background-image:linear-gradient(90deg, #202124 0px, rgba(32,33,36,0)) !important; }
-    html.jp-site-dark-active .slick-next { background-image:linear-gradient(90deg, rgba(32,33,36,0), #202124) !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .slick-prev { background-image:linear-gradient(90deg, #202124 0px, rgba(32,33,36,0)) !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .slick-next { background-image:linear-gradient(90deg, rgba(32,33,36,0), #202124) !important; }
     /* Alertas: info azul + erro de login. */
-    html.jp-site-dark-active #alert-email-verification { background-color:#16324a !important; color:#a8d4f5 !important; border-color:#1e659f !important; }
-    html.jp-site-dark-active .alert__content { color:#a8d4f5 !important; }
-    html.jp-site-dark-active #login-form__failed-login { background-color:#3d2223 !important; color:#f2b8b5 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) #alert-email-verification { background-color:#16324a !important; color:#a8d4f5 !important; border-color:#1e659f !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .alert__content { color:#a8d4f5 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) #login-form__failed-login { background-color:#3d2223 !important; color:#f2b8b5 !important; }
     /* Modal de login. */
-    html.jp-site-dark-active .modal { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .modal { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
     /* Rodapé. */
-    html.jp-site-dark-active footer { background-color:#17181c !important; color:#cfcfcf !important; }
-    html.jp-site-dark-active .footer__seperator { background-color:#3a3d43 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) footer { background-color:#17181c !important; color:#cfcfcf !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .footer__seperator { background-color:#3a3d43 !important; }
     /* Aba ativa do seletor + painéis de busca avançada. */
-    html.jp-site-dark-active .bigbox-selector__tab--active { background-color:#2b2d31 !important; color:#e8e8e8 !important; }
-    html.jp-site-dark-active .form--searchAdvanced,
-    html.jp-site-dark-active .form--searchAdvancedMulti { background-color:#26272b !important; color:#e8e8e8 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .bigbox-selector__tab--active { background-color:#2b2d31 !important; color:#e8e8e8 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .form--searchAdvanced,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .form--searchAdvancedMulti { background-color:#26272b !important; color:#e8e8e8 !important; }
     /* Tabelas genéricas: só a borda (fundo transparente mostra a página). */
-    html.jp-site-dark-active table,
-    html.jp-site-dark-active th,
-    html.jp-site-dark-active td { border-color:#3a3d43 !important; }
-    html.jp-site-dark-active th { color:#f2f2f2 !important; }
-    html.jp-site-dark-active hr { border-color:#3a3d43 !important; background-color:#3a3d43 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) table,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) th,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) td { border-color:#3a3d43 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) th { color:#f2f2f2 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) hr { border-color:#3a3d43 !important; background-color:#3a3d43 !important; }
     /* Home: coluna lateral + cards do carrossel de perfis. */
-    html.jp-site-dark-active .index-col { background-color:#26272b !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
-    html.jp-site-dark-active .slick-profile__layout { background-color:#2b2d31 !important; color:#e8e8e8 !important; }
-    html.jp-site-dark-active .slick-profile__layout span { color:#e8e8e8 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .index-col { background-color:#26272b !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .slick-profile__layout { background-color:#2b2d31 !important; color:#e8e8e8 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .slick-profile__layout span { color:#e8e8e8 !important; }
     /* Perfil: nome sobre a foto de capa fica branco (o "a" no seletor
        empata a especificidade com a regra genérica de links e vence por vir
        depois — sem ele, o nome continuaria azul). */
-    html.jp-site-dark-active a.hero__profile-name-link { color:#ffffff !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) a.hero__profile-name-link { color:#ffffff !important; }
     /* Área de membros: painel das abas + botões das abas (mesmo motivo do
        "a" acima nas cores; fundo/borda não competem com regra genérica). */
-    html.jp-site-dark-active .tabnav__content { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
-    html.jp-site-dark-active .tabnav__btn { background-color:#2b2d31 !important; border-color:#3a3d43 !important; }
-    html.jp-site-dark-active a.tabnav__btn { color:#e8e8e8 !important; }
-    html.jp-site-dark-active .tabnav__btn--active { background-color:#3a3d43 !important; }
-    html.jp-site-dark-active a.tabnav__btn--active { color:#ffffff !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .tabnav__content { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .tabnav__btn { background-color:#2b2d31 !important; border-color:#3a3d43 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) a.tabnav__btn { color:#e8e8e8 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .tabnav__btn--active { background-color:#3a3d43 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) a.tabnav__btn--active { color:#ffffff !important; }
     /* Upload: dropdowns Chosen + pílulas de checkbox/radio. A pílula ativa
        ganha borda azul pra não perder a distinção (o tema uniformiza bg). */
-    html.jp-site-dark-active .chosen-drop { background-color:#2b2d31 !important; border-color:#4b4e55 !important; }
-    html.jp-site-dark-active .chosen-results li { color:#e8e8e8 !important; }
-    html.jp-site-dark-active .chosen-results li.highlighted { background-color:#1e659f !important; color:#ffffff !important; }
-    html.jp-site-dark-active .checkbox,
-    html.jp-site-dark-active .radio__pill { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#4b4e55 !important; }
-    html.jp-site-dark-active .radio__pill--active { border-color:#2c94e8 !important; }
-    html.jp-site-dark-active .checkbox span,
-    html.jp-site-dark-active .checkbox label,
-    html.jp-site-dark-active .radio__pill span,
-    html.jp-site-dark-active .radio__pill label { color:#e8e8e8 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .chosen-drop { background-color:#2b2d31 !important; border-color:#4b4e55 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .chosen-results li { color:#e8e8e8 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .chosen-results li.highlighted { background-color:#1e659f !important; color:#ffffff !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .checkbox,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .radio__pill { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#4b4e55 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .radio__pill--active { border-color:#2c94e8 !important; }
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .checkbox span,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .checkbox label,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .radio__pill span,
+    html.jp-site-dark-active:not(.jp-site-dark-filter) .radio__pill label { color:#e8e8e8 !important; }
   `;
+
+  // FILTRO (teste A/B): inverte a página inteira e restaura a mídia.
+  // Fotos pixel-idênticas: invert(1)+hue-rotate(180) aplicados 2x voltam à
+  // cor exata — por isso o par é SEMPRE invert(1) puro, sem brightness ou
+  // contrast junto, e o contra-filtro mira SÓ img/video (nunca containers
+  // como picture/figure/a, que duplicariam a inversão). O header (já escuro
+  // no original, com logo branco) e o UI da extensão voltam verbatim com
+  // contra-filtro no container. Mapa (.gm-style) inverte junto de propósito
+  // (vira um "mapa noturno") — fotos de verdade, nunca.
+  const SITE_DARK_FILTER_CSS = `
+    html.jp-site-dark-active.jp-site-dark-filter { filter:invert(1) hue-rotate(180deg); color-scheme:dark; }
+    html.jp-site-dark-active.jp-site-dark-filter img:not(.gm-style img):not(.header img):not(.jp-mobile-like-btn img),
+    html.jp-site-dark-active.jp-site-dark-filter video { filter:invert(1) hue-rotate(180deg); }
+    html.jp-site-dark-active.jp-site-dark-filter .header { filter:invert(1) hue-rotate(180deg); }
+    html.jp-site-dark-active.jp-site-dark-filter #jp-like-widget-bubble,
+    html.jp-site-dark-active.jp-site-dark-filter #jp-like-toast,
+    html.jp-site-dark-active.jp-site-dark-filter #jp-plus-launcher-host,
+    html.jp-site-dark-active.jp-site-dark-filter #jp-plus-submenu,
+    html.jp-site-dark-active.jp-site-dark-filter #jp-plus-settings-panel,
+    html.jp-site-dark-active.jp-site-dark-filter #jp-site-queue-tracker,
+    html.jp-site-dark-active.jp-site-dark-filter .jp-mobile-like-btn,
+    html.jp-site-dark-active.jp-site-dark-filter .jp-queue-eta-badge { filter:invert(1) hue-rotate(180deg); }
+  `;
+
+  function ensureSiteDarkFilterStyle() {
+    if (document.getElementById(SITE_DARK_FILTER_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = SITE_DARK_FILTER_STYLE_ID;
+    style.textContent = SITE_DARK_FILTER_CSS;
+    (document.head || document.documentElement).appendChild(style);
+  }
 
   function ensureSiteDarkThemeStyle() {
     if (document.getElementById(SITE_DARK_STYLE_ID)) return;
@@ -1421,11 +1464,14 @@
   }
 
   function applySiteDarkMode(isOn) {
+    const filterMode = currentSettings.darkTheme !== 'manual';
     if (isOn) {
       ensureSiteDarkThemeStyle();
-      tagNativeTablesForDark();
+      ensureSiteDarkFilterStyle();
+      if (!filterMode) tagNativeTablesForDark();
     }
     document.documentElement.classList.toggle(SITE_DARK_HTML_CLASS, isOn);
+    document.documentElement.classList.toggle(SITE_DARK_FILTER_CLASS, isOn && filterMode);
   }
   // =======================================================================
   // Painel principal
@@ -1433,7 +1479,7 @@
   let panelEl = null;
   let settingsMenuEl = null;
   let settingsPanelEl = null;
-  let currentSettings = { siteDarkMode: false, queueEstimatorEnabled: true, language: 'pt-BR' };
+  let currentSettings = { siteDarkMode: false, queueEstimatorEnabled: true, language: 'pt-BR', darkTheme: 'filter' };
 
   function buildToggleSwitch(initialOn, onChange) {
     const wrapper = document.createElement('button');
@@ -1516,6 +1562,29 @@
     siteDarkRow.appendChild(siteDarkLabel);
     siteDarkRow.appendChild(siteDarkToggle);
     inner.appendChild(siteDarkRow);
+
+    // --- Linha: método do modo escuro (teste A/B manual x filtro) ---
+    const darkThemeRow = document.createElement('div');
+    darkThemeRow.style.cssText = `display:flex; align-items:center; justify-content:space-between; gap:12px; min-width:0; width:100%; box-sizing:border-box;`;
+
+    const darkThemeLabel = document.createElement('div');
+    darkThemeLabel.style.cssText = `font-family:Arial,Helvetica,sans-serif; font-size:14px; color:var(--jp-text); line-height:1.4; min-width:0; flex:1 1 auto; overflow-wrap:anywhere; word-break:normal;`;
+    darkThemeLabel.innerHTML = `${t('darkTheme')}<br><span style="font-size:12px; color:var(--jp-subtext);">${t('darkThemeHelp')}</span>`;
+
+    const darkThemeSelect = document.createElement('select');
+    darkThemeSelect.id = 'jp-dark-theme-select';
+    darkThemeSelect.style.cssText = `font-family:Arial,Helvetica,sans-serif; font-size:13px; color:var(--jp-text); background:var(--jp-bg); border:1px solid var(--jp-border); border-radius:6px; padding:6px 8px; cursor:pointer;`;
+    darkThemeSelect.innerHTML = `<option value="filter">${t('darkThemeFilter')}</option><option value="manual">${t('darkThemeManual')}</option>`;
+    darkThemeSelect.value = currentSettings.darkTheme === 'manual' ? 'manual' : 'filter';
+    darkThemeSelect.addEventListener('change', () => {
+      currentSettings.darkTheme = darkThemeSelect.value === 'manual' ? 'manual' : 'filter';
+      setDarkTheme(currentSettings.darkTheme);
+      if (currentSettings.siteDarkMode) applySiteDarkMode(true);
+    });
+
+    darkThemeRow.appendChild(darkThemeLabel);
+    darkThemeRow.appendChild(darkThemeSelect);
+    inner.appendChild(darkThemeRow);
 
     // --- Linha: estimador de dias na fila (experimental) ---
     // Só é relevante em queue.php, mas o toggle fica visível em qualquer

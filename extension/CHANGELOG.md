@@ -74,6 +74,11 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Upload: dropdowns Chosen (.chosen-drop, opções e destaque) e pílulas de checkbox/radio escurecidos; pílula ativa ganha borda azul pra manter a distinção.
 - Zebra escuro generalizado: todas as tabelas nativas (fila, photostats, Period Totals...) herdam o striping escuro, não só a fila.
 
+### Modo escuro: teste A/B com filtro total (CSS puro v2)
+- Novo método "Filtro": inverte a página inteira com invert(1)+hue-rotate(180) e restaura mídia e chrome — cobertura total instantânea em qualquer página, sem varredura de DOM.
+- Fotos pixel-idênticas por construção: o par invert(1) puro aplicado 2x volta à cor exata; o contra-filtro mira só img/video (nunca containers); header (já escuro, logo branco) e todo o UI da extensão voltam verbatim; mapa vira "noturno" de propósito.
+- Chave nas configurações: Método do modo escuro = Manual (tema r14) ou Filtro (teste, padrão). Troca ao vivo, sem reinstalar; o perdedor será removido na próxima versão.
+
 ---
 
 ## [2.0.0]
