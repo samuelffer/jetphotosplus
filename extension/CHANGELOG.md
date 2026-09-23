@@ -91,6 +91,11 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Like 100% branco no escuro (texto + joinha, qualquer estado, resultados e foto): o ícone preto fixo vira branco via invert(1), com a opacidade de estado intacta; modo claro intocado.
 - Nome do perfil sobre a capa: regra blindada com -webkit-text-fill-color (o site pinta links com ele).
 
+### Modo escuro: paginação branca, câmeras do perfil, menu mobile
+- Números da paginação (.paging__pager) agora brancos no escuro (antes seguiam azuis).
+- Ícones de câmera do perfil (trocar avatar/capa) brancos no escuro — só nas páginas de fotógrafo, modo claro intocado.
+- Menu lateral mobile (.header__extended-section--navigation) escurecido + links (.nav__link) brancos.
+
 ---
 
 ## [2.0.0]

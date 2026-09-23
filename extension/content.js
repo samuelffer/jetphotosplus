@@ -1412,13 +1412,17 @@
     html.jp-site-dark-active .badge-overview__frame span { color:#e8e8e8 !important; }
     /* Títulos avulsos com cor escura explícita (ex: upload guidelines). */
     html.jp-site-dark-active .title { color:#f2f2f2 !important; }
-    /* Like (resultados + foto): texto e joinha 100% brancos em qualquer
-       estado. O ícone é preto fixo — invert(1) vira branco exato; a
-       opacidade (curtido x não-curtido) segue intacta. Text-fill porque o
-       site pinta esses links com ele. Modo claro: intocado (escopo dark). */
-    html.jp-site-dark-active a.social__link--like,
-    html.jp-site-dark-active a.social__link--like .social__text { color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; }
-    html.jp-site-dark-active a.social__link--like img { filter:invert(1) !important; }
+    /* Album/Like/Share (resultados + foto): cinza neutro nos rótulos e
+       ícones; branco no hover e no Like curtido (o texto desses dois
+       estados já é branco nas regras acima — aqui vão o cinza padrão e os
+       filtros dos ícones). brightness(0) zera a cor original do arquivo e
+       invert(0.62) chega no tom do joinha não-curtido; opacidade 1 pra o
+       tom não variar. Modo claro: intocado (escopo dark). */
+    html.jp-site-dark-active a.social__link,
+    html.jp-site-dark-active a.social__link .social__text { color:#9aa0a6 !important; -webkit-text-fill-color:#9aa0a6 !important; }
+    html.jp-site-dark-active a.social__link img { filter:brightness(0) invert(0.62) !important; opacity:1 !important; }
+    html.jp-site-dark-active a.social__link:hover img,
+    html.jp-site-dark-active a.social__link.social__link--like.social__link--active img { filter:invert(1) !important; opacity:1 !important; }
     /* Ícones de câmera do perfil (trocar avatar/capa): brancos no escuro.
        Vale só nas páginas de fotógrafo (jp-on-profile). Cobre fonte de
        ícone, SVG e imagem (brightness zera a cor, invert vira branco). */
@@ -1429,7 +1433,7 @@
     /* Menu lateral mobile (hambúrguer): fundo escuro + links claros. */
     html.jp-site-dark-active .header__extended-section--navigation { background-color:#26272b !important; }
     html.jp-site-dark-active .header__extended-section--navigation span { color:#e8e8e8 !important; }
-    html.jp-site-dark-active a.nav__link { color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; }
+    html.jp-site-dark-active a.nav__link { color:#2c94e8 !important; -webkit-text-fill-color:#2c94e8 !important; }
   `;
 
   function ensureSiteDarkThemeStyle() {
