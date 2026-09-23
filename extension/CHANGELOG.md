@@ -18,6 +18,11 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Cada confirmação de rede agora atualiza só a própria foto (busca mirada por `data-photo`/`data-id`) em vez de revarrer a página inteira; durante o "curtir faltantes" o `refresh()` completo roda uma vez só no final — elimina as dezenas de reflows seguidos que travavam o celular.
 - Janela anti-duplo-toque reduzida de 500ms para 300ms e removido o dim do botão durante o clique (brigava com o feedback instantâneo).
 
+### Widget de curtidas: minimizar pra bolha
+- Novo botão `−` no canto do widget que recolhe ele pra uma bolha compacta (coração + faltantes, `✓` verde quando termina); um clique na bolha expande de volta.
+- Estado aberto/recolhido salvo em `chrome.storage.local`, continua igual ao trocar de página.
+- A bolha acompanha a contagem ao vivo, inclusive durante o "curtir faltantes".
+
 ---
 
 ## [2.0.0]

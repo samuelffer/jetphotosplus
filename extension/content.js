@@ -47,6 +47,7 @@
   const STORAGE_KEY_SITE_DARK_MODE = 'jpSiteDarkMode'; // boolean, padrão false (EXPERIMENTAL)
   const STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED = 'jpQueueEstimatorEnabled'; // boolean, padrão true (EXPERIMENTAL)
   const STORAGE_KEY_LANGUAGE = 'jpLanguage'; // 'pt-BR' | 'en'
+  const STORAGE_KEY_WIDGET_COLLAPSED = 'jpLikeWidgetCollapsed'; // boolean, padrão false
 
   // ---------------------------------------------------------------------
   // Preload anti-FOUC: evita o "flash" do tema claro original do JetPhotos
@@ -109,7 +110,7 @@
 
   const I18N = {
     'pt-BR': {
-      settings: 'Configurações', close: 'Fechar',
+      settings: 'Configurações', close: 'Fechar', minimize: 'Minimizar', expand: 'Expandir',
       viewReleases: 'Ver novidades', reportIssue: 'Reportar um problema', aboutJetPhotosPlus: 'Sobre o JetPhotos+',
       analyzing: 'Analisando página...',
       likeMissing: 'Curtir faltantes',
@@ -155,7 +156,7 @@
       trackedDays: (n) => `${n} dia${n === 1 ? '' : 's'} acompanhado${n === 1 ? '' : 's'}`,
     },
     en: {
-      settings: 'Settings', close: 'Close', viewReleases: "See what's new", reportIssue: 'Report an issue', aboutJetPhotosPlus: 'About JetPhotos+', analyzing: 'Analyzing page...',
+      settings: 'Settings', close: 'Close', minimize: 'Minimize', expand: 'Expand', viewReleases: "See what's new", reportIssue: 'Report an issue', aboutJetPhotosPlus: 'About JetPhotos+', analyzing: 'Analyzing page...',
       likeMissing: 'Like missing photos',
       noneFound: 'No photos found yet (waiting for the page to load)...',
       missing: 'missing', liked: 'already liked',
@@ -1025,6 +1026,33 @@
       #jp-like-context-widget.jp-dark .jp-like-widget-progress { background:#343434; }
       #jp-like-context-widget.jp-dark .jp-like-widget-confirm { color:#a9a9a9; }
       #jp-like-context-widget.jp-dark .jp-like-widget-button { background:linear-gradient(#303030,#292929); color:#eeeeee; border-color:#555555; }
+      /* Botão de minimizar no canto do widget de curtidas. */
+      #jp-like-context-widget .jp-like-widget-min {
+        position:absolute; top:4px; right:6px;
+        width:28px; height:28px; padding:0;
+        display:inline-flex; align-items:center; justify-content:center;
+        border:0; border-radius:6px; background:transparent; color:#8a8a8a;
+        font-size:18px; line-height:1; cursor:pointer;
+      }
+      #jp-like-context-widget .jp-like-widget-min:hover { color:#ffffff; background:rgba(255,255,255,.08); }
+      /* Bolha recolhida do widget: mesma identidade (fundo/borda/sombra),
+         só que compacta — coração + faltantes. display:none por padrão; o
+         JS alterna pra flex quando recolhido (ver setWidgetCollapsed). */
+      #jp-like-widget-bubble {
+        position:fixed; right:18px; bottom:18px; z-index:999999;
+        display:none; align-items:center; gap:8px;
+        min-height:48px; padding:10px 16px 10px 14px; box-sizing:border-box;
+        background:#1c1c1c; color:#eeeeee;
+        border:1px solid #464646; border-radius:999px;
+        box-shadow:0 5px 20px rgba(0,0,0,.30);
+        font:inherit; font-size:14px; font-weight:700; line-height:1;
+        cursor:pointer;
+        animation:jpLikeWidgetIn .18s ease;
+      }
+      #jp-like-widget-bubble:hover { background:#2a2a2a; border-color:#686868; }
+      #jp-like-widget-bubble:focus-visible { outline:2px solid #669DF6; outline-offset:2px; }
+      #jp-like-widget-bubble svg { width:20px; height:20px; flex:0 0 auto; }
+      #jp-like-widget-bubble.jp-bubble-done #jp-like-widget-bubble-count { color:#8fce8f; }
       @keyframes jpLikeWidgetIn { from {opacity:0; transform:translateY(6px)} to {opacity:1; transform:translateY(0)} }
 
       #jp-like-settings-menu {
@@ -1169,6 +1197,7 @@
         #jp-plus-submenu { width: 170px !important; }
         #jp-plus-settings-panel { width: min(360px, calc(100vw - 18px)) !important; }
         #jp-like-context-widget { right:10px; bottom:10px; width:calc(100vw - 20px); min-height:0; padding:11px; gap:10px; }
+        #jp-like-widget-bubble { right:10px; bottom:10px; }
         #jp-like-context-widget .jp-like-widget-button { min-width:48px; padding:9px; }
         #jp-like-context-widget .jp-like-widget-button span { display:none; }
         #jp-like-context-widget .jp-like-widget-chevron { display:none; }
@@ -1176,6 +1205,7 @@
 
       @media (prefers-reduced-motion: reduce) {
         #jp-like-context-widget { animation-duration:.001ms !important; transition-duration:.001ms !important; }
+        #jp-like-widget-bubble { animation-duration:.001ms !important; transition-duration:.001ms !important; }
         #jp-plus-settings-panel { transition-duration:.001ms !important; }
         #jp-plus-launcher .jp-launcher-logo {
           transition-duration: .001ms !important;
@@ -1254,12 +1284,13 @@
   function getSettings() {
     return new Promise(resolve => {
       chrome.storage.local.get(
-        [STORAGE_KEY_SITE_DARK_MODE, STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED, STORAGE_KEY_LANGUAGE],
+        [STORAGE_KEY_SITE_DARK_MODE, STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED, STORAGE_KEY_LANGUAGE, STORAGE_KEY_WIDGET_COLLAPSED],
         result => {
           resolve({
             siteDarkMode: result[STORAGE_KEY_SITE_DARK_MODE] === true, // padrão: false
             queueEstimatorEnabled: result[STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED] !== false, // padrão: true (EXPERIMENTAL)
-            language: result[STORAGE_KEY_LANGUAGE] || getBrowserLanguage()
+            language: result[STORAGE_KEY_LANGUAGE] || getBrowserLanguage(),
+            widgetCollapsed: result[STORAGE_KEY_WIDGET_COLLAPSED] === true // padrão: false
           });
         }
       );
@@ -1538,7 +1569,7 @@
   let likeWidgetEl = null;
   let settingsMenuEl = null;
   let settingsPanelEl = null;
-  let currentSettings = { siteDarkMode: false, queueEstimatorEnabled: true, language: 'pt-BR' };
+  let currentSettings = { siteDarkMode: false, queueEstimatorEnabled: true, language: 'pt-BR', widgetCollapsed: false };
 
   function buildToggleSwitch(initialOn, onChange) {
     const wrapper = document.createElement('button');
@@ -1767,6 +1798,7 @@
 
     document.querySelectorAll('#jp-plus-launcher-host').forEach(el => el.remove());
     document.querySelectorAll('#jp-like-context-widget').forEach(el => el.remove());
+    document.querySelectorAll('#jp-like-widget-bubble').forEach(el => el.remove());
     document.querySelectorAll('#jp-plus-settings-panel').forEach(el => el.remove());
 
     const host = document.createElement(headerTarget.mode === 'account-list' ? 'li' : 'span');
@@ -1867,8 +1899,35 @@
           <svg class="jp-like-widget-chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       `;
+      const minBtn = document.createElement('button');
+      minBtn.type = 'button';
+      minBtn.id = 'jp-like-widget-min';
+      minBtn.className = 'jp-like-widget-min';
+      minBtn.textContent = '\u2212';
+      minBtn.title = t('minimize');
+      minBtn.setAttribute('aria-label', t('minimize'));
+      minBtn.addEventListener('click', () => setWidgetCollapsed(true));
+      widget.appendChild(minBtn);
       document.body.appendChild(widget);
       likeWidgetEl = widget;
+
+      // Bolha recolhida: começa escondida e aparece no lugar do widget quando
+      // recolhido. Criada junto pra já existir antes do primeiro refresh()
+      // tentar atualizar o contador.
+      const bubble = document.createElement('button');
+      bubble.type = 'button';
+      bubble.id = 'jp-like-widget-bubble';
+      bubble.title = t('expand');
+      bubble.setAttribute('aria-label', t('analyzing'));
+      bubble.setAttribute('aria-expanded', 'false');
+      bubble.innerHTML = `
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.9c0 5.2-8.8 10.1-8.8 10.1S3.2 14.1 3.2 8.9A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <span id="jp-like-widget-bubble-count">\u2026</span>`;
+      bubble.addEventListener('click', () => setWidgetCollapsed(false));
+      document.body.appendChild(bubble);
+
+      // Aplica o estado salvo (aberto/recolhido) sem regravar no storage.
+      setWidgetCollapsed(currentSettings.widgetCollapsed === true, false);
     } else {
       likeWidgetEl = null;
     }
@@ -1877,10 +1936,46 @@
     return true;
   }
 
+  // Alterna widget aberto <-> bolha recolhida. O estado é persistido pra
+  // continuar igual ao trocar de página; o persist=false é só pra aplicar
+  // o valor salvo na montagem sem regravar à toa.
+  function setWidgetCollapsed(collapsed, persist = true) {
+    currentSettings.widgetCollapsed = collapsed;
+    if (persist) chrome.storage.local.set({ [STORAGE_KEY_WIDGET_COLLAPSED]: collapsed });
+    const widget = document.getElementById('jp-like-context-widget');
+    const bubble = document.getElementById('jp-like-widget-bubble');
+    if (widget) widget.style.display = collapsed ? 'none' : '';
+    if (bubble) {
+      bubble.style.display = collapsed ? 'flex' : 'none';
+      bubble.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    }
+  }
+
+  // Atualiza o contador da bolha. null = ainda analisando (mostra …).
+  function updateBubble(missingOrNull) {
+    const bubble = document.getElementById('jp-like-widget-bubble');
+    const count = document.getElementById('jp-like-widget-bubble-count');
+    if (!bubble || !count) return;
+    if (missingOrNull == null) {
+      count.textContent = '\u2026';
+      bubble.classList.remove('jp-bubble-done');
+      bubble.setAttribute('aria-label', t('analyzing'));
+      return;
+    }
+    const done = missingOrNull <= 0;
+    count.textContent = done ? '\u2713' : String(missingOrNull);
+    bubble.classList.toggle('jp-bubble-done', done);
+    bubble.setAttribute('aria-label', done
+      ? (currentSettings.language === 'en' ? 'All liked!' : 'Tudo curtido!')
+      : `${missingOrNull} ${t('missing')}`);
+  }
+
   function updateStatus(cards, missing) {
     // Durante a leva de curtidas, o observer pode detectar cada mutação do
     // site. Não deixe esses refreshes sobrescreverem o contador X/Y.
     if (isLiking) return;
+
+    updateBubble(cards.length ? missing : null);
 
     const textEl = document.getElementById('jp-like-widget-status');
     if (!textEl) return;
@@ -2023,6 +2118,7 @@
           ? `Liking ${i}/${targets.length} photo(s)...`
           : `Curtindo ${i}/${targets.length} foto(s)...`;
       }
+      updateBubble(targets.length - i);
       const delay = LIKE_CLICK_DELAY_MS + Math.random() * LIKE_CLICK_JITTER_MS;
       setTimeout(clickNext, delay);
     }
@@ -3087,6 +3183,7 @@
 
         const total = likeAllMissing(() => {
           // onDone: reabilita o botão quando a leva de cliques termina.
+          updateBubble(0); // a leva terminou: bolha mostra ✓ (o refresh final confirma)
           if (btn) {
             btn.disabled = false;
             btn.style.opacity = '1';
