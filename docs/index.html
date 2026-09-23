@@ -472,12 +472,12 @@ async function loadRelease() {
       downloadButton.removeAttribute('target');
       downloadButton.removeAttribute('rel');
       downloadButton.setAttribute('download', asset.name);
-      downloadLabel.textContent = `${t.installButton ? t.installButton.replace(/v?1\.9\.3/i, cleanVersion) : `Install ${cleanVersion}`}`;
+      downloadLabel.textContent = `${t.installButton ? t.installButton.replace(/v?\d+\.\d+\.\d+/i, cleanVersion) : `Install ${cleanVersion}`}`;
     } else {
       downloadButton.href = release.html_url || FALLBACK_RELEASE;
       downloadButton.target = '_blank';
       downloadButton.rel = 'noreferrer';
-      downloadLabel.textContent = `${t.installButton ? t.installButton.replace(/v?1\.9\.3/i, cleanVersion) : `Install ${cleanVersion}`}`;
+      downloadLabel.textContent = `${t.installButton ? t.installButton.replace(/v?\d+\.\d+\.\d+/i, cleanVersion) : `Install ${cleanVersion}`}`;
     }
 
     if (typeof release.body === 'string' && release.body.trim()) {
@@ -515,7 +515,7 @@ window.addEventListener('jpp:languagechange', () => {
   }
   if (downloadLabel) {
     downloadLabel.textContent = t.installButton
-      ? t.installButton.replace(/v?1\.9\.3/i, meta.cleanVersion)
+      ? t.installButton.replace(/v?\d+\.\d+\.\d+/i, meta.cleanVersion)
       : `Install ${meta.cleanVersion}`;
   }
 });
