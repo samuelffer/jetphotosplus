@@ -33,6 +33,10 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Pop de conclusão na bolha ao terminar uma leva que curtiu algo (respeita `prefers-reduced-motion`).
 - No celular o toque na bolha não expande mais — só curte tudo quando há faltantes; no desktop o toque continua expandindo como antes.
 
+### Bolha: selo de concluído + centralização do anel
+- Corrigida a centralização do coração dentro do anel (agora por flex, à prova de desalinhamento) e removida a regra genérica de `svg` que podia interferir nos tamanhos.
+- Quando tudo está curtido, o anel + coração dão lugar a um selo verde com confere branco (entra com um pop); o número continua mostrando `0` em verde.
+
 ---
 
 ## [2.0.0]

@@ -1051,7 +1051,6 @@
       }
       #jp-like-widget-bubble:hover { background:#2a2a2a; border-color:#686868; }
       #jp-like-widget-bubble:focus-visible { outline:2px solid #669DF6; outline-offset:2px; }
-      #jp-like-widget-bubble svg { width:20px; height:20px; flex:0 0 auto; }
       #jp-like-widget-bubble.jp-bubble-done #jp-like-widget-bubble-count { color:#8fce8f; }
       /* Durante a leva, a bolha pulsa verde (é o feedback de progresso no
          celular, onde a barrinha do widget está escondida). */
@@ -1066,16 +1065,26 @@
       /* Anel de progresso em volta do coração: o track fica sempre visível
          (contorno sutil) e o fill verde fecha conforme a leva avança (ver
          setBubbleProgress). Começa no topo por causa do rotate(-90deg). */
-      #jp-like-widget-bubble .jp-bubble-ring-wrap { position:relative; width:28px; height:28px; flex:0 0 auto; }
-      #jp-like-widget-bubble .jp-bubble-ring { position:absolute; inset:0; width:28px; height:28px; transform:rotate(-90deg); }
+      /* O coração é centralizado por flex (à prova de conta de margem) e o
+         anel preenche o wrap em absoluto — assim os dois ficam concêntricos
+         de verdade, sem depender de margin:auto + inset. */
+      #jp-like-widget-bubble .jp-bubble-ring-wrap { position:relative; width:28px; height:28px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
+      #jp-like-widget-bubble .jp-bubble-ring { position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); }
       #jp-like-widget-bubble .jp-bubble-ring-track { fill:none; stroke:rgba(255,255,255,.16); stroke-width:2.5; }
       #jp-like-widget-bubble .jp-bubble-ring-fill { fill:none; stroke:#4caf50; stroke-width:2.5; stroke-linecap:round; stroke-dasharray:75.4; stroke-dashoffset:75.4; transition:stroke-dashoffset .15s linear; }
-      #jp-like-widget-bubble .jp-bubble-heart { position:absolute; inset:0; margin:auto; width:17px; height:17px; }
+      #jp-like-widget-bubble .jp-bubble-heart { position:relative; width:17px; height:17px; }
+      /* Selo de concluído: quando tudo está curtido, o anel + coração dão
+         lugar a um disco verde com confere branco (entra com um pop). */
+      #jp-like-widget-bubble .jp-bubble-check { display:none; position:absolute; inset:0; width:100%; height:100%; }
+      #jp-like-widget-bubble.jp-bubble-done .jp-bubble-ring,
+      #jp-like-widget-bubble.jp-bubble-done .jp-bubble-heart { display:none; }
+      #jp-like-widget-bubble.jp-bubble-done .jp-bubble-check { display:block; animation:jpLikePop .25s ease; }
       /* Pop de conclusão na bolha (reaproveita o keyframe do joinha). */
       #jp-like-widget-bubble.jp-bubble-pop { animation:jpLikePop .25s ease; }
       @media (prefers-reduced-motion: reduce) {
         #jp-like-widget-bubble.jp-bubble-pop { animation:none; }
         #jp-like-widget-bubble .jp-bubble-ring-fill { transition:none; }
+        #jp-like-widget-bubble.jp-bubble-done .jp-bubble-check { animation:none; }
       }
       @keyframes jpLikeWidgetIn { from {opacity:0; transform:translateY(6px)} to {opacity:1; transform:translateY(0)} }
 
@@ -1948,6 +1957,7 @@
         <span class="jp-bubble-ring-wrap" aria-hidden="true">
           <svg class="jp-bubble-ring" viewBox="0 0 28 28"><circle class="jp-bubble-ring-track" cx="14" cy="14" r="12"></circle><circle class="jp-bubble-ring-fill" id="jp-bubble-ring-fill" cx="14" cy="14" r="12"></circle></svg>
           <svg class="jp-bubble-heart" viewBox="0 0 24 24"><path d="M20.8 8.9c0 5.2-8.8 10.1-8.8 10.1S3.2 14.1 3.2 8.9A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          <svg class="jp-bubble-check" viewBox="0 0 28 28"><circle cx="14" cy="14" r="13" fill="#22c55e"></circle><path d="M8.5 14.5l4 4L19.5 10" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
         <span id="jp-like-widget-bubble-count">\u2026</span>`;
       bubble.addEventListener('click', () => {
