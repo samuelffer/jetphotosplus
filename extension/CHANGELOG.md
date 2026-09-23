@@ -83,6 +83,14 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Veredito do teste A/B: o filtro total foi aposentado e o tema manual (r14) volta a ser o método único — chave removida das configurações, todo o código do filtro deletado (~100 linhas a menos).
 - Próximo passo: completar a cobertura manual com auditorias das páginas restantes (resultados, foto individual, fórum...).
 
+### Modo escuro: paginação, filtros, badges, Like branco
+- Paginação (.paging__pager) escurecida — vale pra álbum, /new, resultados e todas as listas.
+- Barra de filtros dos resultados (.show-photos-header) escurecida.
+- Cards de badges (.badge-overview__frame) + nomes escurecidos; imagens dos badges intactas.
+- Títulos avulsos escuros (.title) clareados (ex: upload guidelines).
+- Like 100% branco no escuro (texto + joinha, qualquer estado, resultados e foto): o ícone preto fixo vira branco via invert(1), com a opacidade de estado intacta; modo claro intocado.
+- Nome do perfil sobre a capa: regra blindada com -webkit-text-fill-color (o site pinta links com ele).
+
 ---
 
 ## [2.0.0]

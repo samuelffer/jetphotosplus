@@ -1381,7 +1381,7 @@
     /* Perfil: nome sobre a foto de capa fica branco (o "a" no seletor
        empata a especificidade com a regra genérica de links e vence por vir
        depois — sem ele, o nome continuaria azul). */
-    html.jp-site-dark-active a.hero__profile-name-link { color:#ffffff !important; }
+    html.jp-site-dark-active a.hero__profile-name-link { color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; }
     /* Área de membros: painel das abas + botões das abas (mesmo motivo do
        "a" acima nas cores; fundo/borda não competem com regra genérica). */
     html.jp-site-dark-active .tabnav__content { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
@@ -1401,6 +1401,24 @@
     html.jp-site-dark-active .checkbox label,
     html.jp-site-dark-active .radio__pill span,
     html.jp-site-dark-active .radio__pill label { color:#e8e8e8 !important; }
+    /* Paginação (álbum, /new, resultados...): caixas brancas viram escuras;
+       o número segue azul (regra genérica), legível no escuro. */
+    html.jp-site-dark-active a.paging__pager { background-color:#2b2d31 !important; border-color:#3a3d43 !important; }
+    /* Barra de filtros dos resultados (contagem, Modify search, Sort by). */
+    html.jp-site-dark-active .show-photos-header { background-color:#26272b !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
+    html.jp-site-dark-active .show-photos-header span { color:#e8e8e8 !important; }
+    /* Cards de badges + nomes (as imagens dos badges ficam intactas). */
+    html.jp-site-dark-active .badge-overview__frame { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
+    html.jp-site-dark-active .badge-overview__frame span { color:#e8e8e8 !important; }
+    /* Títulos avulsos com cor escura explícita (ex: upload guidelines). */
+    html.jp-site-dark-active .title { color:#f2f2f2 !important; }
+    /* Like (resultados + foto): texto e joinha 100% brancos em qualquer
+       estado. O ícone é preto fixo — invert(1) vira branco exato; a
+       opacidade (curtido x não-curtido) segue intacta. Text-fill porque o
+       site pinta esses links com ele. Modo claro: intocado (escopo dark). */
+    html.jp-site-dark-active a.social__link--like,
+    html.jp-site-dark-active a.social__link--like .social__text { color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; }
+    html.jp-site-dark-active a.social__link--like img { filter:invert(1) !important; }
   `;
 
   function ensureSiteDarkThemeStyle() {
