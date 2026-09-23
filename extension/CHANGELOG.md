@@ -37,6 +37,11 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Corrigida a centralização do coração dentro do anel (agora por flex, à prova de desalinhamento) e removida a regra genérica de `svg` que podia interferir nos tamanhos.
 - Quando tudo está curtido, o anel + coração dão lugar a um selo verde com confere branco (entra com um pop); o número continua mostrando `0` em verde.
 
+### Bolha: padrão em todo lugar + tamanho responsivo
+- A bolha agora é o UI padrão também no PC (o widget grande continua acessível tocando na bolha no desktop); preferência salva continua valendo.
+- Corrigido pontinho verde no topo do anel com progresso zerado (arco de comprimento 0 com ponta redonda ainda renderizava) — o arco some de verdade no zero.
+- Tamanho responsivo: maior no celular (54px, fonte 15px), cresce no tablet (58px) e no desktop (62px + rótulo "faltando", ex: "10 faltando").
+
 ---
 
 ## [2.0.0]

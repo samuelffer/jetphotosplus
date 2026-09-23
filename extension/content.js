@@ -47,7 +47,7 @@
   const STORAGE_KEY_SITE_DARK_MODE = 'jpSiteDarkMode'; // boolean, padrão false (EXPERIMENTAL)
   const STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED = 'jpQueueEstimatorEnabled'; // boolean, padrão true (EXPERIMENTAL)
   const STORAGE_KEY_LANGUAGE = 'jpLanguage'; // 'pt-BR' | 'en'
-  const STORAGE_KEY_WIDGET_COLLAPSED = 'jpLikeWidgetCollapsed'; // boolean, padrão false
+  const STORAGE_KEY_WIDGET_COLLAPSED = 'jpLikeWidgetCollapsed'; // boolean, padrão true (a bolha é o UI principal)
 
   // ---------------------------------------------------------------------
   // Preload anti-FOUC: evita o "flash" do tema claro original do JetPhotos
@@ -1040,12 +1040,12 @@
          JS alterna pra flex quando recolhido (ver setWidgetCollapsed). */
       #jp-like-widget-bubble {
         position:fixed; right:18px; bottom:18px; z-index:999999;
-        display:none; align-items:center; gap:8px;
-        min-height:48px; padding:10px 16px 10px 14px; box-sizing:border-box;
+        display:none; align-items:center; gap:9px;
+        min-height:54px; padding:12px 18px 12px 16px; box-sizing:border-box;
         background:#1c1c1c; color:#eeeeee;
         border:1px solid #464646; border-radius:999px;
         box-shadow:0 5px 20px rgba(0,0,0,.30);
-        font:inherit; font-size:14px; font-weight:700; line-height:1;
+        font:inherit; font-size:15px; font-weight:700; line-height:1;
         cursor:pointer;
         animation:jpLikeWidgetIn .18s ease;
       }
@@ -1068,17 +1068,33 @@
       /* O coração é centralizado por flex (à prova de conta de margem) e o
          anel preenche o wrap em absoluto — assim os dois ficam concêntricos
          de verdade, sem depender de margin:auto + inset. */
-      #jp-like-widget-bubble .jp-bubble-ring-wrap { position:relative; width:28px; height:28px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
+      #jp-like-widget-bubble .jp-bubble-ring-wrap { position:relative; width:30px; height:30px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
       #jp-like-widget-bubble .jp-bubble-ring { position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); }
       #jp-like-widget-bubble .jp-bubble-ring-track { fill:none; stroke:rgba(255,255,255,.16); stroke-width:2.5; }
-      #jp-like-widget-bubble .jp-bubble-ring-fill { fill:none; stroke:#4caf50; stroke-width:2.5; stroke-linecap:round; stroke-dasharray:75.4; stroke-dashoffset:75.4; transition:stroke-dashoffset .15s linear; }
-      #jp-like-widget-bubble .jp-bubble-heart { position:relative; width:17px; height:17px; }
+      #jp-like-widget-bubble .jp-bubble-ring-fill { fill:none; stroke:#4caf50; stroke-width:2.5; stroke-linecap:round; stroke-dasharray:75.4; stroke-dashoffset:75.4; transition:stroke-dashoffset .15s linear, opacity .15s linear; }
+      #jp-like-widget-bubble .jp-bubble-heart { position:relative; width:18px; height:18px; }
       /* Selo de concluído: quando tudo está curtido, o anel + coração dão
          lugar a um disco verde com confere branco (entra com um pop). */
       #jp-like-widget-bubble .jp-bubble-check { display:none; position:absolute; inset:0; width:100%; height:100%; }
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-ring,
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-heart { display:none; }
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-check { display:block; animation:jpLikePop .25s ease; }
+      /* Rótulo só no desktop largo (ex: "10 faltando"): deixa a bolha mais
+         larga e autoexplicativa onde há espaço; some no mobile. */
+      #jp-like-widget-bubble .jp-bubble-label { display:none; font-weight:600; opacity:.75; }
+      /* A bolha cresce com a tela: compacta no celular, com presença no PC.
+         O anel é viewBox e escala sozinho junto com o wrap. */
+      @media (min-width:700px) {
+        #jp-like-widget-bubble { min-height:58px; padding:13px 20px 13px 17px; font-size:16px; }
+        #jp-like-widget-bubble .jp-bubble-ring-wrap { width:32px; height:32px; }
+        #jp-like-widget-bubble .jp-bubble-heart { width:19px; height:19px; }
+      }
+      @media (min-width:1100px) {
+        #jp-like-widget-bubble { min-height:62px; padding:14px 22px 14px 18px; font-size:16px; gap:10px; }
+        #jp-like-widget-bubble .jp-bubble-ring-wrap { width:34px; height:34px; }
+        #jp-like-widget-bubble .jp-bubble-heart { width:20px; height:20px; }
+        #jp-like-widget-bubble .jp-bubble-label { display:inline; }
+      }
       /* Pop de conclusão na bolha (reaproveita o keyframe do joinha). */
       #jp-like-widget-bubble.jp-bubble-pop { animation:jpLikePop .25s ease; }
       @media (prefers-reduced-motion: reduce) {
@@ -1323,7 +1339,7 @@
             siteDarkMode: result[STORAGE_KEY_SITE_DARK_MODE] === true, // padrão: false
             queueEstimatorEnabled: result[STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED] !== false, // padrão: true (EXPERIMENTAL)
             language: result[STORAGE_KEY_LANGUAGE] || getBrowserLanguage(),
-            widgetCollapsed: result[STORAGE_KEY_WIDGET_COLLAPSED] === true // padrão: false
+            widgetCollapsed: result[STORAGE_KEY_WIDGET_COLLAPSED] !== false // padrão: true
           });
         }
       );
@@ -1602,7 +1618,7 @@
   let likeWidgetEl = null;
   let settingsMenuEl = null;
   let settingsPanelEl = null;
-  let currentSettings = { siteDarkMode: false, queueEstimatorEnabled: true, language: 'pt-BR', widgetCollapsed: false };
+  let currentSettings = { siteDarkMode: false, queueEstimatorEnabled: true, language: 'pt-BR', widgetCollapsed: true };
 
   function buildToggleSwitch(initialOn, onChange) {
     const wrapper = document.createElement('button');
@@ -1959,7 +1975,8 @@
           <svg class="jp-bubble-heart" viewBox="0 0 24 24"><path d="M20.8 8.9c0 5.2-8.8 10.1-8.8 10.1S3.2 14.1 3.2 8.9A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
           <svg class="jp-bubble-check" viewBox="0 0 28 28"><circle cx="14" cy="14" r="13" fill="#22c55e"></circle><path d="M8.5 14.5l4 4L19.5 10" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
-        <span id="jp-like-widget-bubble-count">\u2026</span>`;
+        <span id="jp-like-widget-bubble-count">\u2026</span>
+        <span id="jp-like-widget-bubble-label" class="jp-bubble-label"></span>`;
       bubble.addEventListener('click', () => {
         // No celular a bolha é o único UI: o toque curte tudo direto (via o
         // botão escondido). Expandir/recolher pelo toque não existe no
@@ -2032,6 +2049,9 @@
     const fill = document.getElementById('jp-bubble-ring-fill');
     if (!fill) return;
     const clamped = Math.max(0, Math.min(1, frac || 0));
+    // Esconde o arco zerado: com ponta redonda, um arco de comprimento 0
+    // ainda renderiza como um pontinho verde no topo do anel.
+    fill.style.opacity = clamped <= 0 ? '0' : '1';
     fill.style.strokeDashoffset = String(BUBBLE_RING_C * (1 - clamped));
   }
 
@@ -2048,6 +2068,7 @@
   function updateBubble(missingOrNull) {
     const bubble = document.getElementById('jp-like-widget-bubble');
     const count = document.getElementById('jp-like-widget-bubble-count');
+    const label = document.getElementById('jp-like-widget-bubble-label');
     if (!bubble || !count) return;
     if (missingOrNull == null) {
       lastBubbleMissing = null;
@@ -2055,6 +2076,7 @@
       count.textContent = '\u2026';
       bubble.classList.remove('jp-bubble-done');
       bubble.setAttribute('aria-label', t('analyzing'));
+      if (label) { label.textContent = ''; label.style.display = 'none'; }
       return;
     }
     lastBubbleMissing = missingOrNull;
@@ -2066,6 +2088,11 @@
       ? (currentSettings.language === 'en' ? 'All liked!' : 'Tudo curtido!')
       : `${missingOrNull} ${t('missing')}`);
     bubble.title = !isMobileLayout() ? t('expand') : (done ? '' : t('likeMissing'));
+    // Rótulo do desktop largo ("10 faltando"); some quando concluído (o selo basta).
+    if (label) {
+      label.textContent = done ? '' : t('missing');
+      label.style.display = done ? 'none' : '';
+    }
   }
 
   function updateStatus(cards, missing) {
