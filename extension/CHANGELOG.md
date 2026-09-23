@@ -47,6 +47,11 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Tocar na bolha curte todas as fotos faltantes de uma vez (quando há algo faltando); sem nada faltando, o toque não faz nada.
 - Removida a preferência salva de recolhido/expandido e o maquinário de colapso (menos código, sem mudança no visual da bolha).
 
+### Bolha: visual sóbrio + selo sozinho + toast de aviso
+- Bolha mais discreta: sem pulsar durante a leva (só a borda fica verde), sem pop de conclusão e entrada só com fade — o progresso continua no anel e na contagem regressiva.
+- Tudo curtido = só o selo verde, sem o número 0 do lado: a bolha encolhe pra um disco com o confere.
+- Clicar na bolha verde mostra um toast ("Todas as fotos da página já estão curtidas"), no PC e no celular; some sozinho e nunca bloqueia toques.
+
 ---
 
 ## [2.0.0]

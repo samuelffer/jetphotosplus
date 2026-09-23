@@ -114,6 +114,7 @@
       analyzing: 'Analisando página...',
       likeMissing: 'Curtir faltantes',
       missing: 'faltando',
+      allLikedToast: 'Todas as fotos da página já estão curtidas',
       experimental: 'Experimental',
       siteDarkMode: 'Modo escuro (beta)',
       siteDarkModeHelp: 'Escurece o JetPhotos e também a interface da extensão (painel, submenu e widget). Fotos e cores de marca não são alteradas.',
@@ -157,6 +158,7 @@
       settings: 'Settings', close: 'Close', viewReleases: "See what's new", reportIssue: 'Report an issue', aboutJetPhotosPlus: 'About JetPhotos+', analyzing: 'Analyzing page...',
       likeMissing: 'Like missing photos',
       missing: 'missing',
+      allLikedToast: 'All photos on this page are already liked',
       experimental: 'Experimental', siteDarkMode: 'Site dark mode (beta)', siteDarkModeHelp: 'Darkens JetPhotos backgrounds and light text. Photos and brand colors are not changed.',
       queueEstimator: 'Queue days estimator (beta)', queueEstimatorHelp: 'Estimates how long your photo may take to be reviewed on queue.php. Reload the page after changing.',
       language: 'Language', languageHelp: 'Choose the extension language.', portugueseBrazil: 'Português (Brasil)', english: 'English',
@@ -954,17 +956,15 @@
       }
       #jp-like-widget-bubble:hover { background:#2a2a2a; border-color:#686868; }
       #jp-like-widget-bubble:focus-visible { outline:2px solid #669DF6; outline-offset:2px; }
-      #jp-like-widget-bubble.jp-bubble-done #jp-like-widget-bubble-count { color:#8fce8f; }
-      /* Durante a leva, a bolha pulsa verde (é o feedback de progresso no
-         celular, onde a barrinha do widget está escondida). */
-      @keyframes jpBubbleLiking {
-        0%, 100% { box-shadow:0 5px 20px rgba(0,0,0,.30), 0 0 0 0 rgba(76,175,80,.55); }
-        50% { box-shadow:0 5px 20px rgba(0,0,0,.30), 0 0 0 9px rgba(76,175,80,0); }
-      }
-      #jp-like-widget-bubble.jp-bubble-liking { border-color:#4caf50; animation:jpBubbleLiking 1.1s ease-out infinite; }
-      @media (prefers-reduced-motion: reduce) {
-        #jp-like-widget-bubble.jp-bubble-liking { animation:none; border-color:#4caf50; }
-      }
+      /* Concluído: a bolha encolhe pra um disco só com o selo — o contador
+         some junto (sem "0" pendurado do lado). Padding igual dos 4 lados
+         centraliza o selo; vale em qualquer breakpoint (seletor mais
+         específico que os paddings dos @media). */
+      #jp-like-widget-bubble.jp-bubble-done { padding:12px; gap:0; min-height:0; }
+      #jp-like-widget-bubble.jp-bubble-done #jp-like-widget-bubble-count { display:none; }
+      /* Durante a leva, a bolha só troca a borda pra verde (estado estático,
+         sem pulsar — o progresso aparece no anel e na contagem regressiva). */
+      #jp-like-widget-bubble.jp-bubble-liking { border-color:#4caf50; }
       /* Anel de progresso em volta do coração: o track fica sempre visível
          (contorno sutil) e o fill verde fecha conforme a leva avança (ver
          setBubbleProgress). Começa no topo por causa do rotate(-90deg). */
@@ -977,11 +977,11 @@
       #jp-like-widget-bubble .jp-bubble-ring-fill { fill:none; stroke:#4caf50; stroke-width:2.5; stroke-linecap:round; stroke-dasharray:75.4; stroke-dashoffset:75.4; transition:stroke-dashoffset .15s linear, opacity .15s linear; }
       #jp-like-widget-bubble .jp-bubble-heart { position:relative; width:18px; height:18px; }
       /* Selo de concluído: quando tudo está curtido, o anel + coração dão
-         lugar a um disco verde com confere branco (entra com um pop). */
+         lugar a um disco verde com confere branco (troca seca, sem pop). */
       #jp-like-widget-bubble .jp-bubble-check { display:none; position:absolute; inset:0; width:100%; height:100%; }
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-ring,
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-heart { display:none; }
-      #jp-like-widget-bubble.jp-bubble-done .jp-bubble-check { display:block; animation:jpLikePop .25s ease; }
+      #jp-like-widget-bubble.jp-bubble-done .jp-bubble-check { display:block; }
       /* Rótulo só no desktop largo (ex: "10 faltando"): deixa a bolha mais
          larga e autoexplicativa onde há espaço; some no mobile. */
       #jp-like-widget-bubble .jp-bubble-label { display:none; font-weight:600; opacity:.75; }
@@ -998,14 +998,23 @@
         #jp-like-widget-bubble .jp-bubble-heart { width:20px; height:20px; }
         #jp-like-widget-bubble .jp-bubble-label { display:inline; }
       }
-      /* Pop de conclusão na bolha (reaproveita o keyframe do joinha). */
-      #jp-like-widget-bubble.jp-bubble-pop { animation:jpLikePop .25s ease; }
       @media (prefers-reduced-motion: reduce) {
-        #jp-like-widget-bubble.jp-bubble-pop { animation:none; }
+        #jp-like-widget-bubble { animation:none; }
         #jp-like-widget-bubble .jp-bubble-ring-fill { transition:none; }
-        #jp-like-widget-bubble.jp-bubble-done .jp-bubble-check { animation:none; }
+        #jp-like-toast { transition:none; }
       }
-      @keyframes jpBubbleIn { from {opacity:0; transform:translateY(6px)} to {opacity:1; transform:translateY(0)} }
+      @keyframes jpBubbleIn { from {opacity:0} to {opacity:1} }
+      /* Toast de aviso da bolha (ex: "já está tudo curtido"): aparece embaixo,
+         no centro, some sozinho e nunca intercepta toques (pointer-events). */
+      #jp-like-toast {
+        position:fixed; left:50%; bottom:28px; transform:translateX(-50%); z-index:1000000;
+        max-width:min(420px, calc(100vw - 32px)); box-sizing:border-box;
+        background:#1c1c1c; color:#eeeeee; border:1px solid #464646; border-radius:12px;
+        padding:11px 16px; font:inherit; font-size:14px; font-weight:600; line-height:1.35; text-align:center;
+        box-shadow:0 5px 20px rgba(0,0,0,.35); pointer-events:none;
+        opacity:0; transition:opacity .18s ease;
+      }
+      #jp-like-toast.jp-toast-show { opacity:1; }
 
       #jp-like-settings-menu {
         position: absolute !important;
@@ -1837,13 +1846,14 @@
         <span id="jp-like-widget-bubble-count">\u2026</span>
         <span id="jp-like-widget-bubble-label" class="jp-bubble-label"></span>`;
       bubble.addEventListener('click', () => {
-        // O toque curte tudo direto. Sem nada faltando (ou com leva em
-        // andamento), o toque não faz nada — não há mais expandir/minimizar.
-        if (isLiking || (lastBubbleMissing ?? 0) <= 0) return;
+        // O toque curte tudo direto. Com leva em andamento, ignora; com a
+        // bolha verde (tudo curtido), avisa num toast em vez de calar.
+        if (isLiking) return;
+        if ((lastBubbleMissing ?? 0) <= 0) {
+          if (lastBubbleMissing !== null) showLikeToast(t('allLikedToast'));
+          return;
+        }
         runLikeAllBatch();
-      });
-      bubble.addEventListener('animationend', event => {
-        if (event.animationName === 'jpLikePop') bubble.classList.remove('jp-bubble-pop');
       });
       document.body.appendChild(bubble);
     }
@@ -1869,14 +1879,24 @@
     fill.style.strokeDashoffset = String(BUBBLE_RING_C * (1 - clamped));
   }
 
-  // Pop de conclusão na bolha (mesmo esquema do pop do joinha: classe
-  // transitória + reflow pra reiniciar, limpa no animationend).
-  function popBubbleDone() {
-    const bubble = document.getElementById('jp-like-widget-bubble');
-    if (!bubble) return;
-    bubble.classList.remove('jp-bubble-pop');
-    void bubble.offsetWidth;
-    bubble.classList.add('jp-bubble-pop');
+  // Toast de aviso da bolha (ex: tudo já curtido). Um de cada vez: se já
+  // houver um visível, só troca o texto e reinicia o temporizador.
+  let likeToastTimer = null;
+  function showLikeToast(message) {
+    let toast = document.getElementById('jp-like-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'jp-like-toast';
+      toast.setAttribute('role', 'status');
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    // Recomeça a transição mesmo quando o toast já estava visível.
+    toast.classList.remove('jp-toast-show');
+    void toast.offsetWidth;
+    toast.classList.add('jp-toast-show');
+    clearTimeout(likeToastTimer);
+    likeToastTimer = setTimeout(() => toast.classList.remove('jp-toast-show'), 2500);
   }
 
   function updateBubble(missingOrNull) {
@@ -2044,16 +2064,15 @@
   }
 
   // Dispara a leva de "curtir faltantes" a partir da bolha. Todo o feedback
-  // é na própria bolha (contagem regressiva + anel + pulso verde + selo).
+  // é na própria bolha (contagem regressiva + anel + borda verde + selo).
   function runLikeAllBatch() {
     if (isLiking) return;
     let total = 0;
     try {
       total = likeAllMissing(doneCount => {
         // onDone: a leva terminou (doneCount=0 se não havia nada faltando).
-        updateBubble(0); // bolha mostra 0 + anel fechado (o refresh final confirma)
+        updateBubble(0); // bolha vira só o selo verde (o refresh final confirma)
         document.getElementById('jp-like-widget-bubble')?.classList.remove('jp-bubble-liking');
-        if (doneCount > 0) popBubbleDone(); // pop de conclusão (só quando curtiu algo de fato)
       });
     } catch (error) {
       console.error('[JetPhotos+] Falha ao iniciar a leva de curtidas:', error);
