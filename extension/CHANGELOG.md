@@ -79,6 +79,10 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Fotos pixel-idênticas por construção: o par invert(1) puro aplicado 2x volta à cor exata; o contra-filtro mira só img/video (nunca containers); header (já escuro, logo branco) e todo o UI da extensão voltam verbatim; mapa vira "noturno" de propósito.
 - Chave nas configurações: Método do modo escuro = Manual (tema r14) ou Filtro (teste, padrão). Troca ao vivo, sem reinstalar; o perdedor será removido na próxima versão.
 
+### Modo escuro: filtro v2 removido, manual volta a ser único
+- Veredito do teste A/B: o filtro total foi aposentado e o tema manual (r14) volta a ser o método único — chave removida das configurações, todo o código do filtro deletado (~100 linhas a menos).
+- Próximo passo: completar a cobertura manual com auditorias das páginas restantes (resultados, foto individual, fórum...).
+
 ---
 
 ## [2.0.0]
