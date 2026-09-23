@@ -1063,6 +1063,20 @@
       @media (prefers-reduced-motion: reduce) {
         #jp-like-widget-bubble.jp-bubble-liking { animation:none; border-color:#4caf50; }
       }
+      /* Anel de progresso em volta do coração: o track fica sempre visível
+         (contorno sutil) e o fill verde fecha conforme a leva avança (ver
+         setBubbleProgress). Começa no topo por causa do rotate(-90deg). */
+      #jp-like-widget-bubble .jp-bubble-ring-wrap { position:relative; width:28px; height:28px; flex:0 0 auto; }
+      #jp-like-widget-bubble .jp-bubble-ring { position:absolute; inset:0; width:28px; height:28px; transform:rotate(-90deg); }
+      #jp-like-widget-bubble .jp-bubble-ring-track { fill:none; stroke:rgba(255,255,255,.16); stroke-width:2.5; }
+      #jp-like-widget-bubble .jp-bubble-ring-fill { fill:none; stroke:#4caf50; stroke-width:2.5; stroke-linecap:round; stroke-dasharray:75.4; stroke-dashoffset:75.4; transition:stroke-dashoffset .15s linear; }
+      #jp-like-widget-bubble .jp-bubble-heart { position:absolute; inset:0; margin:auto; width:17px; height:17px; }
+      /* Pop de conclusão na bolha (reaproveita o keyframe do joinha). */
+      #jp-like-widget-bubble.jp-bubble-pop { animation:jpLikePop .25s ease; }
+      @media (prefers-reduced-motion: reduce) {
+        #jp-like-widget-bubble.jp-bubble-pop { animation:none; }
+        #jp-like-widget-bubble .jp-bubble-ring-fill { transition:none; }
+      }
       @keyframes jpLikeWidgetIn { from {opacity:0; transform:translateY(6px)} to {opacity:1; transform:translateY(0)} }
 
       #jp-like-settings-menu {
@@ -1931,17 +1945,25 @@
       bubble.setAttribute('aria-label', t('analyzing'));
       bubble.setAttribute('aria-expanded', 'false');
       bubble.innerHTML = `
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.9c0 5.2-8.8 10.1-8.8 10.1S3.2 14.1 3.2 8.9A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <span class="jp-bubble-ring-wrap" aria-hidden="true">
+          <svg class="jp-bubble-ring" viewBox="0 0 28 28"><circle class="jp-bubble-ring-track" cx="14" cy="14" r="12"></circle><circle class="jp-bubble-ring-fill" id="jp-bubble-ring-fill" cx="14" cy="14" r="12"></circle></svg>
+          <svg class="jp-bubble-heart" viewBox="0 0 24 24"><path d="M20.8 8.9c0 5.2-8.8 10.1-8.8 10.1S3.2 14.1 3.2 8.9A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        </span>
         <span id="jp-like-widget-bubble-count">\u2026</span>`;
       bubble.addEventListener('click', () => {
-        // No celular a bolha É o widget: o toque curte tudo direto (via o
-        // botão escondido, reaproveitando toda a lógica da leva). Nos outros
-        // casos (desktop, nada faltando ou leva em andamento) expande.
-        if (isMobileLayout() && !isLiking && (lastBubbleMissing ?? 0) > 0) {
-          document.getElementById('jp-like-all-btn')?.click();
+        // No celular a bolha é o único UI: o toque curte tudo direto (via o
+        // botão escondido). Expandir/recolher pelo toque não existe no
+        // celular a pedido — no desktop o toque continua expandindo.
+        if (isMobileLayout()) {
+          if (!isLiking && (lastBubbleMissing ?? 0) > 0) {
+            document.getElementById('jp-like-all-btn')?.click();
+          }
           return;
         }
         setWidgetCollapsed(false);
+      });
+      bubble.addEventListener('animationend', event => {
+        if (event.animationName === 'jpLikePop') bubble.classList.remove('jp-bubble-pop');
       });
       document.body.appendChild(bubble);
 
@@ -1994,12 +2016,32 @@
   }
 
   // Atualiza o contador da bolha. null = ainda analisando (mostra …).
+  // Anel de progresso da bolha: 0 = vazio, 1 = fechado verde.
+  const BUBBLE_RING_C = 75.4; // 2π×12, mesmo r do círculo no SVG (ver CSS)
+  function setBubbleProgress(frac) {
+    const fill = document.getElementById('jp-bubble-ring-fill');
+    if (!fill) return;
+    const clamped = Math.max(0, Math.min(1, frac || 0));
+    fill.style.strokeDashoffset = String(BUBBLE_RING_C * (1 - clamped));
+  }
+
+  // Pop de conclusão na bolha (mesmo esquema do pop do joinha: classe
+  // transitória + reflow pra reiniciar, limpa no animationend).
+  function popBubbleDone() {
+    const bubble = document.getElementById('jp-like-widget-bubble');
+    if (!bubble) return;
+    bubble.classList.remove('jp-bubble-pop');
+    void bubble.offsetWidth;
+    bubble.classList.add('jp-bubble-pop');
+  }
+
   function updateBubble(missingOrNull) {
     const bubble = document.getElementById('jp-like-widget-bubble');
     const count = document.getElementById('jp-like-widget-bubble-count');
     if (!bubble || !count) return;
     if (missingOrNull == null) {
       lastBubbleMissing = null;
+      setBubbleProgress(0);
       count.textContent = '\u2026';
       bubble.classList.remove('jp-bubble-done');
       bubble.setAttribute('aria-label', t('analyzing'));
@@ -2007,12 +2049,13 @@
     }
     lastBubbleMissing = missingOrNull;
     const done = missingOrNull <= 0;
-    count.textContent = done ? '\u2713' : String(missingOrNull);
+    setBubbleProgress(done ? 1 : 0);
+    count.textContent = done ? '0' : String(missingOrNull);
     bubble.classList.toggle('jp-bubble-done', done);
     bubble.setAttribute('aria-label', done
       ? (currentSettings.language === 'en' ? 'All liked!' : 'Tudo curtido!')
       : `${missingOrNull} ${t('missing')}`);
-    bubble.title = (isMobileLayout() && !done) ? t('likeMissing') : t('expand');
+    bubble.title = !isMobileLayout() ? t('expand') : (done ? '' : t('likeMissing'));
   }
 
   function updateStatus(cards, missing) {
@@ -2139,7 +2182,7 @@
       .map(({ anchor }) => anchor);
 
     if (!targets.length) {
-      if (onDone) onDone();
+      if (onDone) onDone(0);
       return 0;
     }
 
@@ -2149,7 +2192,7 @@
       if (i >= targets.length) {
         isLiking = false;
         setTimeout(refresh, 500); // dá um tempo pro site atualizar o estado visual do último clique
-        if (onDone) onDone();
+        if (onDone) onDone(targets.length);
         return;
       }
       targets[i].click();
@@ -2164,6 +2207,7 @@
           : `Curtindo ${i}/${targets.length} foto(s)...`;
       }
       updateBubble(targets.length - i);
+      setBubbleProgress(i / targets.length);
       const delay = LIKE_CLICK_DELAY_MS + Math.random() * LIKE_CLICK_JITTER_MS;
       setTimeout(clickNext, delay);
     }
@@ -3226,10 +3270,11 @@
         const btn = document.getElementById('jp-like-all-btn');
         const textEl = document.getElementById('jp-like-widget-status');
 
-        const total = likeAllMissing(() => {
+        const total = likeAllMissing((doneCount = 0) => {
           // onDone: reabilita o botão quando a leva de cliques termina.
-          updateBubble(0); // a leva terminou: bolha mostra ✓ (o refresh final confirma)
+          updateBubble(0); // a leva terminou: bolha mostra 0 + anel fechado (o refresh final confirma)
           document.getElementById('jp-like-widget-bubble')?.classList.remove('jp-bubble-liking');
+          if (doneCount > 0) popBubbleDone(); // pop de conclusão (só quando curtiu algo de fato)
           if (btn) {
             btn.disabled = false;
             btn.style.opacity = '1';

@@ -26,7 +26,12 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 ### Bolha vira o widget principal no celular
 - Em telas de até 520px o widget já abre recolhido na bolha (coração + faltantes); girar/redimensionar alterna sozinho, sem mexer na preferência salva do desktop.
 - Tocar na bolha no celular curte todas as faltantes direto (via o botão escondido, com a mesma contagem ao vivo); tocar sem nada faltando, durante a leva ou no desktop continua expandindo.
-- Durante a leva a bolha pulsa verde; ao terminar mostra o `✓` verde.
+- Durante a leva a bolha pulsa verde; ao terminar o anel fecha completo (ver abaixo).
+
+### Bolha: anel de progresso no lugar do ✓
+- O `✓` de conclusão foi substituído por um anel de progresso em volta do coração: o contorno sutil fica sempre visível, o arco verde preenche durante a leva e fecha completo quando tudo está curtido (o número passa a mostrar `0`).
+- Pop de conclusão na bolha ao terminar uma leva que curtiu algo (respeita `prefers-reduced-motion`).
+- No celular o toque na bolha não expande mais — só curte tudo quando há faltantes; no desktop o toque continua expandindo como antes.
 
 ---
 
