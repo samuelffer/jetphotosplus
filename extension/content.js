@@ -359,32 +359,60 @@
     anchor.removeAttribute('aria-pressed');
   }
 
-  // Aplica o estado confirmado (liked/unliked) em toda âncora de Like
-  // visível cujo ID bata com o da resposta de rede. Normalmente é só uma
-  // (a foto que gerou a requisição), mas percorrer todas é barato e cobre
-  // o caso raro da mesma foto aparecer 2x na mesma página.
+  // Aplica o estado confirmado (liked/unliked) direto nos elementos dessa
+  // foto, sem varrer a página inteira: mira pelo data-photo/data-id, que é
+  // o mesmo ID da resposta de rede. Isso importa porque esta função roda a
+  // cada confirmação — durante uma leva em massa, o findPhotoCards()
+  // completo aqui dentro significava N varreduras (era parte da lentidão
+  // no celular). O querySelectorAll cobre o caso raro da mesma foto
+  // aparecer 2x na mesma página. Fotos sem data-photo/data-id (só
+  // detectáveis pelo fallback de href) não são pegas aqui, mas o
+  // refresh() periódico corrige elas normalmente.
   function syncPhotoVisualById(photoId, liked) {
     if (!photoId) return;
-    findPhotoCards().forEach(({ anchor, card }) => {
-      if (getPhotoId(anchor, card) !== photoId) return;
-      if (liked) forceLikedVisual(anchor); else revokeLikedVisual(anchor);
+    const id = CSS.escape(String(photoId));
+    document.querySelectorAll(`.result[data-photo="${id}"], .social[data-id="${id}"]`).forEach(scope => {
+      const img = scope.querySelector('img[alt="Like"], img[title="Like"]');
+      const anchor = img?.closest('a');
+      // O closest() pode subir pra fora do scope se o img não estiver num
+      // link — nesse caso a âncora não é o Like desta foto, então pula.
+      if (anchor && scope.contains(anchor)) {
+        if (liked) forceLikedVisual(anchor); else revokeLikedVisual(anchor);
+      }
+      scope.querySelectorAll('.' + MOBILE_LIKE_BTN_CLASS).forEach(btn => applyMobileButtonState(btn, liked));
     });
   }
 
   function handleLikeNetResult(event) {
     const { id, action, ok } = event.detail || {};
-    if (!id || !action || !ok) return; // sem ID/ação reconhecidos, ou o servidor não confirmou: não mexe em nada
+    if (!id || !action) return; // sem ID/ação reconhecidos: não dá pra casar com nenhuma foto
 
-    if (action === 'add') {
-      markPhotoLikedInCache(id);
-      syncPhotoVisualById(id, true);
-    } else if (action === 'remove') {
-      unmarkPhotoLikedInCache(id);
-      syncPhotoVisualById(id, false);
+    if (ok) {
+      if (action === 'add') {
+        markPhotoLikedInCache(id);
+        syncPhotoVisualById(id, true);
+      } else if (action === 'remove') {
+        unmarkPhotoLikedInCache(id);
+        syncPhotoVisualById(id, false);
+      }
+    } else {
+      // O servidor recusou (ou a rede falhou): desfaz a UI otimista que o
+      // toque aplicou na hora — sem isso o joinha ficaria "curtido" pra
+      // sempre numa foto que na verdade não foi curtida.
+      if (action === 'add') {
+        unmarkPhotoLikedInCache(id);
+        syncPhotoVisualById(id, false);
+      } else if (action === 'remove') {
+        markPhotoLikedInCache(id);
+        syncPhotoVisualById(id, true);
+      }
     }
 
-    // Atualiza contador/realce na hora — cobre tanto a leva em massa quanto
-    // um clique manual avulso do usuário, sem esperar o debounce normal.
+    // Num clique avulso, atualiza contador/realce na hora, sem esperar o
+    // debounce. Durante a leva em massa o refresh() se auto-pula (ver
+    // refresh) e o settle acontece uma vez só no final — sem isso seriam N
+    // varreduras completas do DOM, uma por foto, que é o que travava o
+    // celular.
     refresh();
   }
 
@@ -518,36 +546,56 @@
     button.setAttribute('aria-pressed', liked ? 'true' : 'false');
   }
 
+  const MOBILE_LIKE_BTN_POP_CLASS = 'jp-mobile-like-btn--pop';
+
+  // Dispara o pop do joinha (ver CSS jpLikePop). Remove e readiciona a
+  // classe com um reflow forçado no meio pra animação reiniciar mesmo se o
+  // usuário curtir/descurtir/curtir rápido em sequência.
+  function popMobileButton(button) {
+    button.classList.remove(MOBILE_LIKE_BTN_POP_CLASS);
+    void button.offsetWidth;
+    button.classList.add(MOBILE_LIKE_BTN_POP_CLASS);
+  }
+
   async function handleMobileLikeClick(button, photoId, nativeAnchor) {
     if (button.disabled) return; // evita duplo-toque disparar duas requisições
     button.disabled = true;
     button.classList.add('jp-mobile-like-btn--pending');
 
+    // UI otimista: o joinha acende NA HORA do toque, sem esperar a resposta
+    // do servidor (no celular essa confirmação demora e o botão parecia
+    // "morto"). Se o servidor recusar, o evento de rede (!ok) desfaz tudo
+    // em handleLikeNetResult — ver comentário lá.
+    const willLike = !button.classList.contains(MOBILE_LIKE_BTN_LIKED_CLASS);
+    applyMobileButtonState(button, willLike);
+    if (willLike) popMobileButton(button);
+
     if (nativeAnchor) {
       // Aciona o link nativo do JetPhotos (existe no DOM, só escondido pelo
       // layout mobile). O content-hook.js confirma via rede e
       // handleLikeNetResult já cuida do cache + realce + contador — aqui só
-      // reabilitamos o botão depois, dando tempo da resposta chegar.
+      // reabilitamos o botão depois de uma janela curta anti-duplo-toque.
       nativeAnchor.click();
       setTimeout(() => {
         button.disabled = false;
         button.classList.remove('jp-mobile-like-btn--pending');
-      }, 500);
+      }, 300);
       return;
     }
 
     // Sem link nativo disponível nesse card (não deveria acontecer no
     // layout atual do site, mas evita deixar o botão sem função caso o
     // JetPhotos mude a estrutura): usa o mesmo endpoint diretamente.
-    const alreadyLiked = button.classList.contains(MOBILE_LIKE_BTN_LIKED_CLASS);
-    const action = alreadyLiked ? 'remove' : 'add';
+    const action = willLike ? 'add' : 'remove';
     const ok = await performLikeRequest(photoId, action);
     button.disabled = false;
     button.classList.remove('jp-mobile-like-btn--pending');
-    if (!ok) return;
+    if (!ok) {
+      applyMobileButtonState(button, !willLike); // desfaz o otimismo
+      return;
+    }
     if (action === 'add') markPhotoLikedInCache(photoId); else unmarkPhotoLikedInCache(photoId);
-    applyMobileButtonState(button, action === 'add');
-    refresh();
+    if (!isLiking) refresh(); // durante a leva em massa o refresh final cobre tudo
   }
 
   // Varre os cards e injeta o botão como último ".result__stat" só onde o
@@ -602,6 +650,9 @@
         event.preventDefault();
         event.stopPropagation();
         handleMobileLikeClick(button, photoId, nativeAnchor);
+      });
+      button.addEventListener('animationend', event => {
+        if (event.animationName === 'jpLikePop') button.classList.remove(MOBILE_LIKE_BTN_POP_CLASS);
       });
     });
   }
@@ -1158,7 +1209,22 @@
       .${MOBILE_LIKE_BTN_CLASS}.${MOBILE_LIKE_BTN_LIKED_CLASS} img { opacity:1; }
       .${MOBILE_LIKE_BTN_CLASS}:active { transform:scale(.9); }
       .${MOBILE_LIKE_BTN_CLASS}:hover { background:rgba(0,0,0,.06); }
-      .${MOBILE_LIKE_BTN_CLASS}.jp-mobile-like-btn--pending { opacity:.6; pointer-events:none; }
+      /* Sem dim no pending: o clique já aplica o estado na hora (UI otimista)
+         e o pop abaixo é o feedback — escurecer o botão brigaria com isso. */
+      .${MOBILE_LIKE_BTN_CLASS}.jp-mobile-like-btn--pending { pointer-events:none; }
+      /* Pop do joinha ao curtir: resposta instantânea e com um pouco de vida.
+         Mora numa classe transitória (--pop), não no estado --liked, pra não
+         repetir a cada refresh() — ver popMobileButton(). */
+      @keyframes jpLikePop {
+        0% { transform:scale(1); }
+        40% { transform:scale(1.35); }
+        70% { transform:scale(.95); }
+        100% { transform:scale(1); }
+      }
+      .${MOBILE_LIKE_BTN_CLASS}.jp-mobile-like-btn--pop img { animation:jpLikePop .2s ease; }
+      @media (prefers-reduced-motion: reduce) {
+        .${MOBILE_LIKE_BTN_CLASS}.jp-mobile-like-btn--pop img { animation:none; }
+      }
     `;
     document.head.appendChild(style);
   }
@@ -1859,6 +1925,13 @@
 
   function refresh() {
     if (isRefreshing) return; // evita reentrância
+    // Durante a leva em massa, pula: cada confirmação de rede + cada mutação
+    // do site pediria uma varredura completa (getBoundingClientRect/
+    // getComputedStyle por card = reflow forçado), e no celular isso somava
+    // dezenas de reflows seguidos e travava a página. Cada joinha já se
+    // atualiza sozinho via syncPhotoVisualById (mirado, barato), e o fim da
+    // leva chama refresh() de novo pra assentar contador e realces.
+    if (isLiking) return null;
     isRefreshing = true;
 
     // Desliga o observer enquanto mexemos no DOM/estilo, e religa depois.

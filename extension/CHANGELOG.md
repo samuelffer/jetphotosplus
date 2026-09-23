@@ -12,6 +12,12 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Aumentado o ícone do botão de Like injetado no layout mobile de 16px para 20px (caixa de toque de 28px para 30px, sem alterar a altura da fileira de estatísticas).
 - Alinhado o botão verticalmente com os demais ícones da fileira (remoção da folga de baseline do `<img>` + `vertical-align: middle` no stat), com ajuste fino de 2px pra cima.
 
+### Curtidas no mobile: instantâneas + animação pop
+- O joinha agora acende na hora do toque (UI otimista), sem esperar a resposta do servidor; se o servidor recusar ou a rede falhar, o estado é desfeito sozinho via evento `!ok` do hook de rede.
+- Nova microanimação de "pop" (escala 1 → 1.35 → 0.95 → 1, 0.2s) ao curtir no mobile; respeita `prefers-reduced-motion`.
+- Cada confirmação de rede agora atualiza só a própria foto (busca mirada por `data-photo`/`data-id`) em vez de revarrer a página inteira; durante o "curtir faltantes" o `refresh()` completo roda uma vez só no final — elimina as dezenas de reflows seguidos que travavam o celular.
+- Janela anti-duplo-toque reduzida de 500ms para 300ms e removido o dim do botão durante o clique (brigava com o feedback instantâneo).
+
 ---
 
 ## [2.0.0]
