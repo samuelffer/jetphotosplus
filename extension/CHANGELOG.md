@@ -121,6 +121,11 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Seletor verde aprofunda (.social__text *): cobre ícone aninhado em qualquer nível da barrinha da foto no mobile.
 - Botão injetado nos cards mobile usa a mesma matriz (tom por tema).
 
+### Like verde à prova de estrutura inicial (TESTE)
+- Correção: na foto já curtida (mobile, dois temas), o ícone abria num verde escuro nativo e só igualava ao rótulo após descurtir/curtir — o ícone inicial escapa dos seletores (o site remonta a estrutura no toggle).
+- Backstop em JS: pinta o ícone (img/svg/i) inline com a matriz do tema em force/revoke, no botão injetado, no refresh e na troca de tema — qualquer estrutura, mesmo tom do rótulo.
+- Seletor verde cobre ::after também (antes só ::before).
+
 ---
 
 ## [2.0.0]

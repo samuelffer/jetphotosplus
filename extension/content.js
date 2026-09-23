@@ -347,18 +347,47 @@
     return null;
   }
 
+  // Backstop do verde exato (TESTE): o CSS cobre (quase) toda estrutura,
+  // mas o ícone inicial da barrinha do mobile escapa e o site o remonta
+  // diferente no toggle — por isso pintar inline aqui garante o tom em
+  // qualquer estrutura, nos dois temas. Só img/svg/i (nunca um invólucro
+  // que possa conter o rótulo). Idempotente e barato: pode rodar sempre.
+  function greenFilterUrl() {
+    return document.documentElement.classList.contains(SITE_DARK_HTML_CLASS) ? 'url(#jp-green-dark)' : 'url(#jp-green-light)';
+  }
+
+  function paintLikeIconGreen(scope, liked) {
+    if (!scope) return;
+    const icon = scope.querySelector('img, svg, i');
+    if (!icon) return;
+    if (liked) {
+      icon.style.setProperty('filter', greenFilterUrl(), 'important');
+      icon.style.setProperty('opacity', '1', 'important');
+    } else {
+      icon.style.removeProperty('filter');
+      icon.style.removeProperty('opacity');
+    }
+  }
+
+  function repaintLikeIcons() {
+    document.querySelectorAll('a.social__link--like').forEach(anchor => paintLikeIconGreen(anchor, anchor.classList.contains('social__link--active')));
+    document.querySelectorAll('.' + MOBILE_LIKE_BTN_CLASS).forEach(btn => paintLikeIconGreen(btn, btn.classList.contains(MOBILE_LIKE_BTN_LIKED_CLASS)));
+  }
+
   function forceLikedVisual(anchor) {
     if (!anchor) return;
     if (!anchor.classList.contains('social__link--active')) {
       anchor.classList.add('social__link--active');
       anchor.setAttribute('aria-pressed', 'true');
     }
+    paintLikeIconGreen(anchor, true);
   }
 
   function revokeLikedVisual(anchor) {
     if (!anchor) return;
     anchor.classList.remove('social__link--active');
     anchor.removeAttribute('aria-pressed');
+    paintLikeIconGreen(anchor, false);
   }
 
   // Aplica o estado confirmado (liked/unliked) direto nos elementos dessa
@@ -546,6 +575,7 @@
   function applyMobileButtonState(button, liked) {
     button.classList.toggle(MOBILE_LIKE_BTN_LIKED_CLASS, liked);
     button.setAttribute('aria-pressed', liked ? 'true' : 'false');
+    paintLikeIconGreen(button, liked);
   }
 
   const MOBILE_LIKE_BTN_POP_CLASS = 'jp-mobile-like-btn--pop';
@@ -1241,6 +1271,7 @@
       a.social__link.social__link--like.social__link--active > :not(.social__text):not(:has(.social__text)),
       a.social__link.social__link--like.social__link--active .social__text *,
       a.social__link.social__link--like.social__link--active::before { filter:url(#jp-green-light) !important; opacity:1 !important; }
+      a.social__link.social__link--like.social__link--active::after { filter:url(#jp-green-light) !important; opacity:1 !important; }
       .jp-mobile-like-btn.jp-mobile-like-btn--liked img { filter:url(#jp-green-light) !important; }
     `;
     document.head.appendChild(style);
@@ -1471,6 +1502,7 @@
     html.jp-site-dark-active a.social__link.social__link--like.social__link--active > :not(.social__text):not(:has(.social__text)),
     html.jp-site-dark-active a.social__link.social__link--like.social__link--active .social__text *,
     html.jp-site-dark-active a.social__link.social__link--like.social__link--active::before { filter:url(#jp-green-dark) !important; opacity:1 !important; }
+    html.jp-site-dark-active a.social__link.social__link--like.social__link--active::after { filter:url(#jp-green-dark) !important; opacity:1 !important; }
     /* Joinha injetado pela extensão nos cards do layout mobile: o arquivo
        é preto — branco (apagado) no escuro quando não-curtido, VERDE quando
        curtido. Modo claro: verde escuro quando curtido (regra no estilo
@@ -1514,6 +1546,7 @@
     }
     document.documentElement.classList.toggle(SITE_DARK_HTML_CLASS, isOn);
     document.documentElement.classList.toggle('jp-on-profile', location.pathname.startsWith('/photographer'));
+    repaintLikeIcons(); // re-tinta no tom do tema (o inline guarda a url do tema anterior)
   }
   // =======================================================================
   // Painel principal
@@ -1989,6 +2022,7 @@
         if (!liked) missing++;
       });
 
+      repaintLikeIcons();
       updateStatus(cards, missing);
       return { cards, missing };
     } catch (error) {
