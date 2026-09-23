@@ -52,6 +52,11 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Tudo curtido = só o selo verde, sem o número 0 do lado: a bolha encolhe pra um disco com o confere.
 - Clicar na bolha verde mostra um toast ("Todas as fotos da página já estão curtidas"), no PC e no celular; some sozinho e nunca bloqueia toques.
 
+### Toast com a cara do site
+- O toast agora é um cartão claro como os cards de resultado (fundo branco, texto escuro, filete azul como os botões) em vez da pílula escura.
+- Fonte declarada explícita com a mesma pilha sans do JetPhotos (antes herdada do body, o que podia cair em fonte errada); aplicada também na bolha.
+- O toast fica de fora da recolorida do modo escuro do site, mantendo o visual.
+
 ---
 
 ## [2.0.0]

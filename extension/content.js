@@ -950,7 +950,7 @@
         background:#1c1c1c; color:#eeeeee;
         border:1px solid #464646; border-radius:999px;
         box-shadow:0 5px 20px rgba(0,0,0,.30);
-        font:inherit; font-size:15px; font-weight:700; line-height:1;
+        font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size:15px; font-weight:700; line-height:1;
         cursor:pointer;
         animation:jpBubbleIn .18s ease;
       }
@@ -1004,14 +1004,19 @@
         #jp-like-toast { transition:none; }
       }
       @keyframes jpBubbleIn { from {opacity:0} to {opacity:1} }
-      /* Toast de aviso da bolha (ex: "já está tudo curtido"): aparece embaixo,
-         no centro, some sozinho e nunca intercepta toques (pointer-events). */
+      /* Toast de aviso da bolha com a cara do site: cartão claro como os
+         cards de resultado, texto escuro e filete azul como os botões. A fonte
+         é declarada explícita (pilha sans do sistema, igual à do site) em vez
+         de herdada — herança falha se o site escopar a fonte em wrappers. */
       #jp-like-toast {
         position:fixed; left:50%; bottom:28px; transform:translateX(-50%); z-index:1000000;
         max-width:min(420px, calc(100vw - 32px)); box-sizing:border-box;
-        background:#1c1c1c; color:#eeeeee; border:1px solid #464646; border-radius:12px;
-        padding:11px 16px; font:inherit; font-size:14px; font-weight:600; line-height:1.35; text-align:center;
-        box-shadow:0 5px 20px rgba(0,0,0,.35); pointer-events:none;
+        background:#ffffff; color:#212121;
+        border:1px solid #d8d8d8; border-left:4px solid #1f8dd6; border-radius:8px;
+        padding:11px 16px;
+        font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        font-size:14px; font-weight:600; line-height:1.35; text-align:center;
+        box-shadow:0 5px 20px rgba(0,0,0,.22); pointer-events:none;
         opacity:0; transition:opacity .18s ease;
       }
       #jp-like-toast.jp-toast-show { opacity:1; }
@@ -1402,7 +1407,7 @@
     // Em especial, o estimador da fila é reconstruído durante atualizações
     // de dados; se o observer de dark mode recolorisse seus <td>s depois da
     // reconstrução, haveria um flash branco antes do próximo scan.
-    if (el.closest('#jp-like-widget-bubble, #jp-plus-submenu, #jp-plus-launcher-host, #jp-site-queue-tracker, .' + MOBILE_LIKE_BTN_CLASS)) return;
+    if (el.closest('#jp-like-widget-bubble, #jp-like-toast, #jp-plus-submenu, #jp-plus-launcher-host, #jp-site-queue-tracker, .' + MOBILE_LIKE_BTN_CLASS)) return;
 
     // Ícones pretos fixos (Album/Like/Share etc.): inverte pra virar
     // branco sobre o novo fundo escuro. Não passa pelo resto da função
