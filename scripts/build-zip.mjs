@@ -9,9 +9,12 @@
  * Uso:
  *   node scripts/build-zip.mjs
  *
- * O nome do arquivo sai da versão que está em extension/manifest.json,
- * então a cada bump de versão o zip acompanha sozinho:
+ * O nome do arquivo sai da versão que está em extension/manifest.json:
  *   zips/jetphotosplus-v2.0.0.zip
+ * Como a versão só muda quando o usuário mandar (ver AGENTS.md), vários
+ * testes podem sair com a mesma versão — nesse caso o script NÃO sobrescreve:
+ * se o zip já existir, acrescenta um sufixo de revisão (-r2, -r3, ...):
+ *   zips/jetphotosplus-v2.0.1-r2.zip
  *
  * Requisitos: só o Node (sem dependências, sem npm install, sem `zip` do
  * sistema — por isso funciona igual no Linux, macOS e Windows).
@@ -20,10 +23,13 @@
  *   · manifest.json fica na RAIZ do zip — se ficar dentro de uma pasta,
  *     o navegador rejeita a extensão.
  *   · Arquivos ocultos (.DS_Store, .git, etc.) são ignorados.
- *   · A saída vai pra zips/, que está no .gitignore (nunca é commitada).
+ *   · CHANGELOG.md fica DE FORA do zip: é documento do repositório, não
+ *     arquivo de instalação (o usuário pediu pra não ir no pacote).
+ *   · A saída vai pra zips/, que está no .gitignore (só é commitada com
+ *     -f nas branches de sessão — ver AGENTS.md).
  */
 
-import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { deflateRawSync } from 'node:zlib';
 import { join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -60,6 +66,10 @@ function dosDateTime(date) {
   return { time, day };
 }
 
+// Arquivos de extension/ que NÃO entram no pacote de teste (relativos à
+// raiz de extension/). São documentos do repositório, não da instalação.
+const ZIP_EXCLUDE = new Set(['CHANGELOG.md']);
+
 // ---------------------------------------------------------------------------
 // Lista os arquivos, ignorando ocultos (dotfiles) e a própria pasta de saída
 // ---------------------------------------------------------------------------
@@ -71,6 +81,7 @@ function listFiles(dir) {
     if (statSync(full).isDirectory()) {
       out.push(...listFiles(full));
     } else {
+      if (ZIP_EXCLUDE.has(relative(SOURCE_DIR, full).split(sep).join('/'))) continue;
       out.push(full);
     }
   }
@@ -165,7 +176,16 @@ function main() {
   }
 
   mkdirSync(OUTPUT_DIR, { recursive: true });
-  const outputPath = join(OUTPUT_DIR, `jetphotosplus-v${version}.zip`);
+
+  // Nunca sobrescreve um zip anterior: se a versão repetir (o normal, já
+  // que ela só muda quando o usuário mandar), gera -r2, -r3, ...
+  let outputPath = join(OUTPUT_DIR, `jetphotosplus-v${version}.zip`);
+  if (existsSync(outputPath)) {
+    let revision = 2;
+    while (existsSync(join(OUTPUT_DIR, `jetphotosplus-v${version}-r${revision}.zip`))) revision++;
+    outputPath = join(OUTPUT_DIR, `jetphotosplus-v${version}-r${revision}.zip`);
+  }
+
   writeFileSync(outputPath, buildZip(files, SOURCE_DIR));
 
   console.log(`✔ ${relative(ROOT, outputPath)}`);

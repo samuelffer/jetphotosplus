@@ -1143,11 +1143,14 @@
          e o stat usa inline-flex + vertical-align:middle pra acompanhar a
          altura dos outros ".result__stat" da fileira. A caixa do botão
          cresceu junto com o ícone (30px) mas a margem negativa compensa na
-         mesma medida, então a altura da fileira continua igual à original. */
+         mesma medida, então a altura da fileira continua igual à original.
+         A margem vertical é assimétrica de propósito (-9px em cima, -5px
+         embaixo): sobe o botão 2px em relação aos ícones vizinhos sem
+         alterar a altura total ocupada (30 - 9 - 5 = 16px, igual antes). */
       .${MOBILE_LIKE_STAT_CLASS} { cursor:pointer; display:inline-flex; align-items:center; vertical-align:middle; }
       .${MOBILE_LIKE_BTN_CLASS} {
         display:inline-flex; align-items:center; justify-content:center;
-        width:30px; height:30px; margin:-7px -4px; padding:0;
+        width:30px; height:30px; margin:-9px -4px -5px; padding:0;
         border:0; background:transparent; border-radius:50%;
         cursor:pointer; transition:background .15s ease, opacity .15s ease, transform .1s ease;
       }

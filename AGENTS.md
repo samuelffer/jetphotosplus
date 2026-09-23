@@ -27,30 +27,32 @@ da sessão (Arena), o usuário baixa esse zip pelo navegador e testa a
 extensão no próprio PC. O GitHub é a ponte, não o destino final.
 
 1. Receba o pedido e altere o código em `extension/`.
-2. Suba a versão (ver tabela abaixo — todos os lugares juntos).
-3. Gere o pacote de teste:
+2. Gere o pacote de teste:
    ```bash
    node scripts/build-zip.mjs
    ```
    Isso cria `zips/jetphotosplus-v<versão>.zip` (a versão vem do
-   `manifest.json`). O zip sai com o `manifest.json` na **raiz**.
-   Cada modificação gera um zip novo, com a versão nova no nome —
-   nunca sobrescreva o zip de uma versão anterior.
-4. Commite e dê push **na branch da sessão (Arena)** — código + zip juntos:
+   `manifest.json`). O zip sai com o `manifest.json` na **raiz** e contém
+   **só os arquivos de instalação** — `CHANGELOG.md` fica de fora (é
+   documento do repositório, ver `ZIP_EXCLUDE` no script).
+   Cada modificação gera um zip novo e **nunca sobrescreve** um anterior:
+   como a versão só muda quando o usuário mandar, testes repetidos na
+   mesma versão ganham sufixo automático (`-r2`, `-r3`, ...).
+3. Commite e dê push **na branch da sessão (Arena)** — código + zip juntos:
    ```bash
    git add -A
-   git add -f zips/jetphotosplus-v<versão>.zip
+   git add -f zips/<nome-do-zip-gerado>.zip
    git commit -m "..."
    git push origin <branch-da-sessão>
    ```
    (`zips/` está no `.gitignore`, por isso o `-f`: os zips vivem SÓ nas
    branches de sessão, nunca no `main`.)
-5. Avise o usuário com o link do zip na branch pra ele baixar e testar.
-6. O usuário baixa, descompacta e carrega via "Carregar sem compactação"
+4. Avise o usuário com o link do zip na branch pra ele baixar e testar.
+5. O usuário baixa, descompacta e carrega via "Carregar sem compactação"
    (`chrome://extensions`). Se ele já tiver a pasta carregada, basta
    sobrescrever os arquivos e clicar no **↻**.
-7. Se ele reportar problema, corrija, suba a versão, gere um novo zip e
-   dê push de novo — tudo ainda só na branch da sessão.
+6. Se ele reportar problema, corrija, gere um novo zip e dê push de novo —
+   tudo ainda só na branch da sessão, **sem trocar a versão**.
 
 ### Regras que decorrem disso
 
@@ -65,7 +67,11 @@ extensão no próprio PC. O GitHub é a ponte, não o destino final.
 
 ## Versão: manter tudo sincronizado
 
-Sempre que subir a versão, atualize **todos** os lugares abaixo — eles já
+**Não troque a versão a cada alteração.** A versão só muda quando o usuário
+disser explicitamente qual deve ser (enquanto isso, os zips de teste da
+mesma versão se diferenciam pelo sufixo `-rN`).
+
+Quando ele mandar subir a versão, atualize **todos** os lugares abaixo — eles já
 ficaram divergentes uma vez e isso gerou confusão:
 
 | Arquivo | Onde |

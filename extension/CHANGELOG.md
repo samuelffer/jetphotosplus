@@ -10,7 +10,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 
 ### Botão de Like no layout mobile
 - Aumentado o ícone do botão de Like injetado no layout mobile de 16px para 20px (caixa de toque de 28px para 30px, sem alterar a altura da fileira de estatísticas).
-- Alinhado o botão verticalmente com os demais ícones da fileira (remoção da folga de baseline do `<img>` + `vertical-align: middle` no stat).
+- Alinhado o botão verticalmente com os demais ícones da fileira (remoção da folga de baseline do `<img>` + `vertical-align: middle` no stat), com ajuste fino de 2px pra cima.
 
 ---
 
