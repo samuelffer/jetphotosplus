@@ -1,0 +1,7 @@
+# Pacotes de teste gerados por scripts/build-zip.mjs
+# (nunca devem ser commitados — são só pra instalar localmente)
+zips/
+
+# Lixos comuns de sistema
+.DS_Store
+Thumbs.db
