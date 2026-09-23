@@ -100,6 +100,17 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Album/Like/Share (resultados + foto): rótulos e ícones em cinza neutro (#9aa0a6, tom do joinha não-curtido); branco no hover e no Like curtido.
 - Links do menu lateral mobile (.nav__link) agora no azul padrão do JetPhotos (#2c94e8).
 
+### Modo escuro: social mais claro + joinha da extensão branco
+- Album/Like/Share: cinza clareado (#c3c9d2 nos rótulos, invert(0.78) nos ícones); continua branco no hover e no Like curtido.
+- Filtros dos ícones agora valem pra img, svg e fonte de ícone (o layout mobile pode usar qualquer um dos três).
+- Joinha injetado pela extensão nos cards mobile (.jp-mobile-like-btn) vira branco no escuro (opacidade .4/1 de estado mantida).
+
+### Like curtido verde (TESTE) + ícone do mobile corrigido
+- Correção: o seletor do ícone do Like agora pega qualquer formato (img, svg, fonte de ícone ou span com fundo) — o joinha da página de foto no mobile estava escapando e ficava preto.
+- Like curtido = verde nos dois temas (rótulo + joinha, PC e mobile, resultados e foto): verde-claro (#3ddc84) no escuro, verde-escuro (#188038) no claro.
+- Não-curtido segue o padrão de cada tema (claro: nativo do site; escuro: cinza claro, branco no hover).
+- Joinha injetado pela extensão nos cards mobile acompanha: verde quando curtido (tom por tema).
+
 ---
 
 ## [2.0.0]

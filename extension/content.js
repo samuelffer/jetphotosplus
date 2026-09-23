@@ -693,14 +693,13 @@
          whose original light-theme colors become unreadable on dark backgrounds.
          They are scoped to the extension's dark-mode class so normal JetPhotos
          colors remain completely untouched when dark mode is off. */
-      /* Active Like state: JetPhotos sets this to a dark color in its
-         light-theme CSS. In dark mode the label must stay white, matching
-         the already-inverted Like icon. Keep this override scoped to the
-         active Like link so normal/site light-mode colors are untouched. */
+      /* Like curtido (TESTE): rótulo verde no modo escuro (#3ddc84). O
+         ícone verde vai na regra do bloco abaixo; o tom do modo claro fica
+         no estilo geral da extensão (fora do escopo dark). */
       html.jp-site-dark-active a.social__link.social__link--like.social__link--active,
       html.jp-site-dark-active a.social__link.social__link--like.social__link--active .social__text {
-        color: #ffffff !important;
-        -webkit-text-fill-color: #ffffff !important;
+        color: #3ddc84 !important;
+        -webkit-text-fill-color: #3ddc84 !important;
       }
 
       /* Account submenu: JetPhotos keeps these native account links at
@@ -736,12 +735,11 @@
         -webkit-text-fill-color: #ffffff !important;
       }
 
-      /* Explicitly cover the overlap: an already-active Like link while
-         hovered must remain white as well, regardless of source specificity. */
+      /* Curtido + hover: continua verde (curtida = verde, sempre). */
       html.jp-site-dark-active a.social__link.social__link--like.social__link--active:hover,
       html.jp-site-dark-active a.social__link.social__link--like.social__link--active:hover .social__text {
-        color: #ffffff !important;
-        -webkit-text-fill-color: #ffffff !important;
+        color: #3ddc84 !important;
+        -webkit-text-fill-color: #3ddc84 !important;
       }
 
       /* Queue estimator: DOM próprio da extensão, com as cores dark-mode
@@ -1214,6 +1212,13 @@
       @media (prefers-reduced-motion: reduce) {
         .${MOBILE_LIKE_BTN_CLASS}.jp-mobile-like-btn--pop img { animation:none; }
       }
+      /* Like curtido = verde (TESTE): vale nos dois temas — o bloco do
+         modo escuro sobrescreve o tom quando ligado. Não-curtido segue o
+         padrão de cada tema (claro: nativo do site; escuro: cinza claro). */
+      a.social__link.social__link--like.social__link--active,
+      a.social__link.social__link--like.social__link--active .social__text { color:#188038 !important; -webkit-text-fill-color:#188038 !important; }
+      a.social__link.social__link--like.social__link--active > :not(.social__text):not(:has(.social__text)) { filter:invert(1) sepia(1) saturate(5) hue-rotate(90deg) brightness(.72) !important; opacity:1 !important; }
+      .jp-mobile-like-btn.jp-mobile-like-btn--liked img { filter:invert(1) sepia(1) saturate(5) hue-rotate(90deg) brightness(.72) !important; }
     `;
     document.head.appendChild(style);
   }
@@ -1413,27 +1418,23 @@
     /* Títulos avulsos com cor escura explícita (ex: upload guidelines). */
     html.jp-site-dark-active .title { color:#f2f2f2 !important; }
     /* Album/Like/Share (resultados + foto): cinza claro nos rótulos e
-       ícones; branco no hover e no Like curtido (o texto desses dois
-       estados já é branco nas regras acima — aqui vão o cinza padrão e os
-       filtros dos ícones). brightness(0) zera a cor original e invert(0.78)
-       chega no cinza claro; vale pra img, svg e fonte de ícone (o mobile
-       pode usar qualquer um dos três). Opacidade 1 pra o tom não variar.
+       ícones; branco no hover; VERDE no Like curtido (rótulo nas regras
+       acima, ícone aqui). brightness(0) zera a cor original e invert(0.78)
+       chega no cinza claro. O seletor > :not(...) pega o ícone seja ele
+       img, svg, fonte ou span com fundo (o mobile varia) — excluindo o
+       rótulo pra nunca filtrar texto. Opacidade 1 pra o tom não variar.
        Modo claro: intocado (escopo dark). */
     html.jp-site-dark-active a.social__link,
     html.jp-site-dark-active a.social__link .social__text { color:#c3c9d2 !important; -webkit-text-fill-color:#c3c9d2 !important; }
-    html.jp-site-dark-active a.social__link img,
-    html.jp-site-dark-active a.social__link svg,
-    html.jp-site-dark-active a.social__link i { filter:brightness(0) invert(0.78) !important; opacity:1 !important; }
-    html.jp-site-dark-active a.social__link:hover img,
-    html.jp-site-dark-active a.social__link:hover svg,
-    html.jp-site-dark-active a.social__link:hover i,
-    html.jp-site-dark-active a.social__link.social__link--like.social__link--active img,
-    html.jp-site-dark-active a.social__link.social__link--like.social__link--active svg,
-    html.jp-site-dark-active a.social__link.social__link--like.social__link--active i { filter:invert(1) !important; opacity:1 !important; }
+    html.jp-site-dark-active a.social__link > :not(.social__text):not(:has(.social__text)) { filter:brightness(0) invert(0.78) !important; opacity:1 !important; }
+    html.jp-site-dark-active a.social__link:hover > :not(.social__text):not(:has(.social__text)) { filter:invert(1) !important; opacity:1 !important; }
+    html.jp-site-dark-active a.social__link.social__link--like.social__link--active > :not(.social__text):not(:has(.social__text)) { filter:invert(1) sepia(1) saturate(5) hue-rotate(90deg) !important; opacity:1 !important; }
     /* Joinha injetado pela extensão nos cards do layout mobile: o arquivo
-       é preto, vira branco no escuro; a opacidade .4/1 (não-curtido x
-       curtido) segue valendo. Modo claro: intocado (escopo dark). */
+       é preto — branco (apagado) no escuro quando não-curtido, VERDE quando
+       curtido. Modo claro: verde escuro quando curtido (regra no estilo
+       geral), senão o preto nativo com a opacidade .4/1. */
     html.jp-site-dark-active .jp-mobile-like-btn img { filter:invert(1) !important; }
+    html.jp-site-dark-active .jp-mobile-like-btn.jp-mobile-like-btn--liked img { filter:invert(1) sepia(1) saturate(5) hue-rotate(90deg) !important; }
     /* Ícones de câmera do perfil (trocar avatar/capa): brancos no escuro.
        Vale só nas páginas de fotógrafo (jp-on-profile). Cobre fonte de
        ícone, SVG e imagem (brightness zera a cor, invert vira branco). */
