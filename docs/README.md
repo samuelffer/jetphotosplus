@@ -16,11 +16,11 @@ A identidade usa azul inspirado no projeto atual, com um acento mais controlado:
 
 ## Download
 
-O site consulta automaticamente a release `1.9.3-BETA` do repositório oficial do projeto através da API pública do GitHub.
+O site consulta automaticamente a **última release publicada** (`/releases/latest`) do repositório oficial do projeto através da API pública do GitHub.
 
 Se a release tiver um arquivo `.zip`, o botão **Download** aponta diretamente para esse asset. Se o asset não estiver disponível ou a API estiver temporariamente indisponível, o botão abre a página da release como fallback.
 
-Para publicar uma nova versão, basta criar a nova Release no GitHub e atualizar `RELEASE_API` e `FALLBACK_RELEASE` em `index.html` para a nova tag.
+Para publicar uma nova versão, basta criar a nova Release no GitHub: como o site consulta `/releases/latest`, ela passa a ser exibida automaticamente. Os textos estáticos de `index.html` (`Install vX.Y.Z` e o fallback de `version`) são apenas o estado exibido antes de a API responder — atualize-os junto para manter o pré-carregamento coerente com a nova versão.
 
 ## Repositório
 
@@ -28,7 +28,9 @@ Para publicar uma nova versão, basta criar a nova Release no GitHub e atualizar
 
 ## Release atual
 
-`1.9.3-BETA` — `https://github.com/samuelffer/jetphotosplus/releases/tag/1.9.3-BETA`
+`v1.9.4` — `https://github.com/samuelffer/jetphotosplus/releases/tag/v1.9.4`
+
+> Última release publicada. A versão **2.0.0** já está no código (`extension/manifest.json`), mas ainda depende de uma release no GitHub para aparecer no site.
 
 
 ## Branding note
