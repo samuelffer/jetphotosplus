@@ -1053,6 +1053,16 @@
       #jp-like-widget-bubble:focus-visible { outline:2px solid #669DF6; outline-offset:2px; }
       #jp-like-widget-bubble svg { width:20px; height:20px; flex:0 0 auto; }
       #jp-like-widget-bubble.jp-bubble-done #jp-like-widget-bubble-count { color:#8fce8f; }
+      /* Durante a leva, a bolha pulsa verde (é o feedback de progresso no
+         celular, onde a barrinha do widget está escondida). */
+      @keyframes jpBubbleLiking {
+        0%, 100% { box-shadow:0 5px 20px rgba(0,0,0,.30), 0 0 0 0 rgba(76,175,80,.55); }
+        50% { box-shadow:0 5px 20px rgba(0,0,0,.30), 0 0 0 9px rgba(76,175,80,0); }
+      }
+      #jp-like-widget-bubble.jp-bubble-liking { border-color:#4caf50; animation:jpBubbleLiking 1.1s ease-out infinite; }
+      @media (prefers-reduced-motion: reduce) {
+        #jp-like-widget-bubble.jp-bubble-liking { animation:none; border-color:#4caf50; }
+      }
       @keyframes jpLikeWidgetIn { from {opacity:0; transform:translateY(6px)} to {opacity:1; transform:translateY(0)} }
 
       #jp-like-settings-menu {
@@ -1923,11 +1933,31 @@
       bubble.innerHTML = `
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.9c0 5.2-8.8 10.1-8.8 10.1S3.2 14.1 3.2 8.9A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
         <span id="jp-like-widget-bubble-count">\u2026</span>`;
-      bubble.addEventListener('click', () => setWidgetCollapsed(false));
+      bubble.addEventListener('click', () => {
+        // No celular a bolha É o widget: o toque curte tudo direto (via o
+        // botão escondido, reaproveitando toda a lógica da leva). Nos outros
+        // casos (desktop, nada faltando ou leva em andamento) expande.
+        if (isMobileLayout() && !isLiking && (lastBubbleMissing ?? 0) > 0) {
+          document.getElementById('jp-like-all-btn')?.click();
+          return;
+        }
+        setWidgetCollapsed(false);
+      });
       document.body.appendChild(bubble);
 
-      // Aplica o estado salvo (aberto/recolhido) sem regravar no storage.
-      setWidgetCollapsed(currentSettings.widgetCollapsed === true, false);
+      // Estado inicial: no celular a bolha já nasce como widget principal;
+      // no desktop vale o estado salvo. Sem regravar no storage.
+      setWidgetCollapsed(currentSettings.widgetCollapsed === true || isMobileLayout(), false);
+
+      // Reaplica ao girar/redimensionar (ex: celular deitado que passa dos
+      // 520px volta a mostrar o widget grande). Uma vez só por página.
+      if (!mobileViewWired && typeof window.matchMedia === 'function') {
+        mobileViewWired = true;
+        window.matchMedia('(max-width: 520px)').addEventListener('change', event => {
+          if (!document.getElementById('jp-like-context-widget')) return;
+          setWidgetCollapsed(currentSettings.widgetCollapsed === true || event.matches, false);
+        });
+      }
     } else {
       likeWidgetEl = null;
     }
@@ -1939,6 +1969,18 @@
   // Alterna widget aberto <-> bolha recolhida. O estado é persistido pra
   // continuar igual ao trocar de página; o persist=false é só pra aplicar
   // o valor salvo na montagem sem regravar à toa.
+  // Layout mobile = mesma largura onde o CSS troca o widget pra barra
+  // inferior (max-width: 520px). Mantido em JS também pra bolha virar o
+  // widget principal no celular (ver buildPanel).
+  function isMobileLayout() {
+    return typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 520px)').matches;
+  }
+
+  // Última contagem vista pela bolha (null = ainda analisando). É o que o
+  // toque na bolha consulta pra decidir entre "curtir tudo" e "expandir".
+  let lastBubbleMissing = null;
+  let mobileViewWired = false;
+
   function setWidgetCollapsed(collapsed, persist = true) {
     currentSettings.widgetCollapsed = collapsed;
     if (persist) chrome.storage.local.set({ [STORAGE_KEY_WIDGET_COLLAPSED]: collapsed });
@@ -1957,17 +1999,20 @@
     const count = document.getElementById('jp-like-widget-bubble-count');
     if (!bubble || !count) return;
     if (missingOrNull == null) {
+      lastBubbleMissing = null;
       count.textContent = '\u2026';
       bubble.classList.remove('jp-bubble-done');
       bubble.setAttribute('aria-label', t('analyzing'));
       return;
     }
+    lastBubbleMissing = missingOrNull;
     const done = missingOrNull <= 0;
     count.textContent = done ? '\u2713' : String(missingOrNull);
     bubble.classList.toggle('jp-bubble-done', done);
     bubble.setAttribute('aria-label', done
       ? (currentSettings.language === 'en' ? 'All liked!' : 'Tudo curtido!')
       : `${missingOrNull} ${t('missing')}`);
+    bubble.title = (isMobileLayout() && !done) ? t('likeMissing') : t('expand');
   }
 
   function updateStatus(cards, missing) {
@@ -3184,6 +3229,7 @@
         const total = likeAllMissing(() => {
           // onDone: reabilita o botão quando a leva de cliques termina.
           updateBubble(0); // a leva terminou: bolha mostra ✓ (o refresh final confirma)
+          document.getElementById('jp-like-widget-bubble')?.classList.remove('jp-bubble-liking');
           if (btn) {
             btn.disabled = false;
             btn.style.opacity = '1';
@@ -3210,6 +3256,8 @@
           btn.style.opacity = '.6';
           btn.style.cursor = 'default';
         }
+        // Feedback na bolha (principalmente no celular, onde o widget está escondido).
+        document.getElementById('jp-like-widget-bubble')?.classList.toggle('jp-bubble-liking', total > 0);
 
         if (textEl) {
           // O texto abaixo é escrito diretamente durante a leva. Invalide o

@@ -23,6 +23,11 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Estado aberto/recolhido salvo em `chrome.storage.local`, continua igual ao trocar de página.
 - A bolha acompanha a contagem ao vivo, inclusive durante o "curtir faltantes".
 
+### Bolha vira o widget principal no celular
+- Em telas de até 520px o widget já abre recolhido na bolha (coração + faltantes); girar/redimensionar alterna sozinho, sem mexer na preferência salva do desktop.
+- Tocar na bolha no celular curte todas as faltantes direto (via o botão escondido, com a mesma contagem ao vivo); tocar sem nada faltando, durante a leva ou no desktop continua expandindo.
+- Durante a leva a bolha pulsa verde; ao terminar mostra o `✓` verde.
+
 ---
 
 ## [2.0.0]
