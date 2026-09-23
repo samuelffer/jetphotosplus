@@ -347,59 +347,18 @@
     return null;
   }
 
-  // ---- Joinha verde exato quando curtido (TESTE) ----
-  // Filtro CSS não chega no tom exato do rótulo (o arquivo do ícone não
-  // é preto puro, e hue-rotate a partir dele sai desbotado). Então o JS
-  // troca o src pelo pixel transparente e marca com .jp-like-green: o
-  // CSS mostra o fundo verde recortado pela própria arte (máscara). Só
-  // atua no thumbs-up conhecido; outro formato cai no fallback do CSS.
-  const LIKE_GREEN_IMG_CLASS = 'jp-like-green';
-  const TRANSPARENT_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-
-  function setLikeIconGreen(img, green) {
-    if (!img) return;
-    const src = img.getAttribute('src') || '';
-    const isThumbs = img.classList.contains(LIKE_GREEN_IMG_CLASS) || src.includes('thumbs-up');
-    if (!isThumbs) return; // formato desconhecido: deixa o CSS cuidar
-    if (green) {
-      if (!img.classList.contains(LIKE_GREEN_IMG_CLASS)) {
-        img.dataset.jpOrigSrc = img.src; // guarda o original pra restaurar
-        img.src = TRANSPARENT_PIXEL;
-        img.classList.add(LIKE_GREEN_IMG_CLASS);
-        img.style.setProperty('filter', 'none', 'important'); // neutraliza os filtros do CSS
-      }
-    } else if (img.classList.contains(LIKE_GREEN_IMG_CLASS)) {
-      img.classList.remove(LIKE_GREEN_IMG_CLASS);
-      img.style.removeProperty('filter');
-      if (img.dataset.jpOrigSrc) { img.src = img.dataset.jpOrigSrc; delete img.dataset.jpOrigSrc; }
-    }
-  }
-
-  function syncLikeAnchorIcon(anchor) {
-    if (!anchor) return;
-    const liked = anchor.classList.contains('social__link--active') || anchor.getAttribute('aria-pressed') === 'true';
-    setLikeIconGreen(anchor.querySelector('img'), liked);
-  }
-
-  function syncGreenLikeIcons() {
-    document.querySelectorAll('a.social__link--like').forEach(syncLikeAnchorIcon);
-    document.querySelectorAll('.' + MOBILE_LIKE_BTN_CLASS).forEach(btn => setLikeIconGreen(btn.querySelector('img'), btn.classList.contains(MOBILE_LIKE_BTN_LIKED_CLASS)));
-  }
-
   function forceLikedVisual(anchor) {
     if (!anchor) return;
     if (!anchor.classList.contains('social__link--active')) {
       anchor.classList.add('social__link--active');
       anchor.setAttribute('aria-pressed', 'true');
     }
-    setLikeIconGreen(anchor.querySelector('img'), true);
   }
 
   function revokeLikedVisual(anchor) {
     if (!anchor) return;
     anchor.classList.remove('social__link--active');
     anchor.removeAttribute('aria-pressed');
-    setLikeIconGreen(anchor.querySelector('img'), false);
   }
 
   // Aplica o estado confirmado (liked/unliked) direto nos elementos dessa
@@ -587,7 +546,6 @@
   function applyMobileButtonState(button, liked) {
     button.classList.toggle(MOBILE_LIKE_BTN_LIKED_CLASS, liked);
     button.setAttribute('aria-pressed', liked ? 'true' : 'false');
-    setLikeIconGreen(button.querySelector('img'), liked);
   }
 
   const MOBILE_LIKE_BTN_POP_CLASS = 'jp-mobile-like-btn--pop';
@@ -728,6 +686,25 @@
   // Respeita prefers-reduced-motion pra usuários sensíveis a movimento.
   // ---------------------------------------------------------------------
   const STYLE_ID = 'jp-plus-styles';
+  // Filtros SVG de cor exata (like curtido = mesmo tom do rótulo).
+  // feColorMatrix constante: todo pixel opaco vira o verde alvo (o alfa
+  // é preservado, então anti-serrilhado continua suave). Referência
+  // same-document (url(#id)): sem fetch, sem problema de CSP/encoding.
+  const LIKE_GREEN_SVG_ID = 'jp-like-green-filters';
+  function ensureLikeGreenFilters() {
+    if (document.getElementById(LIKE_GREEN_SVG_ID)) return;
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('id', LIKE_GREEN_SVG_ID);
+    svg.setAttribute('width', '0');
+    svg.setAttribute('height', '0');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.style.position = 'absolute';
+    svg.innerHTML = `
+      <filter id="jp-green-dark"><feColorMatrix type="matrix" values="0 0 0 0 0.239 0 0 0 0 0.863 0 0 0 0 0.518 0 0 0 1 0"/></filter>
+      <filter id="jp-green-light"><feColorMatrix type="matrix" values="0 0 0 0 0.094 0 0 0 0 0.502 0 0 0 0 0.220 0 0 0 1 0"/></filter>`;
+    (document.head || document.documentElement).appendChild(svg);
+  }
+
   function injectStyles() {
     if (document.getElementById(STYLE_ID)) return;
     const style = document.createElement('style');
@@ -1261,17 +1238,13 @@
          padrão de cada tema (claro: nativo do site; escuro: cinza claro). */
       a.social__link.social__link--like.social__link--active,
       a.social__link.social__link--like.social__link--active .social__text { color:#188038 !important; -webkit-text-fill-color:#188038 !important; }
-      a.social__link.social__link--like.social__link--active > :not(.social__text):not(:has(.social__text)):not(i):not(svg),
-      a.social__link.social__link--like.social__link--active .social__text > :not(i):not(svg),
-      a.social__link.social__link--like.social__link--active::before { filter:invert(1) sepia(1) saturate(5) hue-rotate(90deg) brightness(.72) !important; opacity:1 !important; }
-      a.social__link.social__link--like.social__link--active > i,
-      a.social__link.social__link--like.social__link--active > svg,
-      a.social__link.social__link--like.social__link--active .social__text > i,
-      a.social__link.social__link--like.social__link--active .social__text > svg { color:#188038 !important; fill:#188038 !important; }
-      img.jp-like-green { background-color:#188038 !important; -webkit-mask-image:url("https://www.jetphotos.com/assets/img/thumbs-up-black.svg") !important; mask-image:url("https://www.jetphotos.com/assets/img/thumbs-up-black.svg") !important; -webkit-mask-size:contain !important; mask-size:contain !important; -webkit-mask-repeat:no-repeat !important; mask-repeat:no-repeat !important; -webkit-mask-position:center !important; mask-position:center !important; }
-      .jp-mobile-like-btn.jp-mobile-like-btn--liked img { filter:invert(1) sepia(1) saturate(5) hue-rotate(90deg) brightness(.72) !important; }
+      a.social__link.social__link--like.social__link--active > :not(.social__text):not(:has(.social__text)),
+      a.social__link.social__link--like.social__link--active .social__text *,
+      a.social__link.social__link--like.social__link--active::before { filter:url(#jp-green-light) !important; opacity:1 !important; }
+      .jp-mobile-like-btn.jp-mobile-like-btn--liked img { filter:url(#jp-green-light) !important; }
     `;
     document.head.appendChild(style);
+    ensureLikeGreenFilters();
   }
 
   // ---------------------------------------------------------------------
@@ -1470,8 +1443,7 @@
     html.jp-site-dark-active .title { color:#f2f2f2 !important; }
     /* Album/Like/Share (resultados + foto): cinza claro nos rótulos e
        ícones; branco no hover; VERDE no Like curtido (rótulo nas regras
-       acima; ícone: o JS troca o <img> conhecido pela máscara verde exata,
-       e o filtro abaixo é só fallback pra arquivo desconhecido).
+       acima; ícone: matriz SVG constante no tom exato, regra abaixo).
        brightness(0) zera a cor original e invert(0.78) chega no cinza
        claro. Os seletores pegam o ícone como filho direto, aninhado no
        rótulo ou ::before (o mobile varia) — i/svg vão por cor/fill exatas,
@@ -1493,23 +1465,18 @@
     html.jp-site-dark-active a.social__link:hover > svg,
     html.jp-site-dark-active a.social__link:hover .social__text > i,
     html.jp-site-dark-active a.social__link:hover .social__text > svg { color:#ffffff !important; fill:#ffffff !important; }
-    html.jp-site-dark-active a.social__link.social__link--like.social__link--active > :not(.social__text):not(:has(.social__text)):not(i):not(svg),
-    html.jp-site-dark-active a.social__link.social__link--like.social__link--active .social__text > :not(i):not(svg),
-    html.jp-site-dark-active a.social__link.social__link--like.social__link--active::before { filter:invert(1) sepia(1) saturate(5) hue-rotate(90deg) !important; opacity:1 !important; }
-    html.jp-site-dark-active a.social__link.social__link--like.social__link--active > i,
-    html.jp-site-dark-active a.social__link.social__link--like.social__link--active > svg,
-    html.jp-site-dark-active a.social__link.social__link--like.social__link--active .social__text > i,
-    html.jp-site-dark-active a.social__link.social__link--like.social__link--active .social__text > svg { color:#3ddc84 !important; fill:#3ddc84 !important; }
-    /* Verde EXATO no joinha curtido: o JS troca o src pelo pixel
-       transparente e marca com .jp-like-green; o fundo verde aparece
-       recortado pela própria arte do ícone (máscara). */
-    html.jp-site-dark-active img.jp-like-green { background-color:#3ddc84 !important; -webkit-mask-image:url("https://www.jetphotos.com/assets/img/thumbs-up-black.svg") !important; mask-image:url("https://www.jetphotos.com/assets/img/thumbs-up-black.svg") !important; -webkit-mask-size:contain !important; mask-size:contain !important; -webkit-mask-repeat:no-repeat !important; mask-repeat:no-repeat !important; -webkit-mask-position:center !important; mask-position:center !important; }
+    /* Verde EXATO do curtido = mesmo tom do rótulo (#3ddc84): matriz
+       constante, idempotente — vale em qualquer profundidade (filho
+       direto, aninhado no rótulo ou ::before), qualquer formato. */
+    html.jp-site-dark-active a.social__link.social__link--like.social__link--active > :not(.social__text):not(:has(.social__text)),
+    html.jp-site-dark-active a.social__link.social__link--like.social__link--active .social__text *,
+    html.jp-site-dark-active a.social__link.social__link--like.social__link--active::before { filter:url(#jp-green-dark) !important; opacity:1 !important; }
     /* Joinha injetado pela extensão nos cards do layout mobile: o arquivo
        é preto — branco (apagado) no escuro quando não-curtido, VERDE quando
        curtido. Modo claro: verde escuro quando curtido (regra no estilo
        geral), senão o preto nativo com a opacidade .4/1. */
     html.jp-site-dark-active .jp-mobile-like-btn img { filter:invert(1) !important; }
-    html.jp-site-dark-active .jp-mobile-like-btn.jp-mobile-like-btn--liked img { filter:invert(1) sepia(1) saturate(5) hue-rotate(90deg) !important; }
+    html.jp-site-dark-active .jp-mobile-like-btn.jp-mobile-like-btn--liked img { filter:url(#jp-green-dark) !important; }
     /* Ícones de câmera do perfil (trocar avatar/capa): brancos no escuro.
        Vale só nas páginas de fotógrafo (jp-on-profile). Cobre fonte de
        ícone, SVG e imagem (brightness zera a cor, invert vira branco). */
@@ -2022,7 +1989,6 @@
         if (!liked) missing++;
       });
 
-      syncGreenLikeIcons();
       updateStatus(cards, missing);
       return { cards, missing };
     } catch (error) {

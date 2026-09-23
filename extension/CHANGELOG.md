@@ -116,6 +116,11 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Barrinha da foto no mobile: seletores expandidos (ícone como filho direto, aninhado no rótulo ou ::before; i/svg por cor exata) pra pegar o formato que escapava e ficava preto.
 - Filtros verdes do CSS viraram fallback pra arquivos de ícone desconhecidos.
 
+### Like verde unificado: ícone = tom exato do rótulo (TESTE)
+- Troca de técnica (máscara + JS removidos): o verde do joinha curtido agora é feColorMatrix constante — todo pixel vira exatamente #3ddc84 (escuro) ou #188038 (claro), igual ao rótulo LIKE, em qualquer formato de ícone.
+- Seletor verde aprofunda (.social__text *): cobre ícone aninhado em qualquer nível da barrinha da foto no mobile.
+- Botão injetado nos cards mobile usa a mesma matriz (tom por tema).
+
 ---
 
 ## [2.0.0]
