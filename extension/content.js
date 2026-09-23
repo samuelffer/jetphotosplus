@@ -58,8 +58,8 @@
   // o script em "document_start" (o mais cedo possível) e, aqui em cima,
   // fazemos uma checagem rápida e isolada: se o modo escuro estiver ligado,
   // escondemos a página (fundo escuro neutro + body invisível) até o
-  // restante do script (init() -> applySiteDarkMode()) terminar a primeira
-  // recolorização. Um timeout de segurança garante que a página nunca
+  // restante do script (init() -> applySiteDarkMode()) aplicar o tema.
+  // Um timeout de segurança garante que a página nunca
   // fique escondida por muito tempo, mesmo se algo falhar.
   // ---------------------------------------------------------------------
   const PRELOAD_HIDE_CLASS = 'jp-dark-preload-hide';
@@ -78,9 +78,9 @@
     (document.head || document.documentElement).appendChild(style);
   }
 
-  // Chamado depois que applySiteDarkMode() já rodou a primeira recolorização
-  // (ou pelo timeout de segurança). Idempotente: pode ser chamado mais de
-  // uma vez sem problema.
+  // Chamado depois que applySiteDarkMode() já aplicou o tema (ou pelo
+  // timeout de segurança). Idempotente: pode ser chamado mais de uma vez
+  // sem problema.
   function removePreloadHide() {
     if (preloadHideRemoved) return;
     preloadHideRemoved = true;
@@ -744,10 +744,8 @@
         -webkit-text-fill-color: #ffffff !important;
       }
 
-      /* Queue estimator: this is extension-owned DOM and is refreshed in
-         place when the live queue data changes. Keep its dark-mode colors
-         here instead of letting the generic page recolor observer touch its
-         table cells after every refresh (which caused a visible white flash). */
+      /* Queue estimator: DOM próprio da extensão, com as cores dark-mode
+         aqui mesmo (o tema manual do site não toca em nada com id jp-*). */
       html.jp-site-dark-active #jp-site-queue-tracker,
       html.jp-site-dark-active #jp-site-queue-tracker .jp-plus-queue-table,
       html.jp-site-dark-active #jp-site-queue-tracker .jp-plus-queue-table tbody {
@@ -950,7 +948,7 @@
         background:#1c1c1c; color:#eeeeee;
         border:1px solid #464646; border-radius:999px;
         box-shadow:0 5px 20px rgba(0,0,0,.30);
-        font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size:15px; font-weight:700; line-height:1;
+        font-family:'Fira Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size:15px; font-weight:700; line-height:1;
         cursor:pointer;
         animation:jpBubbleIn .18s ease;
       }
@@ -1014,7 +1012,7 @@
         background:#ffffff; color:#212121;
         border:1px solid #d8d8d8; border-left:4px solid #1f8dd6; border-radius:8px;
         padding:11px 16px;
-        font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        font-family:'Fira Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         font-size:14px; font-weight:600; line-height:1.35; text-align:center;
         box-shadow:0 5px 20px rgba(0,0,0,.22); pointer-events:none;
         opacity:0; transition:opacity .18s ease;
@@ -1178,8 +1176,8 @@
          ícone .svg do site; a diferença entre curtida/não-curtida é só
          opacidade (o arquivo é preto fixo nos dois estados, então isso é
          suficiente e funciona igual em qualquer tema, sem depender do
-         filtro de dark mode automático — por isso essa classe fica de
-         fora da recoloração genérica, ver recolorElement()).
+         filtro de dark mode automático — por isso o tema manual do site
+         nunca toca nesses ícones (ver a lista "nunca tocados" no tema).
          Alinhamento: o <img> é display:block pra eliminar a folga de
          baseline do inline (que deixava o ícone uns px acima dos vizinhos)
          e o stat usa inline-flex + vertical-align:middle pra acompanhar a
@@ -1271,257 +1269,118 @@
   }
 
   // =======================================================================
-  // >>> INÍCIO DO BLOCO EXPERIMENTAL <<<
   // -----------------------------------------------------------------------
-  // Modo escuro do SITE (não só do painel). MÉTODO NOVO (v1.8): recoloração
-  // direta, sem filtro global.
+  // Modo escuro do SITE (não só do painel). TEMA MANUAL: folha de estilo
+  // escrita à mão para os seletores reais do JetPhotos (paleta + classes
+  // BEM extraídas do site via snippet de console).
   //
-  // A versão anterior usava "smart invert" (filter: invert()+hue-rotate()
-  // na página inteira, com reinversão pontual em exceções). Foi
-  // abandonada porque tem 3 problemas estruturais que não dá pra corrigir
-  // só com mais exceções:
-  //   1) fotos que carregam DEPOIS do primeiro scan (lazy-load, paginação)
-  //      ficam sem a correção, então saem com cor errada;
-  //   2) hue-rotate não reconstrói o matiz exato de cores saturadas (um
-  //      azul de marca podia sair alaranjado);
-  //   3) cancelar a inversão num container pra proteger um fundo escuro
-  //      (ex: overlay translúcido sobre uma foto de capa) cancela TUDO
-  //      dentro dele — inclusive texto que devia ter sido invertido
-  //      normalmente. Foi isso que deixou números pretos sobre fundo
-  //      escuro (ilegíveis).
-  //
-  // MÉTODO NOVO: em vez de inverter e depois consertar, cada elemento é
-  // lido individualmente (getComputedStyle) e recolorido de forma
-  // direcionada:
-  //   - Fundo/texto claros (quase branco/preto, baixa saturação) →
-  //     sobrescritos com uma cor escura/clara fixa via inline style
-  //     !important, escolhida por faixa de luminosidade (mesma paleta
-  //     usada no painel da extensão, pra manter consistência visual).
-  //   - Cores saturadas/de marca (azul do site, badges coloridos etc.) →
-  //     NUNCA tocadas. Ficam com a cor original, que já costuma ficar
-  //     legível sobre fundo escuro.
-  //   - Imagens, vídeos, canvas, svg, iframe → NUNCA tocados. É
-  //     impossível "escurecer" uma fotografia real sem estragar a cor;
-  //     a solução correta é simplesmente não mexer nelas.
-  // Como cada elemento é resolvido individualmente (não em cascata via
-  // filter), não existe mais o problema de um container "vazar" a
-  // recoloração pros filhos.
-  // =======================================================================
+  // Por que manual, depois de duas tentativas automáticas:
+  //   - "smart invert" (filter global + reinversão): quebrava o matiz de
+  //     cores saturadas e errava fotos de lazy-load.
+  //   - recoloração por elemento (getComputedStyle + !important inline +
+  //     observer): piscava em conteúdo dinâmico, errava gradientes, bordas,
+  //     sombras e iframes, e custava CPU revisitando o DOM inteiro.
+  // O tema manual não tem JS de varredura: é só uma classe no <html>
+  // (jp-site-dark-active) + CSS com !important. Fotos, vídeos, canvas, SVG,
+  // iframes, o header (já escuro) e cores de marca (azul picton, botões de
+  // share) nunca são tocados — as regras miram só página, cards, textos,
+  // links, formulários e controles.
+  // -----------------------------------------------------------------------
   const SITE_DARK_HTML_CLASS = 'jp-site-dark-active';
+  const SITE_DARK_STYLE_ID = 'jp-site-dark-theme';
 
-  // Paleta reaproveitada do painel da extensão (--jp-bg / --jp-text /
-  // --jp-subtext / --jp-border no modo escuro), pra manter a mesma
-  // identidade visual entre o painel e o site recolorido.
-  const DARK_PALETTE = {
-    bgBase: '#202124',     // fundos que eram quase brancos
-    bgElevated: '#2d2e31', // fundos que eram cinza-claro (cards, inputs)
-    border: '#3c4043',     // bordas/divisores que eram cinza-claro
-    textPrimary: '#e8eaed',   // texto que era quase preto
-    textSecondary: 'rgb(224 224 224)'  // texto secundário no modo escuro: #e0e0e0
-  };
+  const SITE_DARK_THEME_CSS = `
+    html.jp-site-dark-active { color-scheme:dark; }
+    /* Página: fundo + texto base (o #202124 casa com o preload anti-flash). */
+    html.jp-site-dark-active body,
+    html.jp-site-dark-active .page,
+    html.jp-site-dark-active div[class*="page--"],
+    html.jp-site-dark-active .main,
+    html.jp-site-dark-active .main__section { background-color:#202124 !important; color:#e8e8e8 !important; }
+    /* Cards brancos (resultados, painéis). */
+    html.jp-site-dark-active .box,
+    html.jp-site-dark-active div[class*="box--"] { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
+    /* Títulos. */
+    html.jp-site-dark-active h1,
+    html.jp-site-dark-active h2,
+    html.jp-site-dark-active h3,
+    html.jp-site-dark-active h4,
+    html.jp-site-dark-active h5,
+    html.jp-site-dark-active h6,
+    html.jp-site-dark-active .head { color:#f2f2f2 !important; }
+    /* Links: azul clareado pra leitura no escuro (o azul puro #2c94e8 e o
+       azul-link padrão #0000ee somem no fundo escuro). Botões, logo e moldura
+       de foto ficam de fora — têm estilo próprio. */
+    html.jp-site-dark-active a:not(.btn):not(.header__logo):not(.gallery-photo__frame) { color:#6fb1f0 !important; }
+    /* Guarda: o tema nunca toca nos links do submenu da extensão. */
+    html.jp-site-dark-active #jp-plus-submenu a { color:inherit !important; }
+    /* Submenu desktop (era #fefefe). */
+    html.jp-site-dark-active ul.nav-desktop__list--submenu { background-color:#2b2d31 !important; border-color:#3a3d43 !important; }
+    /* Textos da galeria + rótulos de formulário. */
+    html.jp-site-dark-active .gallery-photo__info,
+    html.jp-site-dark-active .gallery-photo__text { color:#e8e8e8 !important; }
+    html.jp-site-dark-active label.form__label { color:#b0b0b0 !important; }
+    /* Campos: wrappers brancos + os inputs. */
+    html.jp-site-dark-active .input-wrapper,
+    html.jp-site-dark-active #header__searchBoxInputWrapper { background-color:#2b2d31 !important; border-color:#4b4e55 !important; }
+    html.jp-site-dark-active input[type="text"],
+    html.jp-site-dark-active input[type="search"],
+    html.jp-site-dark-active input[type="email"],
+    html.jp-site-dark-active input[type="password"],
+    html.jp-site-dark-active input[type="url"],
+    html.jp-site-dark-active input[type="number"],
+    html.jp-site-dark-active input[type="tel"],
+    html.jp-site-dark-active .input-wrapper__field,
+    html.jp-site-dark-active .header__searchBoxInput,
+    html.jp-site-dark-active textarea { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#4b4e55 !important; }
+    html.jp-site-dark-active input::placeholder,
+    html.jp-site-dark-active textarea::placeholder { color:#8e8e8e !important; opacity:1 !important; }
+    /* Selects (busca avançada etc.) + as opções. */
+    html.jp-site-dark-active select,
+    html.jp-site-dark-active .select__control { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#4b4e55 !important; }
+    html.jp-site-dark-active option,
+    html.jp-site-dark-active optgroup { background-color:#2b2d31 !important; color:#e8e8e8 !important; }
+    /* Botões genéricos claros viram escuros; o azul picton e o transparente
+       ficam intactos (já funcionam no escuro). */
+    html.jp-site-dark-active .btn:not(.btn--picton-blue):not(.btn--transparent) { background-color:#3a3d43 !important; color:#e8e8e8 !important; border-color:#4b4e55 !important; }
+    /* Shares mantêm a cor de marca; só garante o texto branco. */
+    html.jp-site-dark-active .resp-sharing-button a { color:#ffffff !important; }
+    /* Setas do carrossel: gradiente claro -> escuro (mesma direção). */
+    html.jp-site-dark-active .slick-prev { background-image:linear-gradient(90deg, #202124 0px, rgba(32,33,36,0)) !important; }
+    html.jp-site-dark-active .slick-next { background-image:linear-gradient(90deg, rgba(32,33,36,0), #202124) !important; }
+    /* Alertas: info azul + erro de login. */
+    html.jp-site-dark-active #alert-email-verification { background-color:#16324a !important; color:#a8d4f5 !important; border-color:#1e659f !important; }
+    html.jp-site-dark-active .alert__content { color:#a8d4f5 !important; }
+    html.jp-site-dark-active #login-form__failed-login { background-color:#3d2223 !important; color:#f2b8b5 !important; }
+    /* Modal de login. */
+    html.jp-site-dark-active .modal { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
+    /* Rodapé. */
+    html.jp-site-dark-active footer { background-color:#17181c !important; color:#cfcfcf !important; }
+    html.jp-site-dark-active .footer__seperator { background-color:#3a3d43 !important; }
+    /* Aba ativa do seletor + painéis de busca avançada. */
+    html.jp-site-dark-active .bigbox-selector__tab--active { background-color:#2b2d31 !important; color:#e8e8e8 !important; }
+    html.jp-site-dark-active .form--searchAdvanced,
+    html.jp-site-dark-active .form--searchAdvancedMulti { background-color:#26272b !important; color:#e8e8e8 !important; }
+    /* Tabelas genéricas: só a borda (fundo transparente mostra a página). */
+    html.jp-site-dark-active table,
+    html.jp-site-dark-active th,
+    html.jp-site-dark-active td { border-color:#3a3d43 !important; }
+    html.jp-site-dark-active th { color:#f2f2f2 !important; }
+    html.jp-site-dark-active hr { border-color:#3a3d43 !important; background-color:#3a3d43 !important; }
+  `;
 
-  // Extrai saturação (0-1) e luminosidade (0-1) em HSL a partir de uma
-  // string rgb()/rgba() vinda de getComputedStyle.
-  function getHSL(colorStr) {
-    const m = colorStr && colorStr.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
-    if (!m) return null;
-    const r = parseInt(m[1], 10) / 255, g = parseInt(m[2], 10) / 255, b = parseInt(m[3], 10) / 255;
-    const max = Math.max(r, g, b), min = Math.min(r, g, b);
-    const l = (max + min) / 2;
-    let s = 0;
-    if (max !== min) {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    }
-    return { s, l };
-  }
-
-  // Considera transparente tanto a keyword quanto rgba(...,0).
-  function isTransparentColor(colorStr) {
-    if (!colorStr || colorStr === 'transparent') return true;
-    const m = colorStr.match(/rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\s*\)/);
-    return !!m && parseFloat(m[1]) === 0;
-  }
-
-  // Acima desse valor de saturação a cor é considerada "vívida/de marca"
-  // (ex: o azul do site, um badge dourado) — nunca é recolorida, fica
-  // exatamente como no site original.
-  const VIVID_SATURATION_THRESHOLD = 0.35;
-  function isVivid(hsl) {
-    return hsl.s >= VIVID_SATURATION_THRESHOLD && hsl.l > 0.12 && hsl.l < 0.9;
-  }
-
-  // Escolhe a cor de fundo escura equivalente pra uma luminosidade clara
-  // original. Retorna null se não precisa mexer (já é escuro o bastante,
-  // ou está numa faixa ambígua — melhor não tocar do que arriscar).
-  function mapBgColor(l) {
-    if (l >= 0.85) return DARK_PALETTE.bgBase;
-    if (l >= 0.6) return DARK_PALETTE.bgElevated;
-    return null;
-  }
-
-  // Idem para bordas (mesma lógica, cor um pouco mais clara que o fundo
-  // pra continuar visível como divisor).
-  function mapBorderColor(l) {
-    if (l >= 0.6) return DARK_PALETTE.border;
-    return null;
-  }
-
-  // Escolhe a cor de texto clara equivalente pra uma luminosidade escura
-  // original. Preserva a hierarquia visual: texto quase-preto (principal)
-  // vira branco; texto cinza-médio (secundário/legenda) vira um cinza
-  // claro, não branco puro — assim continua parecendo "secundário".
-  function mapTextColor(l) {
-    if (l <= 0.15) return DARK_PALETTE.textPrimary;
-    // Limite subido de 0.45 -> 0.7: cinzas médios (ex: texto de menus como
-    // "Profile/Photos/Change password/Log out", em torno de l≈0.48) ficavam
-    // de fora dessa faixa e não eram tocados, sobrando com baixo contraste
-    // sobre o novo fundo escuro (o "meio cinza" ilegível reportado). Esses
-    // cinzas foram pensados pra contrastar com fundo claro, então qualquer
-    // coisa até bem perto de branco (l<=0.7) ainda precisa ser clareada.
-    if (l <= 0.7) return DARK_PALETTE.textSecondary;
-    return null;
-  }
-
-  // Elementos que já recebemos recoloração, marcados por propriedade —
-  // permite reverter (tirar o modo escuro do site) removendo só o que a
-  // própria extensão adicionou, sem mexer em mais nada.
-  const darkTouched = new Set();
-
-  // Ícones "-black" (Album/Like/Share e outros da mesma família, ex. na
-  // seção Photo Administration): são <img> apontando pra um .svg/.png/.gif
-  // com o glifo pintado de preto fixo no próprio arquivo. Como são <img>
-  // (não SVG inline), a regra "nunca mexe em imagem" da recoloração normal
-  // os deixa pretos-sobre-fundo-escuro, ou seja, invisíveis — foi o que
-  // apareceu no print. O nome do arquivo já indica que é uma versão
-  // monocromática fixa, então é seguro (e só nesse caso) inverter a cor
-  // via filter, sem correr o risco de estragar uma foto de verdade.
-  const BLACK_ICON_SRC_RE = /-black\.(svg|png|gif)(\?.*)?$/i;
-  function isBlackIconImg(el) {
-    return el.tagName === 'IMG' && BLACK_ICON_SRC_RE.test(el.currentSrc || el.src || '');
-  }
-
-  function recolorElement(el) {
-    // Nunca mexe nas UIs próprias da extensão. Elas têm regras de tema
-    // próprias e não devem passar pelo recolor genérico do site.
-    // Em especial, o estimador da fila é reconstruído durante atualizações
-    // de dados; se o observer de dark mode recolorisse seus <td>s depois da
-    // reconstrução, haveria um flash branco antes do próximo scan.
-    if (el.closest('#jp-like-widget-bubble, #jp-like-toast, #jp-plus-submenu, #jp-plus-launcher-host, #jp-site-queue-tracker, .' + MOBILE_LIKE_BTN_CLASS)) return;
-
-    // Ícones pretos fixos (Album/Like/Share etc.): inverte pra virar
-    // branco sobre o novo fundo escuro. Não passa pelo resto da função
-    // (background/texto/borda não fazem sentido pra esse tipo de <img>).
-    if (isBlackIconImg(el)) {
-      el.style.setProperty('filter', 'invert(1) brightness(1.1)', 'important');
-      el.dataset.jpDarkFilter = '1';
-      darkTouched.add(el);
-      el.dataset.jpDarkScanned = '1';
-      return;
-    }
-
-    const computed = getComputedStyle(el);
-
-    // Fundo (pula elementos com imagem de fundo — texturas/fotos não
-    // devem ser tocadas, e a cor de fundo por trás delas é irrelevante).
-    const bgImage = computed.backgroundImage;
-    if (!bgImage || bgImage === 'none' || !bgImage.includes('url(')) {
-      const bgColor = computed.backgroundColor;
-      if (!isTransparentColor(bgColor)) {
-        const hsl = getHSL(bgColor);
-        if (hsl && !isVivid(hsl)) {
-          const newBg = mapBgColor(hsl.l);
-          if (newBg) {
-            el.style.setProperty('background-color', newBg, 'important');
-            el.dataset.jpDarkBg = '1';
-            darkTouched.add(el);
-          }
-        }
-      }
-    }
-
-    // Texto
-    const hslText = getHSL(computed.color);
-    if (hslText && !isVivid(hslText)) {
-      const newColor = mapTextColor(hslText.l);
-      if (newColor) {
-        el.style.setProperty('color', newColor, 'important');
-        el.dataset.jpDarkText = '1';
-        darkTouched.add(el);
-      }
-    }
-
-    // Borda (divisores/cards costumam usar border-color clara)
-    const borderColor = computed.borderTopColor;
-    if (!isTransparentColor(borderColor)) {
-      const hslBorder = getHSL(borderColor);
-      if (hslBorder && !isVivid(hslBorder)) {
-        const newBorder = mapBorderColor(hslBorder.l);
-        if (newBorder) {
-          el.style.setProperty('border-color', newBorder, 'important');
-          el.dataset.jpDarkBorder = '1';
-          darkTouched.add(el);
-        }
-      }
-    }
-
-    el.dataset.jpDarkScanned = '1';
-  }
-
-  // Varre o DOM recolorindo cada elemento ainda não visto. Roda de novo
-  // (via observer/debounce) sempre que o DOM muda, então elementos que
-  // aparecem depois (lazy-load, paginação AJAX, filtros) são pegos
-  // naturalmente — sem depender de "adivinhar" o momento certo.
-  function scanAndRecolor(root) {
-    if (!currentSettings.siteDarkMode) return;
-    const scope = root && root.querySelectorAll ? root : document;
-    const elements = scope === document ? document.body.querySelectorAll('*') : scope.querySelectorAll('*');
-    elements.forEach(el => {
-      if (el.dataset.jpDarkScanned === '1') return;
-      recolorElement(el);
-    });
-  }
-
-  // Desfaz toda a recoloração aplicada, sem precisar recarregar a página.
-  function revertRecoloring() {
-    darkTouched.forEach(el => {
-      if (el.dataset.jpDarkBg === '1') { el.style.removeProperty('background-color'); delete el.dataset.jpDarkBg; }
-      if (el.dataset.jpDarkText === '1') { el.style.removeProperty('color'); delete el.dataset.jpDarkText; }
-      if (el.dataset.jpDarkBorder === '1') { el.style.removeProperty('border-color'); delete el.dataset.jpDarkBorder; }
-      if (el.dataset.jpDarkFilter === '1') { el.style.removeProperty('filter'); delete el.dataset.jpDarkFilter; }
-      delete el.dataset.jpDarkScanned;
-    });
-    darkTouched.clear();
+  function ensureSiteDarkThemeStyle() {
+    if (document.getElementById(SITE_DARK_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = SITE_DARK_STYLE_ID;
+    style.textContent = SITE_DARK_THEME_CSS;
+    (document.head || document.documentElement).appendChild(style);
   }
 
   function applySiteDarkMode(isOn) {
+    if (isOn) ensureSiteDarkThemeStyle();
     document.documentElement.classList.toggle(SITE_DARK_HTML_CLASS, isOn);
-    if (isOn) {
-      scanAndRecolor(document);
-    } else {
-      revertRecoloring();
-    }
   }
-
-  // Debounce pra reescanear quando o DOM muda (lazy-load, paginação AJAX,
-  // filtros de busca aplicados sem reload, etc).
-  const RECOLOR_DEBOUNCE_MS = 400;
-  let recolorTimer = null;
-  function scheduleRecolor() {
-    if (!currentSettings.siteDarkMode) return;
-    clearTimeout(recolorTimer);
-    recolorTimer = setTimeout(() => scanAndRecolor(document), RECOLOR_DEBOUNCE_MS);
-  }
-
-  let siteDarkObserverStarted = false;
-  function startBgObserverIfNeeded() {
-    if (siteDarkObserverStarted || !currentSettings.siteDarkMode) return;
-    siteDarkObserverStarted = true;
-    scanAndRecolor(document);
-    const observer = new MutationObserver(() => scheduleRecolor());
-    observer.observe(document.body, { childList: true, subtree: true });
-  }
-  // >>> FIM DO BLOCO EXPERIMENTAL <<<
   // =======================================================================
   // Painel principal
   // ---------------------------------------------------------------------
@@ -1606,7 +1465,6 @@
       applySiteDarkMode(isOn);
       if (panelEl) panelEl.classList.toggle('jp-dark', isOn);
       if (settingsPanelEl) settingsPanelEl.classList.toggle('jp-dark', isOn);
-      if (isOn) startBgObserverIfNeeded();
     });
 
     siteDarkRow.appendChild(siteDarkLabel);
@@ -3091,10 +2949,10 @@
     currentSettings = await getSettings();
 
     applySiteDarkMode(currentSettings.siteDarkMode);
-    // A primeira recolorização (síncrona, dentro de applySiteDarkMode) já
-    // terminou aqui — seguro revelar a página agora, sem flash do tema
-    // claro original. Se o modo escuro estiver desligado, isso é um no-op
-    // (a classe de preload nunca foi adicionada).
+    // O tema (classe no <html> + CSS) já está valendo aqui — seguro revelar
+    // a página agora, sem flash do tema claro original. Se o modo escuro
+    // estiver desligado, isso é um no-op (a classe de preload nunca foi
+    // adicionada).
     removePreloadHide();
 
     // A extensão agora carrega em TODAS as páginas do jetphotos.com (veja
@@ -3159,11 +3017,6 @@
       initQueueEstimator();
     }
 
-    // [EXPERIMENTAL] Inicia (se o modo escuro do site estiver ligado) o
-    // observer que corrige cores erradas (background-image e fundos
-    // sólidos escuros) — independe da ferramenta contextual, roda em qualquer
-    // página, já que o modo escuro do site também é global.
-    startBgObserverIfNeeded();
   }
 
   if (document.readyState === 'loading') {

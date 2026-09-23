@@ -57,6 +57,12 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Fonte declarada explícita com a mesma pilha sans do JetPhotos (antes herdada do body, o que podia cair em fonte errada); aplicada também na bolha.
 - O toast fica de fora da recolorida do modo escuro do site, mantendo o visual.
 
+### Modo escuro: tema manual caprichado
+- O motor antigo (recoloração por elemento via getComputedStyle + observer) foi aposentado e trocado por um tema CSS escrito à mão para os seletores reais do JetPhotos — sem varredura de DOM, sem flash em conteúdo novo, sem custo de CPU e com toggle instantâneo.
+- Cobertura inicial (extração da página inicial): página, cards, títulos, links, submenu, galeria, formulários, selects, botões genéricos, alertas, modal de login, rodapé, carrossel e tabelas; fotos, header, azul picton, shares de marca e nosso UI nunca são tocados.
+- Bolha e toast agora usam Fira Sans (a fonte do site) quando disponível.
+- Próximo passo: extrações da página de resultados e da página de foto pra completar a cobertura (linhas de resultado, paginação, comentários).
+
 ---
 
 ## [2.0.0]
