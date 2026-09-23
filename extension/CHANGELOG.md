@@ -1,19 +1,63 @@
-## [1.9.4] — Atual
-
-### Idioma
-- Ajustado o idioma inicial para seguir as preferências do navegador: Português usa Português (Brasil), English usa English e outros idiomas usam English como fallback. A escolha manual em Configurações continua tendo prioridade.
-
-
-### Modo escuro
-- Ajustada a cor dos textos secundários no modo escuro para `rgb(224 224 224)` (`#E0E0E0`).
-
 # Changelog — JetPhotos+
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](https://semver.org/lang/pt-BR/).
 
-> **Versão atual: 1.9.3.** Os ajustes desta revisão permanecem dentro da 1.9.3 para estabilização e testes.
+> **Versão atual: 2.0.0.**
 
-## [1.9.3] — Atual
+---
+
+## [2.0.0] — Atual
+
+Versão de reorganização do acompanhamento da fila: o histórico que antes só era visível
+dentro do `queue.php` passou a ter um painel próprio no ícone da extensão, com badge,
+gráfico e portabilidade (exportar/importar).
+
+### Popup do ícone — "Ritmo da fila" (novo)
+- O ícone da extensão na barra do navegador passou a abrir um popup dedicado ao histórico da fila, sem precisar estar no JetPhotos nem abrir o `queue.php`.
+- Três métricas no topo: **Hoje** (maior `Total Screened` observado no dia), **Média** (média dos últimos dias fechados) e **Fila** (total de fotos na fila do site, conforme a última coleta).
+- Gráfico de barras em SVG com as fotos analisadas por dia, cobrindo os últimos até **60 dias**, com tooltip ao passar o mouse e destaque para o dia atual.
+- Selo no cabeçalho com a quantidade de dias acompanhados e rodapé com o horário da **última coleta**.
+- Botão **Abrir fila ↗** abre o `queue.php` em uma nova aba.
+- Os dados continuam vindo do coletor em background (`background.js`), o mesmo introduzido na 1.8.6 — o popup apenas lê `jpQueueDailyStats` do `chrome.storage.local`.
+
+### Badge no ícone
+- O ícone da extensão passou a exibir a quantidade de dias acompanhados no histórico (limitado a `99`), na cor `#4299dc`.
+- O título do ícone acompanha a contagem: `JetPhotos+ — N dias acompanhados` (com plural correto para 1 dia).
+
+### Exportar e importar histórico
+- **Exportar histórico** baixa um JSON (`jetphotos-plus-history-AAAA-MM-DD.json`) com o campo `history` completo, no formato `{ format: 'JetPhotos+', type: 'queue-history', version: 2 }`.
+- **Importar histórico** mescla o arquivo ao histórico atual, dia a dia, preservando os dados já coletados.
+- O `__meta` do coletor **não** volta no tempo: o estado importado só substitui o atual se for mais recente (`lastObservedAtMs`), evitando que um backup antigo regrida a coleta.
+- A poda de 60 dias é reaplicada depois da importação, junto com a atualização do badge.
+
+### Documentação
+- Corrigida a divergência de versão: `manifest.json` já marcava **2.0.0**, enquanto `CHANGELOG.md` e `leia-me.txt` ainda diziam **1.9.4**. Os três agora apontam para a mesma versão.
+- `leia-me.txt` atualizado com o passo a passo do popup e das opções de exportar/importar.
+
+---
+
+## [1.9.4]
+
+### Idioma
+- Ajustado o idioma inicial para seguir as preferências do navegador: Português usa Português (Brasil), English usa English e outros idiomas usam English como fallback. A escolha manual em Configurações continua tendo prioridade.
+
+### Modo escuro
+- Ajustada a cor dos textos secundários no modo escuro para `rgb(224 224 224)` (`#E0E0E0`).
+- Ajustado o fundo das linhas de `Period Totals` e do estimador da fila para um cinza elevado, evitando que os rows permaneçam brancos ou se confundam com o fundo geral do site.
+- Mantida a correção do pisca-pisca durante as atualizações em tempo real do estimador.
+
+### Contraste do estimador
+- Ajustada a cor dos rótulos do estimador no modo escuro para `rgb(224 224 224)`, incluindo Analisadas hoje, Média diária, Tempo estimado e Última coleta.
+
+### Zebra do Period Totals
+- Ajustada a alternância de fundo das duas fileiras para seguir o padrão visual do JetPhotos: a segunda fileira recebe o fundo elevado e a primeira permanece integrada ao fundo escuro.
+- Aplicado o mesmo comportamento ao estimador da fila da extensão.
+
+---
+
+## [1.9.3]
+
+> **Nota histórica:** os ajustes desta revisão permaneceram dentro da 1.9.3 para estabilização e testes.
 
 ### Correções (revisão pós-lançamento)
 - Corrigido o dropdown **Configurações** que fechava sozinho ao mover o mouse da logo em direção ao menu, mesmo com o cursor ainda dentro da área do cabeçalho. A causa era um espaçamento vertical (`top: calc(100% + 2px)`) entre a logo e o dropdown/painel: esse intervalo de 2px criava uma "zona morta" onde o cursor deixava de estar sobre qualquer elemento com `:hover`, fazendo o menu sumir com `display: none` antes do mouse alcançar o item **Configurações**. O espaçamento foi removido (`top: 100%`, colado à logo, igual ao comportamento da versão estável anterior).
@@ -127,7 +171,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 
 ### Alterado
 - Monitor integrado à área de `Period Totals`.
-- Removido o rótulo redundante de “ao vivo”.
+- Removido o rótulo redundante de "ao vivo".
 - Média histórica simplificada para **Média diária**, usando apenas dias concluídos.
 - ETA da fila passou a usar duração legível, como `22 dias e 5h`.
 - Rótulos e espaçamentos compactados para evitar quebras na coluna `Period Totals`.
@@ -204,17 +248,6 @@ Funcionalidades identificadas no histórico do código, sem versão/data exata c
 - Suporte a múltiplas páginas do JetPhotos além do perfil de fotógrafo.
 - Painel compacto em páginas sem suporte a curtidas.
 - Primeira implementação do modo escuro experimental do site.
-
-
-## 1.9.4 — Ajuste de contraste do estimador
-- Ajustada a cor dos rótulos do estimador no modo escuro para `rgb(224 224 224)`, incluindo Analisadas hoje, Média diária, Tempo estimado e Última coleta.
-
-## [1.9.4] — Correção visual do modo escuro
-
-### Modo escuro
-- Ajustado o fundo das linhas de `Period Totals` e do estimador da fila para um cinza elevado, evitando que os rows permaneçam brancos ou se confundam com o fundo geral do site.
-- Mantida a correção do pisca-pisca durante as atualizações em tempo real do estimador.
-
-### Dark mode — zebra do Period Totals
-- Ajustada a alternância de fundo das duas fileiras para seguir o padrão visual do JetPhotos: a segunda fileira recebe o fundo elevado e a primeira permanece integrada ao fundo escuro.
-- Aplicado o mesmo comportamento ao estimador da fila da extensão.
+- **Sincronia de likes:** `content-hook.js` rodando no mundo da página para espionar `fetch`/`XHR` em `PostHandler.php?addFavorite=`/`removeFavorite=`, lendo o corpo da resposta (`"true"`/`"false"`) para confirmar o like no servidor e corrigir o bug visual do JetPhotos.
+- **Cache local de curtidas** (`jpPlusLikedPhotoIds_v1` no `localStorage`), usado como fonte de verdade extra para manter o estado "curtido" depois de um F5.
+- **Botão de Like injetado no layout mobile**, com requisição direta ao `PostHandler.php` e estado sincronizado a cada scan.
