@@ -473,7 +473,7 @@ footer {
   min-height: 132px; padding: 20px 16px 18px;
   background: #ffffff; border: 1px solid var(--border); border-radius: 18px;
   box-shadow: 0 10px 22px -6px rgba(20, 30, 50, .22);
-  color: var(--text); cursor: pointer; font: inherit; -webkit-tap-highlight-color: transparent;
+  color: var(--text); cursor: pointer; font: inherit; -webkit-tap-highlight-color: transparent; overflow: hidden;
   transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
 button.donate-card { appearance: none; }
@@ -483,7 +483,9 @@ button.donate-card { appearance: none; }
 .donate-brandbox { display: flex; align-items: center; justify-content: center; height: 64px; }
 .donate-img { display: block; width: auto; height: auto; max-width: 132px; max-height: 100%; object-fit: contain; }
 /* O logo do Pix é um lockup largo com respiro: caixa bem maior pra não sumir. */
-#icon-pix { max-width: 170px; }
+#icon-pix { max-width: 170px; transform: scale(1.4); }
+/* Caixa mais alta só no cartão Pix, pra escala não invadir a dica abaixo. */
+#pixCard .donate-brandbox { height: 80px; }
 /* Texto que entra no lugar se o hotlink do ícone quebrar. */
 .donate-fallback { font: 800 25px var(--font-heading); letter-spacing: -.5px; }
 .donate-hint { font-size: 12px; font-weight: 700; color: var(--muted); }
@@ -505,8 +507,11 @@ button.donate-card { appearance: none; }
 .toast.error .toast-check { background: #d64545; }
 
 @media (max-width: 600px) {
-  .donate-options { flex-direction: column; align-items: center; }
-  .donate-card { flex: none; width: min(280px, 100%); max-width: none; min-height: 0; }
+  /* No mobile os cartões viram bloco simples empilhado: sem flex, sem risco
+     de espremer/sobrepor (o que quebrava o layout no celular). */
+  .donate-options { display: block; }
+  .donate-card { display: block; width: min(280px, 100%); margin: 0 auto 12px; padding: 18px 16px; text-align: center; }
+  .donate-card:last-child { margin-bottom: 0; }
   footer { flex-wrap: wrap; row-gap: 4px; }
 }
 @media (prefers-reduced-motion: reduce) {
