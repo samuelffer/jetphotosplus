@@ -222,7 +222,12 @@ footer {
   .description { padding: 0 6px; }
   .actions { flex-direction: column; }
   .download, .release-button { width: min(280px, 100%); }
-  footer { width: calc(100% - 32px); height: auto; min-height: 52px; gap: 8px; font-size: 9px; }
+  footer {
+    width: calc(100% - 32px); height: auto; min-height: 52px;
+    gap: 6px; font-size: 10px;
+    flex-direction: column; align-items: center; text-align: center;
+    padding: 12px 16px;
+  }
 }
 
 
@@ -512,7 +517,7 @@ button.donate-card { appearance: none; }
   .donate-options { display: block; }
   .donate-card { display: block; width: min(280px, 100%); margin: 0 auto 12px; padding: 18px 16px; text-align: center; }
   .donate-card:last-child { margin-bottom: 0; }
-  footer { flex-wrap: wrap; row-gap: 4px; }
+  footer { flex-wrap: wrap; row-gap: 6px; flex-direction: column; align-items: center; text-align: center; padding: 12px 16px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .toast { transition: none; }

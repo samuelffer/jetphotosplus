@@ -109,7 +109,7 @@
 
   // URL de doação (provisória: repositório). Troque pela página definitiva
   // (Ko-fi, Apoia.se, Pix...) quando ela existir.
-  const DONATE_URL = 'https://github.com/samuelffer/jetphotosplus';
+  const DONATE_URL = 'https://www.paypal.com/donate/?business=2SB4XYNBF53RC&no_recurring=1&item_name=Extens%C3%A3o+JetPhotos%2B&currency_code=BRL';
   const I18N = {
     'pt-BR': {
       settings: 'Configurações', close: 'Fechar',
