@@ -145,6 +145,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 
 ### Bolha com joinha
 - O ícone da bolha de likes agora é um joinha de contorno (antes era um coração) — combina com o Like do site. O selo verde de concluído não muda.
+- Respiro do joinha no anel: viewBox com folga + 1px na caixa — mesmo tamanho visual, sem encostar no anel.
 
 ---
 
