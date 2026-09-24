@@ -3546,10 +3546,6 @@
     'modal-hot-photo-select',
   ];
 
-  // Threshold: selects com até esse número de opções não ganham enhancer
-  // (são pequenos o suficiente pra rolar manualmente).
-  const ENHANCER_MIN_OPTIONS = 8;
-
   function injectMobileEnhancerStyles() {
     if (document.getElementById('jp-mobile-enhancer-style')) return;
     const style = document.createElement('style');
@@ -3562,10 +3558,10 @@
       .jp-enhancer-input {
         width: 100%;
         box-sizing: border-box;
-        padding: 12px 14px;
-        font-size: 16px; /* 16px pra não dar zoom no iOS */
+        padding: 8px 10px;
+        font-size: 14px;
         border: 1px solid #c8c8c8;
-        border-radius: 8px;
+        border-radius: 6px;
         background: #fff;
         color: #222;
         outline: none;
@@ -3690,19 +3686,6 @@
   function enhanceSelect(select) {
     // Não duplica se já foi enhanced
     if (select.dataset.jpEnhanced === '1') return;
-
-    const options = getSelectOptions(select);
-    // Se tem poucas opções e não é dinâmico, deixa o nativo mesmo
-    if (options.length < ENHANCER_MIN_OPTIONS && !select.disabled) {
-      // Verifica se pode crescer (selects dinâmicos começam com 0 opções)
-      const dynamicIds = [
-        'modal-correct-info-location-airport',
-        'modal-correct-info-aircraft-type',
-        'modal-correct-info-aircraft-model',
-        'modal-correct-info-airline-airline',
-      ];
-      if (!dynamicIds.includes(select.id)) return;
-    }
 
     select.dataset.jpEnhanced = '1';
 
