@@ -1921,6 +1921,41 @@
     if (mobileHostEl) mobileHostEl.classList.remove('jp-settings-open');
     if (open && host) host.classList.add('jp-settings-open');
     updateBackdrop();
+    installClickOutsideSettings(open);
+  }
+
+  // Fecha o settings ao clicar fora dele (no desktop). Usa mousedown no
+  // document em vez do backdrop, porque o backdrop fica preso num
+  // stacking context diferente do header do JetPhotos e acaba cobrindo
+  // o painel. Aqui, verificamos se o clique foi fora do launcherHostEl
+  // e fora do settingsPanel (que pode estar no mobileHostEl).
+  let clickOutsideSettingsHandler = null;
+  function installClickOutsideSettings(active) {
+    // Remove handler anterior, se existir
+    if (clickOutsideSettingsHandler) {
+      document.removeEventListener('mousedown', clickOutsideSettingsHandler, true);
+      clickOutsideSettingsHandler = null;
+    }
+    if (!active) return;
+    // Usa capture:true pra pegar o evento antes de qualquer stopPropagation
+    // que os próprios elementos da extensão possam ter.
+    clickOutsideSettingsHandler = (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      // Se clicou dentro do launcherHostEl (que contém o settings panel
+      // no desktop) ou dentro do mobileHostEl (que contém no mobile),
+      // não fecha.
+      if (launcherHostEl?.contains(target)) return;
+      if (mobileHostEl?.contains(target)) return;
+      // Clique foi fora — fecha tudo.
+      closeAllPlus();
+    };
+    // setTimeout pra não pegar o próprio clique que abriu o settings
+    setTimeout(() => {
+      if (clickOutsideSettingsHandler) {
+        document.addEventListener('mousedown', clickOutsideSettingsHandler, true);
+      }
+    }, 0);
   }
 
   // Docagem do FAB: ao fechar o menu, o botão fica visível por um instante
@@ -1956,6 +1991,7 @@
       mobileHostEl.classList.remove('jp-settings-open');
       mobileHostEl.classList.remove('jp-mobile-menu-open');
     }
+    installClickOutsideSettings(false);
     scheduleFabDock();
     updateBackdrop();
   }
