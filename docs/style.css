@@ -63,14 +63,14 @@ button { font: inherit; }
 .brand:hover .brand-mark img { transform: scale(1.08); }
 
 .top-actions { display: flex; align-items: center; gap: 14px; color: var(--muted); font-size: 12px; font-weight: 700; }
-.github-link {
+.github-link, .home-link {
   width: 36px; height: 36px;
   display: grid; place-items: center;
   border: 1px solid var(--border); border-radius: 11px;
   background: var(--surface); color: var(--text);
   transition: background .15s, transform .15s, border-color .15s, color .15s;
 }
-.github-link:hover { background: var(--surface-hover); border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); color: var(--accent); transform: translateY(-1px); }
+.github-link:hover, .home-link:hover { background: var(--surface-hover); border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); color: var(--accent); transform: translateY(-1px); }
 
 .app-shell { display: grid; place-items: center; min-height: calc(100vh - 120px); padding: 48px 0 72px; position: relative; }
 
@@ -276,7 +276,7 @@ footer {
   background: rgba(255,255,255,.82);
   backdrop-filter: blur(14px);
 }
-.github-link, .brand-mark {
+.github-link, .home-link, .brand-mark {
   background: rgba(255,255,255,.82);
   backdrop-filter: blur(12px);
 }
@@ -460,6 +460,62 @@ footer {
 @media (max-width: 600px) {
   .top-actions { gap: 8px; }
   .language-switcher { height: 34px; padding: 0 8px; }
+}
+
+/* Doação: link no rodapé + página doar.html */
+.donate-link { font-weight: 800; white-space: nowrap; transition: color .15s ease; }
+.donate-link:hover { color: var(--accent); }
+
+.donate-options { display: flex; gap: 12px; justify-content: center; margin-top: 26px; }
+.donate-card {
+  flex: 1 1 0; max-width: 220px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  min-height: 132px; padding: 20px 16px 18px;
+  background: #ffffff; border: 1px solid var(--border); border-radius: 18px;
+  box-shadow: 0 10px 22px -6px rgba(20, 30, 50, .22);
+  color: var(--text); cursor: pointer; font: inherit; -webkit-tap-highlight-color: transparent; overflow: hidden;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+button.donate-card { appearance: none; }
+.donate-card:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 14px 28px -6px rgba(20, 30, 50, .3); border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); }
+.donate-card:active { transform: translateY(0) scale(.98); }
+.donate-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.donate-brandbox { display: flex; align-items: center; justify-content: center; height: 64px; }
+.donate-img { display: block; width: auto; height: auto; max-width: 132px; max-height: 100%; object-fit: contain; }
+/* O logo do Pix é um lockup largo com respiro: caixa bem maior pra não sumir. */
+#icon-pix { max-width: 170px; transform: scale(1.4); }
+/* Caixa mais alta só no cartão Pix, pra escala não invadir a dica abaixo. */
+#pixCard .donate-brandbox { height: 80px; }
+/* Texto que entra no lugar se o hotlink do ícone quebrar. */
+.donate-fallback { font: 800 25px var(--font-heading); letter-spacing: -.5px; }
+.donate-hint { font-size: 12px; font-weight: 700; color: var(--muted); }
+
+/* Toast da doação: cartão claro no padrão do site, some sozinho. */
+.toast {
+  position: fixed; left: 50%; bottom: calc(28px + env(safe-area-inset-bottom, 0px)); z-index: 50;
+  display: flex; align-items: center; gap: 9px;
+  max-width: calc(100% - 40px); padding: 12px 18px;
+  background: rgba(255, 255, 255, .94); border: 1px solid var(--border); border-radius: 999px;
+  box-shadow: 0 16px 40px rgba(20, 30, 50, .25);
+  backdrop-filter: blur(12px);
+  font-size: 13px; font-weight: 700; color: var(--text);
+  opacity: 0; transform: translate(-50%, 12px); pointer-events: none;
+  transition: opacity .22s ease, transform .22s ease;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast-check { flex: none; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: var(--success); color: #ffffff; font-size: 13px; }
+.toast.error .toast-check { background: #d64545; }
+
+@media (max-width: 600px) {
+  /* No mobile os cartões viram bloco simples empilhado: sem flex, sem risco
+     de espremer/sobrepor (o que quebrava o layout no celular). */
+  .donate-options { display: block; }
+  .donate-card { display: block; width: min(280px, 100%); margin: 0 auto 12px; padding: 18px 16px; text-align: center; }
+  .donate-card:last-child { margin-bottom: 0; }
+  footer { flex-wrap: wrap; row-gap: 4px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast { transition: none; }
 }
 
 
