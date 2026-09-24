@@ -115,6 +115,7 @@
       likeMissing: 'Curtir faltantes',
       missing: 'faltando',
       allLikedToast: 'Todas as fotos da página já estão curtidas',
+      settingsGeneral: 'Geral',
       experimental: 'Experimental',
       siteDarkMode: 'Modo escuro (beta)',
       siteDarkModeHelp: 'Escurece o JetPhotos e também a interface da extensão (painel, submenu e widget). Fotos e cores de marca não são alteradas.',
@@ -159,7 +160,7 @@
       likeMissing: 'Like missing photos',
       missing: 'missing',
       allLikedToast: 'All photos on this page are already liked',
-      experimental: 'Experimental', siteDarkMode: 'Site dark mode (beta)', siteDarkModeHelp: 'Darkens JetPhotos backgrounds and light text. Photos and brand colors are not changed.',
+      experimental: 'Experimental', settingsGeneral: 'General', siteDarkMode: 'Site dark mode (beta)', siteDarkModeHelp: 'Darkens JetPhotos backgrounds and light text. Photos and brand colors are not changed.',
       queueEstimator: 'Queue days estimator (beta)', queueEstimatorHelp: 'Estimates how long your photo may take to be reviewed on queue.php. Reload the page after changing.',
       language: 'Language', languageHelp: 'Choose the extension language.', portugueseBrazil: 'Português (Brasil)', english: 'English',
       queueEstimate: 'Queue estimate', likeWidgetLabel: 'JETPHOTOS+ · Likes', screenedToday: 'Screened today:', dailyAverage: 'Daily average:', estimatedQueueTime: 'Estimated time:', lastCollection: 'Last collection:',
@@ -1005,6 +1006,9 @@
       #jp-plus-mobile-fab img { display:block; width:30px; height:32px; object-fit:contain; }
       #jp-plus-mobile-fab:hover { background:#f0f0f0; }
       #jp-plus-mobile-fab:focus-visible { outline:2px solid #2c94e8; outline-offset:2px; }
+      #jp-plus-mobile-host.jp-dark #jp-plus-mobile-fab { background:#2b2d31; border-color:#3a3d43; }
+      #jp-plus-mobile-host.jp-dark #jp-plus-mobile-fab:hover { background:#35383e; }
+      #jp-plus-mobile-host.jp-dark #jp-plus-mobile-fab img { filter:brightness(0) invert(1); }
       /* Submenu mobile: os mesmos 4 itens do PC, em folha acima do FAB. */
       #jp-plus-mobile-host > #jp-plus-mobile-submenu {
         display:none;
@@ -1024,7 +1028,7 @@
         font-size:15px; line-height:1.3;
       }
       #jp-plus-mobile-submenu a:active { background:#e8e8e8; }
-      #jp-plus-mobile-submenu.jp-dark { background:#292929; }
+      #jp-plus-mobile-submenu.jp-dark { background:#292929; color:#eeeeee; }
       #jp-plus-mobile-submenu.jp-dark a { color:#eeeeee; }
       #jp-plus-mobile-submenu.jp-dark a:active { background:#3d3d3d; }
       /* Painel de configs no host mobile: folha sobre o FAB. */
@@ -1033,6 +1037,7 @@
         top:auto !important; right:auto !important;
         width:min(330px, calc(100vw - 32px)) !important;
         transform:translateY(8px);
+        border-radius:16px;
       }
       #jp-plus-mobile-host.jp-settings-open > #jp-plus-settings-panel { display:block !important; }
       #jp-plus-mobile-host.jp-settings-open #jp-plus-settings-panel { opacity:1; transform:none; }
@@ -1165,8 +1170,9 @@
         background: #ffffff;
         color: #222222;
         border: 1px solid #c8c8c8;
-        border-top: 0;
-        box-shadow: 0 2px 8px rgba(0,0,0,.24);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 12px 32px rgba(0,0,0,.28);
         z-index: 1000002;
         opacity: 0;
         transform: translateY(-5px);
@@ -1206,18 +1212,19 @@
         box-shadow:none !important;
       }
       #jp-plus-settings-panel .jp-settings-title {
-        padding: 11px 14px;
-        background: #282828;
-        color: #ffffff;
-        font-size: 14px;
-        font-weight: 600;
-        line-height: 1.2;
+        display:flex; align-items:center; justify-content:space-between; gap:10px;
+        padding:12px 12px 12px 16px;
+        background:#2c94e8;
+        color:#ffffff;
+        font-size:15px;
+        font-weight:700;
+        line-height:1.2;
       }
       #jp-plus-settings-panel .jp-settings-body {
         max-height: min(70vh, 520px);
         overflow-y: auto;
         overflow-x: hidden;
-        padding: 0 14px 14px;
+        padding: 0 16px 16px;
         box-sizing: border-box;
       }
       #jp-plus-settings-panel .jp-settings-body #jp-like-settings-menu {
@@ -1249,13 +1256,16 @@
         box-sizing: border-box;
       }
       #jp-plus-settings-panel .jp-settings-close {
-        float:right;
-        border:0; background:transparent; color:inherit; cursor:pointer;
-        font:inherit; font-size:16px; line-height:1; padding:0 2px;
+        flex:0 0 auto;
+        width:30px; height:30px; border-radius:50%;
+        border:0; background:rgba(255,255,255,.20); color:#ffffff; cursor:pointer;
+        font-size:18px; font-weight:400; line-height:1;
+        display:flex; align-items:center; justify-content:center;
+        padding:0 0 2px;
       }
-      #jp-plus-settings-panel .jp-settings-close:hover { opacity:.75; }
-      #jp-plus-settings-panel.jp-dark .jp-settings-title { background:#202020; }
-      #jp-plus-settings-panel select { border-radius:0 !important; }
+      #jp-plus-settings-panel .jp-settings-close:hover { background:rgba(255,255,255,.35); }
+
+      #jp-plus-settings-panel select { border-radius:8px !important; }
       #jp-plus-launcher-host.jp-settings-open #jp-plus-settings-panel {
         opacity: 1;
         transform: translateY(0);
@@ -1430,8 +1440,9 @@
        azul-link padrão #0000ee somem no fundo escuro). Botões, logo e moldura
        de foto ficam de fora — têm estilo próprio. */
     html.jp-site-dark-active a:not(.btn):not(.header__logo):not(.gallery-photo__frame) { color:#6fb1f0 !important; }
-    /* Guarda: o tema nunca toca nos links do submenu da extensão. */
-    html.jp-site-dark-active #jp-plus-submenu a { color:inherit !important; }
+    /* Guarda: o tema nunca toca nos links dos submenus da extensão. */
+    html.jp-site-dark-active #jp-plus-submenu a,
+    html.jp-site-dark-active #jp-plus-mobile-submenu a { color:inherit !important; }
     /* Links sobre fundos que já eram escuros (header, popups, dropdowns):
        herdam o branco do contexto em vez de forçar o azul. */
     html.jp-site-dark-active .header a:not(.btn):not(.header__logo):not(.gallery-photo__frame),
@@ -1685,10 +1696,42 @@
 
     const inner = document.createElement('div');
     inner.style.cssText = `
-      margin-top:14px; padding-top:14px;
-      border-top:1px solid var(--jp-border);
-      display:flex; flex-direction:column; gap:16px;
+      padding-top:6px; padding-bottom:4px;
+      display:flex; flex-direction:column; gap:18px;
     `;
+
+    // --- Rótulo "Geral" (sem divisor: é a primeira seção) ---
+    const generalHeader = document.createElement('div');
+    generalHeader.style.cssText = `
+      margin-top:0; padding-top:2px;
+      font-family:Arial,Helvetica,sans-serif; font-size:11px; font-weight:600;
+      letter-spacing:.6px; text-transform:uppercase; color:var(--jp-subtext);
+    `;
+    generalHeader.textContent = t('settingsGeneral');
+    inner.appendChild(generalHeader);
+
+    // --- Linha: idioma ---
+    const languageRow = document.createElement('div');
+    languageRow.style.cssText = `display:flex; align-items:center; justify-content:space-between; gap:12px; min-width:0; width:100%; box-sizing:border-box;`;
+
+    const languageLabel = document.createElement('div');
+    languageLabel.style.cssText = `font-family:Arial,Helvetica,sans-serif; font-size:14px; color:var(--jp-text); line-height:1.4; min-width:0; flex:1 1 auto; overflow-wrap:anywhere; word-break:normal;`;
+    languageLabel.innerHTML = `${t('language')}<br><span style="font-size:12px; color:var(--jp-subtext);">${t('languageHelp')}</span>`;
+
+    const languageSelect = document.createElement('select');
+    languageSelect.id = 'jp-language-select';
+    languageSelect.style.cssText = `font-family:Arial,Helvetica,sans-serif; font-size:13px; color:var(--jp-text); background:var(--jp-bg); border:1px solid var(--jp-border); border-radius:6px; padding:6px 8px; cursor:pointer;`;
+    languageSelect.innerHTML = `<option value="pt-BR">${t('portugueseBrazil')}</option><option value="en">${t('english')}</option>`;
+    languageSelect.value = currentSettings.language;
+    languageSelect.addEventListener('change', () => {
+      currentSettings.language = languageSelect.value === 'en' ? 'en' : 'pt-BR';
+      setLanguage(currentSettings.language);
+      location.reload();
+    });
+
+    languageRow.appendChild(languageLabel);
+    languageRow.appendChild(languageSelect);
+    inner.appendChild(languageRow);
 
     // --- Divisor + rótulo "Experimental" ---
     const experimentalHeader = document.createElement('div');
@@ -1720,6 +1763,7 @@
       if (panelEl) panelEl.classList.toggle('jp-dark', isOn);
       if (settingsPanelEl) settingsPanelEl.classList.toggle('jp-dark', isOn);
       document.getElementById('jp-plus-mobile-submenu')?.classList.toggle('jp-dark', isOn);
+      if (mobileHostEl) mobileHostEl.classList.toggle('jp-dark', isOn);
     });
 
     siteDarkRow.appendChild(siteDarkLabel);
@@ -1752,28 +1796,6 @@
     queueEstRow.appendChild(queueEstToggle);
     inner.appendChild(queueEstRow);
 
-    // --- Linha: idioma ---
-    const languageRow = document.createElement('div');
-    languageRow.style.cssText = `display:flex; align-items:center; justify-content:space-between; gap:12px; min-width:0; width:100%; box-sizing:border-box;`;
-
-    const languageLabel = document.createElement('div');
-    languageLabel.style.cssText = `font-family:Arial,Helvetica,sans-serif; font-size:14px; color:var(--jp-text); line-height:1.4; min-width:0; flex:1 1 auto; overflow-wrap:anywhere; word-break:normal;`;
-    languageLabel.innerHTML = `${t('language')}<br><span style="font-size:12px; color:var(--jp-subtext);">${t('languageHelp')}</span>`;
-
-    const languageSelect = document.createElement('select');
-    languageSelect.id = 'jp-language-select';
-    languageSelect.style.cssText = `font-family:Arial,Helvetica,sans-serif; font-size:13px; color:var(--jp-text); background:var(--jp-bg); border:1px solid var(--jp-border); border-radius:6px; padding:6px 8px; cursor:pointer;`;
-    languageSelect.innerHTML = `<option value="pt-BR">${t('portugueseBrazil')}</option><option value="en">${t('english')}</option>`;
-    languageSelect.value = currentSettings.language;
-    languageSelect.addEventListener('change', () => {
-      currentSettings.language = languageSelect.value === 'en' ? 'en' : 'pt-BR';
-      setLanguage(currentSettings.language);
-      location.reload();
-    });
-
-    languageRow.appendChild(languageLabel);
-    languageRow.appendChild(languageSelect);
-    inner.appendChild(languageRow);
 
     menu.appendChild(inner);
 
@@ -1967,6 +1989,7 @@
       <a href="#" id="jp-plus-mobile-settings-link" role="menuitem">${t('settings')}</a>
     `;
     if (currentSettings.siteDarkMode) submenu.classList.add('jp-dark');
+    if (currentSettings.siteDarkMode) mhost.classList.add('jp-dark');
     submenu.querySelector('#jp-plus-mobile-settings-link').addEventListener('click', event => {
       event.preventDefault();
       event.stopPropagation();
@@ -2036,7 +2059,7 @@
     if (currentSettings.siteDarkMode) settingsPanel.classList.add('jp-dark');
     const settingsTitle = document.createElement('div');
     settingsTitle.className = 'jp-settings-title';
-    settingsTitle.innerHTML = `<button type="button" class="jp-settings-close" aria-label="${t('close')}">×</button>${t('settings')}`;
+    settingsTitle.innerHTML = `<span>${t('settings')}</span><button type="button" class="jp-settings-close" aria-label="${t('close')}">×</button>`;
     const settingsBody = document.createElement('div');
     settingsBody.className = 'jp-settings-body';
     settingsPanel.appendChild(settingsTitle);

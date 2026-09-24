@@ -152,6 +152,11 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Novo: quando o launcher do header não está visível (mobile), aparece um FAB redondo com a logo no canto inferior esquerdo — abre o mesmo menu do PC (novidades, issue, sobre, configs).
 - Novo: backdrop invisível + Escape fecham submenu mobile e configs; no PC, clicar fora das configs agora fecha de verdade (antes só o X).
 
+### Menu mobile com cores certas + configs redesenhadas
+- Correção: links do submenu mobile ficavam azuis no escuro (a guarda do tema só cobria o submenu do PC) — agora herdam preto/cinza do tema.
+- Novo: FAB segue o tema (disco branco + logo preta no claro; disco escuro + logo branca no escuro).
+- Configs redesenhadas (PC + mobile): faixa azul JetPhotos com botão fechar redondo, cartão arredondado, sem divisor duplo, seção Geral (idioma) + Experimental, folha arredondada no mobile.
+
 ---
 
 ## [2.0.0]
