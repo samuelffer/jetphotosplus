@@ -1108,10 +1108,12 @@
       #jp-like-widget-bubble .jp-bubble-thumb { position:relative; width:19px; height:19px; }
       /* Selo de concluído: quando tudo está curtido, o anel + joinha dão
          lugar a um disco verde com confere branco (troca seca, sem pop). */
-      #jp-like-widget-bubble .jp-bubble-check { display:none; position:absolute; inset:0; width:100%; height:100%; padding:4px; box-sizing:border-box; }
+      #jp-like-widget-bubble .jp-bubble-check { display:none; position:absolute; inset:0; width:100%; height:100%; padding:0; box-sizing:border-box; }
+      #jp-like-widget-bubble .jp-bubble-check { display:flex; align-items:center; justify-content:center; }
+      #jp-like-widget-bubble .jp-bubble-check svg { display:block; width:100%; height:100%; padding:4px 3px 4px 5px; box-sizing:border-box; }77240749094899d59975508229e0aca1f
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-ring,
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-thumb { display:none; }
-      #jp-like-widget-bubble.jp-bubble-done .jp-bubble-check { display:block; }
+      #jp-like-widget-bubble.jp-bubble-done .jp-bubble-check { display:flex; }
       /* Rótulo só no desktop largo (ex: "10 faltando"): deixa a bolha mais
          larga e autoexplicativa onde há espaço; some no mobile. */
       #jp-like-widget-bubble .jp-bubble-label { display:none; font-weight:600; opacity:.75; }
@@ -1327,7 +1329,7 @@
       .${MOBILE_LIKE_STAT_CLASS} { cursor:pointer; display:inline-flex; align-items:center; vertical-align:middle; }
       .${MOBILE_LIKE_BTN_CLASS} {
         display:inline-flex; align-items:center; justify-content:center;
-        width:30px; height:30px; margin:-9px -4px -5px; padding:0;
+        width:30px; height:30px; margin:-11px -4px -3px; padding:0;
         border:0; background:transparent; border-radius:50%;
         cursor:pointer; transition:background .15s ease, opacity .15s ease, transform .1s ease;
       }
@@ -2315,16 +2317,20 @@
   function highlightCard(card, liked) {
     if (!card) return;
 
-    // Só mexe no estilo se realmente precisa mudar, pra evitar mutações
-    // desnecessárias no DOM (ajuda a manter o scan leve).
-    const wanted = liked ? 'none' : '3px solid #ff5f5f';
-    if (card.style.outline !== wanted) {
-      card.style.transition = 'outline-color .2s ease';
-      card.style.outline = wanted;
-      card.style.outlineOffset = '2px';
+    // Outline removido a pedido do usuário — as linhas vermelhas ao redor
+    // das fotos não curtidas eram confusas. Se um dia quiser voltar, é só
+    // descomentar as linhas abaixo.
+    // const wanted = liked ? 'none' : '3px solid #ff5f5f';
+    // if (card.style.outline !== wanted) {
+    //   card.style.transition = 'outline-color .2s ease';
+    //   card.style.outline = wanted;
+    //   card.style.outlineOffset = '2px';
+    // }
+
+    // Remove outline se existir (caso venha de versão anterior)
+    if (card.style.outline && card.style.outline !== 'none') {
+      card.style.outline = 'none';
     }
-
-
   }
 
   let isRefreshing = false;
