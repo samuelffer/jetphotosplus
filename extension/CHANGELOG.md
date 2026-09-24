@@ -137,6 +137,9 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - O quadradinho da página atual agora é azul com número branco no escuro (antes todos eram iguais e o usuário se perdia). Modo claro intocado.
 - Correção (sonda do console): a atual é a.paging__pager.paging__pager--active — seletor refeito com o `a` pra vencer a regra geral na especificidade.
 
+### Textos dos gráficos no escuro
+- Gráficos Highcharts (perfil + stats): textos SVG clareados via fill (base #c3c9d2, títulos #f2f2f2) — antes ficavam camuflados no fundo escuro. Cores dos dados intactas.
+
 ---
 
 ## [2.0.0]

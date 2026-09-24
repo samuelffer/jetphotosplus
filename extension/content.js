@@ -1475,6 +1475,11 @@
     html.jp-site-dark-active a.paging__pager.paging__pager--active,
     html.jp-site-dark-active a.paging__pager[aria-current],
     html.jp-site-dark-active span.paging__pager { background-color:#2c94e8 !important; border-color:#2c94e8 !important; color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; }
+    /* Graficos Highcharts (perfil, stats...): textos SVG usam fill, nao
+       color — a base clareia tudo (eixos, legenda, rotulos, mapa) e o
+       titulo ganha branco. */
+    html.jp-site-dark-active .highcharts-container text { fill:#c3c9d2 !important; }
+    html.jp-site-dark-active .highcharts-title { fill:#f2f2f2 !important; }
     /* Barra de filtros dos resultados (contagem, Modify search, Sort by). */
     html.jp-site-dark-active .show-photos-header { background-color:#26272b !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
     html.jp-site-dark-active .show-photos-header span { color:#e8e8e8 !important; }
