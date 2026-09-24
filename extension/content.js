@@ -3921,11 +3921,36 @@
     });
     selectObserver.observe(select, { childList: true, attributes: true, subtree: true });
 
-    // Limpa o input quando o select é resetado
-    select.addEventListener('change', () => {
+    // Mantém o input sincronizado quando o select é atualizado externamente
+    // (autofill do site, outro script, etc). O autofill nem sempre dispara
+    // o evento 'change', então fazemos polling do valor do select.
+    let lastSelectValue = select.value;
+
+    function syncInputFromSelect() {
+      if (select.value === lastSelectValue) return;
+      lastSelectValue = select.value;
+      // Recarrega opções (podem ter sido adicionadas via AJAX pelo autofill)
+      allOptions = getSelectOptions(select);
       const selected = allOptions.find(o => o.value === select.value);
-      if (selected) input.value = selected.text;
-    });
+      if (selected && selected.value && selected.value !== '-1') {
+        input.value = selected.text;
+      } else if (!select.value || select.value === '-1') {
+        input.value = '';
+      }
+    }
+
+    select.addEventListener('change', syncInputFromSelect);
+
+    // Polling a cada 500ms — pega mudanças que não disparam 'change'
+    // (autofill do site, scripts externos, etc)
+    const pollInterval = setInterval(() => {
+      // Para de fazer polling se o select foi removido do DOM
+      if (!document.contains(select)) {
+        clearInterval(pollInterval);
+        return;
+      }
+      syncInputFromSelect();
+    }, 500);
   }
 
   function initMobileSelectEnhancer() {
