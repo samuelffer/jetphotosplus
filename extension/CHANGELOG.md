@@ -162,6 +162,8 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Correção: submenu mobile abria branco no escuro (a regra base vencia a variante dark na especificidade) — fundo/cores do tema agora valem.
 - Novo: menu mobile aparece com fade + subida suave (respeita reduced-motion); FAB afunda de leve ao toque.
 - Micro-interações mais secas: menu .16s→.11s, toque do FAB com resposta rápida (.06s).
+- FAB agora "doca" sozinho: parado fica meio escondido no canto + translúcido; toque mostra ele + menu; ao fechar, espera ~1,4s e volta.
+- Preto do disco no escuro travado no tom da bolha (#1c1c1c) em toda ocasião: sem hover/cinza no toque (hover claro só onde há mouse; sem flash de toque).
 
 ---
 

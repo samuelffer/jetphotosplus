@@ -1002,15 +1002,25 @@
         background:#ffffff; border:1px solid rgba(0,0,0,.12);
         box-shadow:0 5px 20px rgba(0,0,0,.30);
         cursor:pointer; padding:0;
+        -webkit-tap-highlight-color:transparent;
         transition:transform .06s ease-out, background .12s ease;
       }
       #jp-plus-mobile-fab img { display:block; width:30px; height:32px; object-fit:contain; }
-      #jp-plus-mobile-fab:hover { background:#f0f0f0; }
+      @media (hover:hover) {
+        #jp-plus-mobile-fab:hover { background:#f0f0f0; }
+      }
       #jp-plus-mobile-fab:active { transform:scale(.92); }
       #jp-plus-mobile-fab:focus-visible { outline:2px solid #2c94e8; outline-offset:2px; }
       #jp-plus-mobile-host.jp-dark #jp-plus-mobile-fab { background:#1c1c1c; border-color:#464646; }
-      #jp-plus-mobile-host.jp-dark #jp-plus-mobile-fab:hover { background:#2a2a2a; border-color:#686868; }
       #jp-plus-mobile-host.jp-dark #jp-plus-mobile-fab img { filter:brightness(0) invert(1); }
+      /* Docagem do FAB: parado, meio escondido no canto + translúcido. A classe
+         jp-fab-docked vai no host, mas o efeito vai no invólucro — o submenu e
+         o painel moram no mesmo host e não podem ser arrastados juntos. */
+      #jp-plus-mobile-fab-wrap { display:block; width:52px; height:52px; transition:transform .22s ease, opacity .22s ease; }
+      #jp-plus-mobile-host.jp-fab-docked #jp-plus-mobile-fab-wrap { transform:translate(-50%, 50%); opacity:.5; }
+      @media (prefers-reduced-motion: reduce) {
+        #jp-plus-mobile-fab-wrap { transition:none; }
+      }
       /* Submenu mobile: os mesmos 4 itens do PC, em folha acima do FAB. */
       #jp-plus-mobile-host > #jp-plus-mobile-submenu {
         display:none;
@@ -1902,6 +1912,21 @@
     updateBackdrop();
   }
 
+  // Docagem do FAB: ao fechar o menu, o botão fica visível por um instante
+  // e depois volta sozinho pro canto (meio escondido + translúcido).
+  let fabDockTimer = null;
+  function scheduleFabDock() {
+    if (!mobileHostEl || typeof window === 'undefined') return;
+    if (fabDockTimer) window.clearTimeout(fabDockTimer);
+    fabDockTimer = window.setTimeout(() => {
+      fabDockTimer = null;
+      if (mobileHostEl && !mobileHostEl.classList.contains('jp-mobile-menu-open')) mobileHostEl.classList.add('jp-fab-docked');
+    }, 1400);
+  }
+  function undockFab() {
+    if (fabDockTimer && typeof window !== 'undefined') { window.clearTimeout(fabDockTimer); fabDockTimer = null; }
+    if (mobileHostEl) mobileHostEl.classList.remove('jp-fab-docked');
+  }
   function setMobileMenuOpen(open) {
     if (!mobileHostEl) return;
     if (open) {
@@ -1909,6 +1934,8 @@
       mobileHostEl.classList.remove('jp-settings-open');
     }
     mobileHostEl.classList.toggle('jp-mobile-menu-open', open);
+    if (open) undockFab();
+    else scheduleFabDock();
     updateBackdrop();
   }
 
@@ -1918,6 +1945,7 @@
       mobileHostEl.classList.remove('jp-settings-open');
       mobileHostEl.classList.remove('jp-mobile-menu-open');
     }
+    scheduleFabDock();
     updateBackdrop();
   }
 
@@ -2003,8 +2031,12 @@
       setMobileMenuOpen(false);
       setSettingsOpen(true);
     });
-    mhost.appendChild(fab);
+    const fabWrap = document.createElement('span');
+    fabWrap.id = 'jp-plus-mobile-fab-wrap';
+    fabWrap.appendChild(fab);
+    mhost.appendChild(fabWrap);
     mhost.appendChild(submenu);
+    mhost.classList.add('jp-fab-docked');
     document.body.appendChild(mhost);
     mobileHostEl = mhost;
     installFabModeWatcher();
