@@ -63,14 +63,14 @@ button { font: inherit; }
 .brand:hover .brand-mark img { transform: scale(1.08); }
 
 .top-actions { display: flex; align-items: center; gap: 14px; color: var(--muted); font-size: 12px; font-weight: 700; }
-.github-link {
+.github-link, .home-link {
   width: 36px; height: 36px;
   display: grid; place-items: center;
   border: 1px solid var(--border); border-radius: 11px;
   background: var(--surface); color: var(--text);
   transition: background .15s, transform .15s, border-color .15s, color .15s;
 }
-.github-link:hover { background: var(--surface-hover); border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); color: var(--accent); transform: translateY(-1px); }
+.github-link:hover, .home-link:hover { background: var(--surface-hover); border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); color: var(--accent); transform: translateY(-1px); }
 
 .app-shell { display: grid; place-items: center; min-height: calc(100vh - 120px); padding: 48px 0 72px; position: relative; }
 
@@ -276,7 +276,7 @@ footer {
   background: rgba(255,255,255,.82);
   backdrop-filter: blur(14px);
 }
-.github-link, .brand-mark {
+.github-link, .home-link, .brand-mark {
   background: rgba(255,255,255,.82);
   backdrop-filter: blur(12px);
 }
@@ -481,6 +481,8 @@ button.donate-card { appearance: none; }
 .donate-card:active { transform: translateY(0) scale(.98); }
 .donate-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .donate-img { display: block; width: auto; height: auto; max-width: 132px; max-height: 52px; object-fit: contain; }
+/* O logo do Pix é um lockup largo: precisa de caixa maior pra não sumir. */
+#icon-pix { max-width: 150px; max-height: 66px; }
 /* Texto que entra no lugar se o hotlink do ícone quebrar. */
 .donate-fallback { font: 800 25px var(--font-heading); letter-spacing: -.5px; }
 .donate-hint { font-size: 12px; font-weight: 700; color: var(--muted); }
