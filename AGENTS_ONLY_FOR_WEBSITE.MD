@@ -49,6 +49,11 @@ no próprio PC. O GitHub é a ponte, não o destino final.
    ```bash
    node scripts/build-site-zip.mjs
    ```
+   **Sessão nova:** `zips/` começa vazia (é ignorada pelo git), então antes
+   do primeiro build pergunte ao usuário o último `-rN` usado e continue
+   de lá: `node scripts/build-site-zip.mjs --min-r <último+1>`
+   (ex.: parou no `-r7` → `--min-r 8`). Sem isso, nomes se repetem entre
+   branches e os downloads se confundem.
    Isso cria `zips/jetphotosplus-site.zip` — ou `jetphotosplus-site-r2`,
    `-r3`, ... se já existir (o script **nunca sobrescreve**: cada
    modificação gera um zip novo). O zip sai com o `index.html` na **raiz**

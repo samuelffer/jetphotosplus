@@ -7,7 +7,12 @@
  * pra pasta).
  *
  * Uso:
- *   node scripts/build-zip.mjs
+ *   node scripts/build-zip.mjs [--min-r N]
+ *
+ * N continua a numeração -rN de sessões anteriores: como zips/ é ignorada
+ * pelo git, toda sessão nova começa com ela vazia — sem o N, a contagem
+ * recomeçaria e repetiria nomes já usados em outra branch (ver AGENTS.md).
+ * Ex.: se a última sessão parou na -r43, gere com --min-r 44.
  *
  * O nome do arquivo sai da versão que está em extension/manifest.json:
  *   zips/jetphotosplus-v2.0.0.zip
@@ -175,13 +180,19 @@ function main() {
     process.exit(1);
   }
 
+  // Sessão nova = zips/ vazia: sem ajuda, a numeração -rN recomeçaria do
+  // zero e colidiria com nomes de branches anteriores. Por isso o agente
+  // informa de onde continuar via --min-r <último+1> (ver AGENTS.md).
+  const minRFlag = process.argv.indexOf('--min-r');
+  const minRevision = minRFlag === -1 ? 2 : Math.max(2, parseInt(process.argv[minRFlag + 1], 10) || 2);
+
   mkdirSync(OUTPUT_DIR, { recursive: true });
 
   // Nunca sobrescreve um zip anterior: se a versão repetir (o normal, já
   // que ela só muda quando o usuário mandar), gera -r2, -r3, ...
   let outputPath = join(OUTPUT_DIR, `jetphotosplus-v${version}.zip`);
-  if (existsSync(outputPath)) {
-    let revision = 2;
+  if (existsSync(outputPath) || minRevision > 2) {
+    let revision = minRevision;
     while (existsSync(join(OUTPUT_DIR, `jetphotosplus-v${version}-r${revision}.zip`))) revision++;
     outputPath = join(OUTPUT_DIR, `jetphotosplus-v${version}-r${revision}.zip`);
   }

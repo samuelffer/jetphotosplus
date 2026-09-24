@@ -6,7 +6,12 @@
  * no PC (é só descompactar e abrir o index.html no navegador).
  *
  * Uso:
- *   node scripts/build-site-zip.mjs
+ *   node scripts/build-site-zip.mjs [--min-r N]
+ *
+ * N continua a numeração -rN de sessões anteriores: como zips/ é ignorada
+ * pelo git, toda sessão nova começa com ela vazia — sem o N, a contagem
+ * recomeçaria e repetiria nomes já usados em outra branch (ver
+ * AGENTS_ONLY_FOR_WEBSITE.MD). Ex.: parou no -r7, gere com --min-r 8.
  *
  * O nome do arquivo é fixo, com sufixo de revisão (o site não tem "versão"
  * própria — ele exibe a última release PUBLICADA, ver
@@ -172,13 +177,19 @@ function main() {
     process.exit(1);
   }
 
+  // Sessão nova = zips/ vazia: sem ajuda, a numeração -rN recomeçaria do
+  // zero e colidiria com nomes de branches anteriores. Por isso o agente
+  // informa de onde continuar via --min-r <último+1>.
+  const minRFlag = process.argv.indexOf('--min-r');
+  const minRevision = minRFlag === -1 ? 2 : Math.max(2, parseInt(process.argv[minRFlag + 1], 10) || 2);
+
   mkdirSync(OUTPUT_DIR, { recursive: true });
 
   // Nunca sobrescreve um zip anterior: se o nome base já existir, gera
   // -r2, -r3, ... (mesma lógica do pacote da extensão).
   let outputPath = join(OUTPUT_DIR, `${BASE_NAME}.zip`);
-  if (existsSync(outputPath)) {
-    let revision = 2;
+  if (existsSync(outputPath) || minRevision > 2) {
+    let revision = minRevision;
     while (existsSync(join(OUTPUT_DIR, `${BASE_NAME}-r${revision}.zip`))) revision++;
     outputPath = join(OUTPUT_DIR, `${BASE_NAME}-r${revision}.zip`);
   }

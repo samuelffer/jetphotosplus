@@ -31,6 +31,11 @@ extensão no próprio PC. O GitHub é a ponte, não o destino final.
    ```bash
    node scripts/build-zip.mjs
    ```
+   **Sessão nova:** `zips/` começa vazia (é ignorada pelo git), então antes
+   do primeiro build pergunte ao usuário o último `-rN` usado e continue
+   de lá: `node scripts/build-zip.mjs --min-r <último+1>`
+   (ex.: parou na `-r43` → `--min-r 44`). Sem isso, nomes se repetem entre
+   branches e os downloads se confundem.
    Isso cria `zips/jetphotosplus-v<versão>.zip` (a versão vem do
    `manifest.json`). O zip sai com o `manifest.json` na **raiz** e contém
    **só os arquivos de instalação** — `CHANGELOG.md` fica de fora (é
