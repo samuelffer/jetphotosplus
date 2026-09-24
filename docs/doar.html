@@ -57,24 +57,19 @@
   <main class="app-shell">
     <section class="hero" aria-labelledby="donate-title">
       <div class="hero-mark"><img src="assets/jetphotosplus-logo.png" alt="JetPhotos+ logo"></div>
-      <div class="ext-badge">
-        <span aria-hidden="true">♥</span>
-        <span data-i18n="donateBadge">Support the project</span>
-      </div>
-      <h1 id="donate-title" data-i18n-html="donateTitle">Support <span>JetPhotos+</span></h1>
+      <h1 id="donate-title" data-i18n-html="donateTitle">Support JetPhotos<span>+</span></h1>
       <p class="description" data-i18n="donateDescription">JetPhotos+ is free and built in spare time. If it helps you every day, consider supporting it with any amount — every donation keeps the project alive.</p>
 
       <div class="donate-options">
         <a class="donate-card" id="paypalCard" href="https://www.paypal.com/" target="_blank" rel="noreferrer" data-i18n-attr="aria-label:donatePaypalCard|title:donatePaypalCard">
-          <span class="donate-brand paymark" aria-hidden="true"><span class="paymark-dark">Pay</span><span class="paymark-light">Pal</span></span>
+          <img class="donate-img" id="icon-paypal" src="" alt="PayPal" width="120" height="48">
           <span class="donate-hint" data-i18n="donatePaypalHint">Open donation page ↗</span>
         </a>
         <button class="donate-card" id="pixCard" type="button" data-i18n-attr="aria-label:donatePixCard|title:donatePixCard">
-          <span class="donate-brand pix-brand" aria-hidden="true"><span class="pix-mark"></span>Pix</span>
+          <img class="donate-img" id="icon-pix" src="" alt="Pix" width="120" height="48">
           <span class="donate-hint" data-i18n="donatePixHint">Copy Pix key</span>
         </button>
       </div>
-      <p class="pix-key"><span data-i18n="donatePixKeyLabel">Pix key:</span> <code id="pixKeyText"></code></p>
     </section>
   </main>
 
@@ -95,14 +90,12 @@
     en: {
       brandHome: 'JetPhotos+ home',
       githubView: 'View on GitHub',
-      donateBadge: 'Support the project',
-      donateTitle: 'Support <span>JetPhotos+</span>',
+      donateTitle: 'Support JetPhotos<span>+</span>',
       donateDescription: 'JetPhotos+ is free and built in spare time. If it helps you every day, consider supporting it with any amount — every donation keeps the project alive.',
       donatePaypalHint: 'Open donation page ↗',
       donatePaypalCard: 'Donate via PayPal (opens in a new tab)',
       donatePixHint: 'Copy Pix key',
       donatePixCard: 'Copy the Pix key to donate',
-      donatePixKeyLabel: 'Pix key:',
       donatePixCopied: 'Pix key copied!',
       donatePixFailed: 'Could not copy the key.',
       backHome: '← Home',
@@ -111,14 +104,12 @@
     pt: {
       brandHome: 'Página inicial do JetPhotos+',
       githubView: 'Ver no GitHub',
-      donateBadge: 'Apoie o projeto',
-      donateTitle: 'Apoie o <span>JetPhotos+</span>',
+      donateTitle: 'Apoie o JetPhotos<span>+</span>',
       donateDescription: 'O JetPhotos+ é gratuito e feito nas horas vagas. Se ele te ajuda no dia a dia, considere apoiar com qualquer valor — cada doação mantém o projeto vivo.',
       donatePaypalHint: 'Abrir página de doação ↗',
       donatePaypalCard: 'Doar via PayPal (abre em nova aba)',
       donatePixHint: 'Copiar chave Pix',
       donatePixCard: 'Copiar a chave Pix para doar',
-      donatePixKeyLabel: 'Chave Pix:',
       donatePixCopied: 'Chave Pix copiada!',
       donatePixFailed: 'Não foi possível copiar a chave.',
       backHome: '← Início',
@@ -226,7 +217,24 @@ const PAYPAL_URL = 'https://www.paypal.com/';
 const PIX_KEY = 'SUA-CHAVE-PIX-AQUI';
 
 document.getElementById('paypalCard').href = PAYPAL_URL;
-document.getElementById('pixKeyText').textContent = PIX_KEY;
+// Ícones dos métodos via hotlink (mesmo esquema dos ícones de navegador da
+// index: pra trocar um dia, basta trocar a URL aqui).
+const DONATE_ICON_URLS = {
+  paypal: 'https://cdn-icons-png.flaticon.com/512/174/174861.png',
+  pix: 'https://blog.caviarcriativo.com/wp-content/uploads/2025/03/Download-Logo-Pix.png'
+};
+Object.entries(DONATE_ICON_URLS).forEach(([name, url]) => {
+  const img = document.getElementById(`icon-${name}`);
+  if (!img) return;
+  // Hotlink pode quebrar: em vez de ícone quebrado, mostra o nome em texto.
+  img.addEventListener('error', () => {
+    const fallback = document.createElement('span');
+    fallback.className = 'donate-fallback';
+    fallback.textContent = name === 'pix' ? 'Pix' : 'PayPal';
+    img.replaceWith(fallback);
+  }, { once: true });
+  img.src = url;
+});
 
 // Copia com fallback: a Clipboard API pode não existir/ser negada (ex.:
 // contexto não seguro), então tenta o textarea + execCommand antes de
