@@ -1110,7 +1110,7 @@
          lugar a um disco verde com confere branco (troca seca, sem pop). */
       #jp-like-widget-bubble .jp-bubble-check { display:none; position:absolute; inset:0; width:100%; height:100%; padding:0; box-sizing:border-box; }
       #jp-like-widget-bubble .jp-bubble-check { display:flex; align-items:center; justify-content:center; }
-      #jp-like-widget-bubble .jp-bubble-check svg { display:block; width:100%; height:100%; padding:4px 3px 4px 5px; box-sizing:border-box; }
+      #jp-like-widget-bubble .jp-bubble-check svg { display:block; width:100%; height:100%; padding:4px 3px 4px 5px; box-sizing:border-box; }77240749094899d59975508229e0aca1f
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-ring,
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-thumb { display:none; }
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-check { display:flex; }
