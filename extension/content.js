@@ -1541,9 +1541,13 @@
     html.jp-site-dark-active a.tabnav__btn--active { color:#ffffff !important; }
     /* Upload: dropdowns Chosen + pílulas de checkbox/radio. A pílula ativa
        ganha borda azul pra não perder a distinção (o tema uniformiza bg). */
-    html.jp-site-dark-active .chosen-drop { background-color:#2b2d31 !important; border-color:#4b4e55 !important; }
+    html.jp-site-dark-active .chosen-drop { background-color:#2b2d31 !important; border-color:#4b4e55 !important; border-width:1px !important; border-style:solid !important; }
+    html.jp-site-dark-active .chosen-results { background-color:#2b2d31 !important; }
     html.jp-site-dark-active .chosen-results li { color:#e8e8e8 !important; }
     html.jp-site-dark-active .chosen-results li.highlighted { background-color:#1e659f !important; color:#ffffff !important; }
+    html.jp-site-dark-active .chosen-single { color:#e8e8e8 !important; border-color:#4b4e55 !important; }
+    html.jp-site-dark-active .chosen-single span { color:#e8e8e8 !important; }
+    html.jp-site-dark-active .chosen-search input { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#4b4e55 !important; }
     html.jp-site-dark-active .checkbox,
     html.jp-site-dark-active .radio__pill { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#4b4e55 !important; }
     html.jp-site-dark-active .radio__pill--active { border-color:#2c94e8 !important; }
