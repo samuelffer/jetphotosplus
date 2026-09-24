@@ -1545,6 +1545,8 @@
     html.jp-site-dark-active .chosen-results { background-color:#2b2d31 !important; }
     html.jp-site-dark-active .chosen-results li { color:#e8e8e8 !important; }
     html.jp-site-dark-active .chosen-results li.highlighted { background-color:#1e659f !important; color:#ffffff !important; }
+    html.jp-site-dark-active .chosen-results li.group-result { color:#888 !important; font-weight:700 !important; text-transform:uppercase !important; font-size:11px !important; letter-spacing:.5px !important; }
+    html.jp-site-dark-active .chosen-results li.group-option { padding-left:18px !important; }
     html.jp-site-dark-active .chosen-single { color:#e8e8e8 !important; border-color:#4b4e55 !important; }
     html.jp-site-dark-active .chosen-single span { color:#e8e8e8 !important; }
     html.jp-site-dark-active .chosen-search input { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#4b4e55 !important; }
