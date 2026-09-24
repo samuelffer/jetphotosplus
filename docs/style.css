@@ -500,7 +500,6 @@ button.donate-card { appearance: none; }
   .donate-options { display: block; }
   .donate-card { display: block; width: min(280px, 100%); margin: 0 auto 12px; padding: 18px 16px; text-align: center; }
   .donate-card:last-child { margin-bottom: 0; }
-<<<<<<< HEAD
 }
 @media (prefers-reduced-motion: reduce) {
   .toast { transition: none; }
