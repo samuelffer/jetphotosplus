@@ -157,6 +157,7 @@
       historyChartHint: 'Fotos analisadas por dia. Passe o mouse para ver os dados.',
       historyNoData: 'Ainda não há dias suficientes para montar o gráfico.',
       trackedDays: (n) => `${n} dia${n === 1 ? '' : 's'} acompanhado${n === 1 ? '' : 's'}`,
+      estimatedReview: 'Estimativa de análise:',
     },
     en: {
       settings: 'Settings', close: 'Close', viewReleases: "See what's new", reportIssue: 'Report an issue', aboutJetPhotosPlus: 'About JetPhotos+', donate: 'Donate', analyzing: 'Analyzing page...',
@@ -182,6 +183,7 @@
       historyChartHint: 'Photos reviewed per day. Hover a point for details.',
       historyNoData: 'Not enough tracked days to build the chart yet.',
       trackedDays: (n) => `${n} tracked day${n === 1 ? '' : 's'}`,
+      estimatedReview: 'Estimated review:',
     }
   };
 
@@ -2536,57 +2538,65 @@
   // "processed" e snapshots da fila foram removidos porque não são mais
   // necessários e podiam introduzir estimativas inconsistentes.
 
-  // Localiza, no DOM, a tabela cujo cabeçalho contém "QUEUE INFO" (a
-  // tabela "YOUR QUEUE STATUS" do print) e tenta extrair, de cada linha, o
-  // número de fotos à frente na fila.
+  // Localiza as fotos do usuário na fila ("YOUR QUEUE STATUS") e extrai,
+  // de cada uma, o número de fotos à frente (campo "Position") e uma
+  // referência ao <li> do "Time in Queue" — é logo abaixo dele que a
+  // estimativa individual será injetada.
   //
-  // A legenda do rodapé ("¹ Number of photos ahead of this one in the
-  // queue") indica que a célula provavelmente só tem um número (com uma
-  // marca ¹), não a frase inteira — então a extração é por POSIÇÃO da
-  // coluna (índice do cabeçalho "QUEUE INFO"), pegando o primeiro número
-  // daquela célula específica, em vez de procurar uma frase que
-  // provavelmente não existe linha a linha.
+  // Estrutura real observada no site (cada foto tem duas cópias no DOM,
+  // uma pra desktop e outra pra mobile; ambas ganham o badge pra não
+  // depender de qual está visível):
   //
-  // Ainda é best-effort (não tenho o HTML real de uma linha preenchida com
-  // fotos pra confirmar 100%) — se detectar algo errado na prática, me
-  // manda o HTML de uma linha preenchida (botão direito > Inspecionar) que
-  // eu ajusto o seletor.
-  const AHEAD_TEXT_RE = /(\d[\d,]*)\s*photos?\s*ahead/i; // fallback: caso alguma linha escreva a frase por extenso
-  const LEADING_NUMBER_RE = /(\d[\d,]*)/;
-
+  //   <li class="list__item">
+  //     <span>Position:</span>
+  //     <span><strong>6,379</strong><sup>1</sup></span>
+  //   </li>
+  //   <li class="list__item">
+  //     <span>Date Uploaded:</span>
+  //     <span><strong>Sep 4, 2026</strong></span>
+  //   </li>
+  //   <li class="list__item">
+  //     <span>Time in Queue:</span>
+  //     <span><strong>20 days 12 hours</strong></span>
+  //   </li>
   function findQueueInfoRows() {
-    const tables = document.querySelectorAll('table');
-    for (const table of tables) {
-      const headerCells = Array.from(table.querySelectorAll('th, thead td'));
-      const headerTexts = headerCells.map(c => c.textContent.trim().toUpperCase());
-      const queueInfoIdx = headerTexts.findIndex(h => h.includes('QUEUE INFO'));
-      if (queueInfoIdx === -1) continue; // essa tabela não é a que queremos
+    const matches = [];
+    const positionItems = document.querySelectorAll('li.list__item');
 
-      const bodyRows = Array.from(table.querySelectorAll('tbody tr, tr'))
-        .filter(tr => !tr.querySelector('th')); // pula a linha de cabeçalho
+    positionItems.forEach(li => {
+      const spans = li.querySelectorAll(':scope > span');
+      if (spans.length < 2) return;
+      const label = (spans[0].textContent || '').trim();
+      if (!/^Position:/i.test(label)) return;
 
-      const matches = [];
-      bodyRows.forEach(tr => {
-        const cells = tr.querySelectorAll('td');
-        const cell = cells[queueInfoIdx];
-        if (!cell) return;
-        const m = (cell.textContent || '').match(LEADING_NUMBER_RE);
-        if (m) matches.push({ rowEl: tr, ahead: numFromMatch(m[1]) });
-      });
+      // Extrai o número de <strong> dentro do segundo <span>; ignora o
+      // <sup> da nota de rodapé ("¹").
+      const valueEl = spans[1].querySelector('strong');
+      if (!valueEl) return;
+      const m = (valueEl.textContent || '').match(/(\d[\d,]*)/);
+      if (!m) return;
+      const ahead = numFromMatch(m[1]);
+      if (!Number.isFinite(ahead)) return;
 
-      if (matches.length) return matches;
+      // Localiza o <li> do "Time in Queue" no mesmo <ul> pai (é onde
+      // vamos injetar a estimativa individual logo abaixo).
+      const parentUl = li.parentElement;
+      if (!parentUl) return;
+      const siblings = parentUl.querySelectorAll(':scope > li.list__item');
+      let timeLi = null;
+      for (const sib of siblings) {
+        const sibLabel = sib.querySelector(':scope > span');
+        if (sibLabel && /^Time in Queue:/i.test((sibLabel.textContent || '').trim())) {
+          timeLi = sib;
+          break;
+        }
+      }
+      if (!timeLi) return; // sem "Time in Queue" ao lado — layout mudou, não injeta
 
-      // Fallback: tenta a frase por extenso em qualquer lugar da linha,
-      // pro caso da coluna QUEUE INFO estar vazia mas a info aparecer
-      // escrita em texto corrido em outra célula.
-      bodyRows.forEach(tr => {
-        const m = (tr.textContent || '').match(AHEAD_TEXT_RE);
-        if (m) matches.push({ rowEl: tr, ahead: numFromMatch(m[1]) });
-      });
+      matches.push({ rowEl: li, timeLi, ahead });
+    });
 
-      return matches; // achou a tabela certa (tinha "QUEUE INFO"), retorna o que conseguiu
-    }
-    return [];
+    return matches;
   }
 
   // Formato curto para o monitor da fila. Mantém a estimativa legível
@@ -2632,31 +2642,71 @@
     return `≈ ${duration} (${t('aroundDate')} ${formatDateShort(target)})`;
   }
 
-  // Injeta (ou atualiza, se já existir) um pequeno texto de estimativa
-  // logo após a célula "QUEUE INFO" de cada linha detectada. Marca a linha
-  // com um data-attribute pra não duplicar o badge em reprocessamentos
-  // (ex: reobservação do DOM depois de trocar o período no dropdown).
-  function injectInlineEstimate(rowEl, days) {
-    const text = formatEtaText(days);
-    let badge = rowEl.querySelector('.jp-queue-eta-badge');
+  // Formata a estimativa individual de cada foto, com data completa (dia/mês/ano)
+  // e texto mais direto: "16 dias estimado (26/09/2026)".
+  function formatPhotoEtaText(days) {
+    if (days == null || !Number.isFinite(days)) return null;
+    const totalHours = Math.max(0, Math.round(days * 24));
+    const wholeDays = Math.floor(totalHours / 24);
+    const hours = totalHours % 24;
+    const target = addDaysToDate(new Date(), totalHours / 24);
+
+    // Data completa com ano
+    const day = String(target.getDate()).padStart(2, '0');
+    const month = String(target.getMonth() + 1).padStart(2, '0');
+    const year = target.getFullYear();
+    const dateStr = currentSettings.language === 'en'
+      ? `${month}/${day}/${year}`
+      : `${day}/${month}/${year}`;
+
+    let duration;
+    if (wholeDays > 0 && hours > 0) {
+      duration = currentSettings.language === 'en'
+        ? `${wholeDays} day${wholeDays === 1 ? '' : 's'} ${hours}h`
+        : `${wholeDays} dia${wholeDays === 1 ? '' : 's'} e ${hours}h`;
+    } else if (wholeDays > 0) {
+      duration = currentSettings.language === 'en'
+        ? `${wholeDays} day${wholeDays === 1 ? '' : 's'}`
+        : `${wholeDays} dia${wholeDays === 1 ? '' : 's'}`;
+    } else {
+      duration = `${hours}h`;
+    }
+
+    const estimatedLabel = currentSettings.language === 'en' ? 'estimated' : 'estimado';
+    return `≈ ${duration} ${estimatedLabel} (${dateStr})`;
+  }
+
+  // Injeta (ou atualiza, se já existir) um <li> de estimativa logo após o
+  // <li class="list__item"> do "Time in Queue". Usa a mesma estrutura
+  // visual dos outros itens da coluna "Queue Info" (label + valor em
+  // <strong>) pra ficar visualmente integrado ao site. Marca o <li>
+  // injetado com uma classe própria pra não duplicar em reprocessamentos
+  // (ex: troca de período no dropdown da página).
+  function injectInlineEstimate(timeLi, days) {
+    const text = formatPhotoEtaText(days);
+    // O badge é irmão do <li> de "Time in Queue" — fica logo abaixo dele
+    // no mesmo <ul>. Se já existir um nosso, reutiliza; senão cria.
+    let badge = timeLi.nextElementSibling;
+    if (badge && !badge.classList.contains('jp-queue-eta-badge')) badge = null;
+
     if (!text) {
       if (badge) badge.remove();
       return;
     }
+
     if (!badge) {
-      badge = document.createElement('div');
-      badge.className = 'jp-queue-eta-badge';
-      badge.style.cssText = `
-        margin-top:4px; font-size:12px; font-weight:600; color:#1a73e8;
-        display:flex; align-items:center; gap:4px;
-      `;
-      // Anexa na última célula da linha (geralmente QUEUE INFO ou ACTIONS,
-      // qualquer uma das duas é um lugar visualmente razoável).
-      const cells = rowEl.querySelectorAll('td');
-      const target = cells[cells.length - 1] || rowEl;
-      target.appendChild(badge);
+      badge = document.createElement('li');
+      badge.className = 'list__item jp-queue-eta-badge';
+      badge.innerHTML = '<span></span><span><strong></strong></span>';
+      // Insere imediatamente após o <li> do "Time in Queue", mantendo a
+      // ordem visual dos campos da coluna.
+      timeLi.insertAdjacentElement('afterend', badge);
     }
-    badge.textContent = text;
+
+    const spans = badge.querySelectorAll(':scope > span');
+    if (spans[0]) spans[0].textContent = t('estimatedReview');
+    const strong = badge.querySelector('strong');
+    if (strong) strong.textContent = text;
   }
 
   // -----------------------------------------------------------------------
@@ -2956,6 +3006,22 @@
       const style = document.createElement('style');
       style.id = styleId;
       style.textContent = `
+        /* Estimativa individual por foto — fica dentro do <ul> do "Queue Info"
+           de cada foto, logo abaixo do "Time in Queue". Usa a mesma tipografia
+           dos outros <li> do site, mas com cor de destaque pra diferenciar. */
+        .jp-queue-eta-badge > span:first-child {
+          color: #1a73e8;
+          font-weight: 600;
+        }
+        .jp-queue-eta-badge > span:last-child strong {
+          color: #1a73e8;
+        }
+        /* No modo escuro do site, ajusta pra um azul mais visível. */
+        html.jp-site-dark-active .jp-queue-eta-badge > span:first-child,
+        html.jp-site-dark-active .jp-queue-eta-badge > span:last-child strong {
+          color: #8ab4f8;
+        }
+
         #jp-site-queue-tracker {
           font-family: inherit;
         }
@@ -3208,8 +3274,8 @@
     const labelEl = document.getElementById('jp-queue-list-label');
     if (!listEl) return;
 
-    rows.forEach(({ rowEl, ahead }) => {
-      injectInlineEstimate(rowEl, lastQueueRate != null ? ahead / lastQueueRate : null);
+    rows.forEach(({ timeLi, ahead }) => {
+      injectInlineEstimate(timeLi, lastQueueRate != null ? ahead / lastQueueRate : null);
     });
 
     if (!rows.length) {
