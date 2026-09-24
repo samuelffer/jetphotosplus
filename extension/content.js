@@ -2073,7 +2073,7 @@
       <a href="https://github.com/samuelffer/jetphotosplus/releases" id="jp-plus-mobile-releases-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('viewReleases')}</a>
       <a href="https://github.com/samuelffer/jetphotosplus/issues" id="jp-plus-mobile-issues-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('reportIssue')}</a>
       <a href="https://samuelffer.github.io/jetphotosplus/" id="jp-plus-mobile-about-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('aboutJetPhotosPlus')}</a>
-      <a href="${DONATE_URL}" id="jp-plus-mobile-donate-link" role="menuitem" target="_blank" rel="noopener noreferrer">\u2665 ${t('donate')}</a>
+      <a href="${DONATE_URL}" id="jp-plus-mobile-donate-link" role="menuitem" target="_blank" rel="noopener noreferrer"><svg width="16" height="16" viewBox="0 0 24 24" fill="#e74c3c" style="vertical-align:middle;margin-right:6px"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>${t('donate')}</a>
       <a href="#" id="jp-plus-mobile-settings-link" role="menuitem">${t('settings')}</a>
     `;
     if (currentSettings.siteDarkMode) submenu.classList.add('jp-dark');
@@ -2145,7 +2145,7 @@
       <a href="https://github.com/samuelffer/jetphotosplus/releases" id="jp-plus-releases-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('viewReleases')}</a>
       <a href="https://github.com/samuelffer/jetphotosplus/issues" id="jp-plus-issues-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('reportIssue')}</a>
       <a href="https://samuelffer.github.io/jetphotosplus/" id="jp-plus-about-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('aboutJetPhotosPlus')}</a>
-      <a href="${DONATE_URL}" id="jp-plus-donate-link" role="menuitem" target="_blank" rel="noopener noreferrer">\u2665 ${t('donate')}</a>
+      <a href="${DONATE_URL}" id="jp-plus-donate-link" role="menuitem" target="_blank" rel="noopener noreferrer"><svg width="16" height="16" viewBox="0 0 24 24" fill="#e74c3c" style="vertical-align:middle;margin-right:6px"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>${t('donate')}</a>
       <a href="#" id="jp-plus-settings-link" role="menuitem">${t('settings')}</a>
     `;
     if (currentSettings.siteDarkMode) submenu.classList.add('jp-dark');
@@ -2214,7 +2214,7 @@
         <span class="jp-bubble-ring-wrap" aria-hidden="true">
           <svg class="jp-bubble-ring" viewBox="0 0 28 28"><circle class="jp-bubble-ring-track" cx="14" cy="14" r="12"></circle><circle class="jp-bubble-ring-fill" id="jp-bubble-ring-fill" cx="14" cy="14" r="12"></circle></svg>
           <svg class="jp-bubble-thumb" viewBox="0 1 26 26"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <svg class="jp-bubble-check" viewBox="0 0 28 28"><circle cx="14" cy="14" r="13" fill="#22c55e"></circle><path d="M8.5 14.5l4 4L19.5 10" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg class="jp-bubble-check" viewBox="0 0 28 28"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" fill="#22c55e" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
         <span id="jp-like-widget-bubble-count">\u2026</span>
         <span id="jp-like-widget-bubble-label" class="jp-bubble-label"></span>`;
