@@ -1113,7 +1113,7 @@
       #jp-like-widget-bubble .jp-bubble-check svg { display:block; width:100%; height:100%; }
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-ring,
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-thumb { display:none; }
-      #jp-like-widget-bubble.jp-bubble-done .jp-bubble-check { display:block; }
+      #jp-like-widget-bubble.jp-bubble-done .jp-bubble-check { display:flex; }
       /* Rótulo só no desktop largo (ex: "10 faltando"): deixa a bolha mais
          larga e autoexplicativa onde há espaço; some no mobile. */
       #jp-like-widget-bubble .jp-bubble-label { display:none; font-weight:600; opacity:.75; }
