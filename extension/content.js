@@ -107,10 +107,13 @@
     setTimeout(removePreloadHide, PRELOAD_SAFETY_MS);
   })();
 
+  // URL de doação (provisória: repositório). Troque pela página definitiva
+  // (Ko-fi, Apoia.se, Pix...) quando ela existir.
+  const DONATE_URL = 'https://github.com/samuelffer/jetphotosplus';
   const I18N = {
     'pt-BR': {
       settings: 'Configurações', close: 'Fechar',
-      viewReleases: 'Ver novidades', reportIssue: 'Reportar um problema', aboutJetPhotosPlus: 'Sobre o JetPhotos+',
+      viewReleases: 'Ver novidades', reportIssue: 'Reportar um problema', aboutJetPhotosPlus: 'Sobre o JetPhotos+', donate: 'Doar',
       analyzing: 'Analisando página...',
       likeMissing: 'Curtir faltantes',
       missing: 'faltando',
@@ -156,7 +159,7 @@
       trackedDays: (n) => `${n} dia${n === 1 ? '' : 's'} acompanhado${n === 1 ? '' : 's'}`,
     },
     en: {
-      settings: 'Settings', close: 'Close', viewReleases: "See what's new", reportIssue: 'Report an issue', aboutJetPhotosPlus: 'About JetPhotos+', analyzing: 'Analyzing page...',
+      settings: 'Settings', close: 'Close', viewReleases: "See what's new", reportIssue: 'Report an issue', aboutJetPhotosPlus: 'About JetPhotos+', donate: 'Donate', analyzing: 'Analyzing page...',
       likeMissing: 'Like missing photos',
       missing: 'missing',
       allLikedToast: 'All photos on this page are already liked',
@@ -2020,6 +2023,7 @@
       <a href="https://github.com/samuelffer/jetphotosplus/releases" id="jp-plus-mobile-releases-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('viewReleases')}</a>
       <a href="https://github.com/samuelffer/jetphotosplus/issues" id="jp-plus-mobile-issues-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('reportIssue')}</a>
       <a href="https://samuelffer.github.io/jetphotosplus/" id="jp-plus-mobile-about-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('aboutJetPhotosPlus')}</a>
+      <a href="${DONATE_URL}" id="jp-plus-mobile-donate-link" role="menuitem" target="_blank" rel="noopener noreferrer">\u2665 ${t('donate')}</a>
       <a href="#" id="jp-plus-mobile-settings-link" role="menuitem">${t('settings')}</a>
     `;
     if (currentSettings.siteDarkMode) submenu.classList.add('jp-dark');
@@ -2085,6 +2089,7 @@
       <a href="https://github.com/samuelffer/jetphotosplus/releases" id="jp-plus-releases-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('viewReleases')}</a>
       <a href="https://github.com/samuelffer/jetphotosplus/issues" id="jp-plus-issues-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('reportIssue')}</a>
       <a href="https://samuelffer.github.io/jetphotosplus/" id="jp-plus-about-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('aboutJetPhotosPlus')}</a>
+      <a href="${DONATE_URL}" id="jp-plus-donate-link" role="menuitem" target="_blank" rel="noopener noreferrer">\u2665 ${t('donate')}</a>
       <a href="#" id="jp-plus-settings-link" role="menuitem">${t('settings')}</a>
     `;
     if (currentSettings.siteDarkMode) submenu.classList.add('jp-dark');
