@@ -1002,10 +1002,11 @@
         background:#ffffff; border:1px solid rgba(0,0,0,.12);
         box-shadow:0 5px 20px rgba(0,0,0,.30);
         cursor:pointer; padding:0;
+        transition:transform .06s ease-out, background .12s ease;
       }
       #jp-plus-mobile-fab img { display:block; width:30px; height:32px; object-fit:contain; }
       #jp-plus-mobile-fab:hover { background:#f0f0f0; }
-      #jp-plus-mobile-fab:active { transform:scale(.94); }
+      #jp-plus-mobile-fab:active { transform:scale(.92); }
       #jp-plus-mobile-fab:focus-visible { outline:2px solid #2c94e8; outline-offset:2px; }
       #jp-plus-mobile-host.jp-dark #jp-plus-mobile-fab { background:#1c1c1c; border-color:#464646; }
       #jp-plus-mobile-host.jp-dark #jp-plus-mobile-fab:hover { background:#2a2a2a; border-color:#686868; }
@@ -1021,7 +1022,7 @@
         overflow:hidden; padding:6px;
         font-family:inherit;
       }
-      #jp-plus-mobile-host.jp-mobile-menu-open > #jp-plus-mobile-submenu { display:block; animation:jpMobileMenuIn .16s ease; }
+      #jp-plus-mobile-host.jp-mobile-menu-open > #jp-plus-mobile-submenu { display:block; animation:jpMobileMenuIn .11s ease; }
       @keyframes jpMobileMenuIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
       @media (prefers-reduced-motion: reduce) {
         #jp-plus-mobile-host.jp-mobile-menu-open > #jp-plus-mobile-submenu { animation:none; }

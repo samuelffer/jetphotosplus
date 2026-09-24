@@ -161,6 +161,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - FAB escuro agora no tom exato da bolha de likes (#1c1c1c + borda #464646, hover igual).
 - Correção: submenu mobile abria branco no escuro (a regra base vencia a variante dark na especificidade) — fundo/cores do tema agora valem.
 - Novo: menu mobile aparece com fade + subida suave (respeita reduced-motion); FAB afunda de leve ao toque.
+- Micro-interações mais secas: menu .16s→.11s, toque do FAB com resposta rápida (.06s).
 
 ---
 
