@@ -101,7 +101,7 @@ extension/
   content-hook.js    roda no MUNDO DA PÁGINA; espiona fetch/XHR do
                      PostHandler.php pra confirmar like no servidor
   background.js      service worker: coleta a fila a cada 10 min (alarms)
-  popup.*            popup do ícone (Ritmo da fila + gráfico + export/import)
+  (sem popup)        o ícone da extensão não abre painel; export/import ficam nas Configurações no site
   _locales/          só nome e descrição da extensão
   CHANGELOG.md       histórico (Keep a Changelog + SemVer)
   leia-me.txt        instruções de instalação pro usuário final

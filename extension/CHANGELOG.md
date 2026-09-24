@@ -45,6 +45,11 @@ Versão de refinamento da experiência de curtir + cobertura do modo escuro: a b
 ### Toast com a cara do site
 - Toast virou cartão claro como os cards de resultado (texto escuro, filete azul, fonte explícita) e fica de fora da recolorida do modo escuro.
 
+### Fila: sem gráfico, sem popup do ícone
+- Removido o gráfico de fotos analisadas por dia em `queue.php` (o estimador em tabela permanece).
+- O ícone da extensão na barra do navegador não abre mais o popup \"Ritmo da fila\".
+- Exportar e importar o histórico da fila passaram para **Configurações** da extensão no site.
+
 ### Documentação
 - `manifest.json`, `CHANGELOG.md` e `leia-me.txt` sincronizados na versão 2.0.1.
 

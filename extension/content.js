@@ -153,10 +153,14 @@
       timezoneAhead: (n) => ` Fuso do site ${Math.abs(n)} dia(s) à frente do seu computador.`,
       timezoneBehind: (n) => ` Fuso do site ${Math.abs(n)} dia(s) atrás do seu computador.`,
       aroundDate: 'por volta de',
-      historyChart: 'Ritmo diário da fila',
-      historyChartHint: 'Fotos analisadas por dia. Passe o mouse para ver os dados.',
-      historyNoData: 'Ainda não há dias suficientes para montar o gráfico.',
       trackedDays: (n) => `${n} dia${n === 1 ? '' : 's'} acompanhado${n === 1 ? '' : 's'}`,
+      historyData: 'Histórico da fila',
+      historyDataHelp: 'Backup do ritmo da fila (fotos analisadas por dia). Importar mescla com o que já existe, sem apagar.',
+      exportHistory: 'Exportar histórico',
+      importHistory: 'Importar histórico',
+      historyExported: 'Histórico exportado.',
+      historyImported: (n) => `Histórico importado: ${n} dia${n === 1 ? '' : 's'}.`,
+      historyImportFail: 'Falha ao importar o arquivo.',
       estimatedReview: 'Estimativa de análise:',
     },
     en: {
@@ -179,10 +183,14 @@
       currentRate: (n, basis) => `Current rate: <b>~${Math.round(n).toLocaleString('en-US')} photos/day</b>${basis ? ` (${basis})` : ''}`,
       generalEta: (eta) => `General waiting estimate: <b>${eta}</b>`, queueTotal: (n) => `Total site queue: ${n.toLocaleString('en-US')} photos.`,
       timezoneAhead: (n) => ` Site time is ${Math.abs(n)} day(s) ahead of your computer.`, timezoneBehind: (n) => ` Site time is ${Math.abs(n)} day(s) behind your computer.`, aroundDate: 'around',
-      historyChart: 'Daily queue pace',
-      historyChartHint: 'Photos reviewed per day. Hover a point for details.',
-      historyNoData: 'Not enough tracked days to build the chart yet.',
       trackedDays: (n) => `${n} tracked day${n === 1 ? '' : 's'}`,
+      historyData: 'Queue history',
+      historyDataHelp: 'Backup of queue pace (photos reviewed per day). Import merges with existing data and does not delete it.',
+      exportHistory: 'Export history',
+      importHistory: 'Import history',
+      historyExported: 'History exported.',
+      historyImported: (n) => `History imported: ${n} day${n === 1 ? '' : 's'}.`,
+      historyImportFail: 'Could not import that file.',
       estimatedReview: 'Estimated review:',
     }
   };
@@ -195,7 +203,6 @@
 
   const STORAGE_KEY_QUEUE_DAILY_STATS = 'jpQueueDailyStats';
   const QUEUE_RATE_SAMPLE_DAYS = 6;
-  const QUEUE_CHART_MAX_DAYS = 60;
 
 
   // A página pode manter um content script antigo vivo depois que a extensão
@@ -1825,6 +1832,100 @@
     queueEstRow.appendChild(queueEstToggle);
     inner.appendChild(queueEstRow);
 
+    const historyHeader = document.createElement('div');
+    historyHeader.style.cssText = `
+      margin-top:4px; padding-top:14px;
+      border-top:1px dashed var(--jp-border);
+      font-family:Arial,Helvetica,sans-serif; font-size:11px; font-weight:600;
+      letter-spacing:.6px; text-transform:uppercase; color:var(--jp-subtext);
+    `;
+    historyHeader.textContent = t('historyData');
+    inner.appendChild(historyHeader);
+
+    const historyHelp = document.createElement('div');
+    historyHelp.style.cssText = `font-family:Arial,Helvetica,sans-serif; font-size:12px; color:var(--jp-subtext); line-height:1.4;`;
+    historyHelp.textContent = t('historyDataHelp');
+    inner.appendChild(historyHelp);
+
+    const historyActions = document.createElement('div');
+    historyActions.style.cssText = `display:flex; flex-wrap:wrap; gap:8px; align-items:center;`;
+
+    const mkBtn = (label) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = label;
+      b.style.cssText = `
+        font-family:Arial,Helvetica,sans-serif; font-size:13px; cursor:pointer;
+        color:var(--jp-text); background:var(--jp-bg); border:1px solid var(--jp-border);
+        border-radius:6px; padding:7px 10px;
+      `;
+      return b;
+    };
+
+    const exportBtn = mkBtn(t('exportHistory'));
+    const importBtn = mkBtn(t('importHistory'));
+    const importInput = document.createElement('input');
+    importInput.type = 'file';
+    importInput.accept = 'application/json,.json';
+    importInput.hidden = true;
+    const historyMsg = document.createElement('div');
+    historyMsg.style.cssText = `font-family:Arial,Helvetica,sans-serif; font-size:12px; color:var(--jp-subtext); min-height:1.2em;`;
+
+    exportBtn.addEventListener('click', async () => {
+      const stats = await loadQueueDailyStats();
+      const blob = new Blob([JSON.stringify({
+        format: 'JetPhotos+', type: 'queue-history', version: 2,
+        exportedAt: new Date().toISOString(), history: stats
+      }, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `jetphotos-plus-history-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 500);
+      historyMsg.textContent = t('historyExported');
+    });
+
+    importBtn.addEventListener('click', () => importInput.click());
+    importInput.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        const payload = JSON.parse(await file.text());
+        const imported = payload?.history;
+        if (!imported || typeof imported !== 'object') throw new Error('invalid');
+        const current = await loadQueueDailyStats();
+        const merged = { ...current };
+        const keys = Object.keys(imported).filter(k => k !== '__meta' && /^\d{4}-\d{2}-\d{2}$/.test(k));
+        for (const key of keys) merged[key] = imported[key];
+        if (imported.__meta) {
+          const currentAt = Number(current.__meta?.lastObservedAtMs || 0);
+          const importedAt = Number(imported.__meta?.lastObservedAtMs || 0);
+          merged.__meta = importedAt > currentAt
+            ? { ...(current.__meta || {}), ...imported.__meta }
+            : (current.__meta || imported.__meta);
+        }
+        const trimmedKeys = Object.keys(merged).filter(k => k !== '__meta' && /^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+        for (const oldKey of trimmedKeys.slice(0, Math.max(0, trimmedKeys.length - 60))) delete merged[oldKey];
+        await new Promise(resolve => chrome.storage.local.set({ [STORAGE_KEY_QUEUE_DAILY_STATS]: merged }, resolve));
+        try {
+          chrome.action.setBadgeText({ text: String(Math.min(Object.keys(merged).filter(k => k !== '__meta').length, 99)) });
+          chrome.action.setBadgeBackgroundColor({ color: '#4299dc' });
+        } catch (_) {}
+        historyMsg.textContent = t('historyImported', keys.length);
+      } catch (_) {
+        historyMsg.textContent = t('historyImportFail');
+      }
+      e.target.value = '';
+    });
+
+    historyActions.appendChild(exportBtn);
+    historyActions.appendChild(importBtn);
+    historyActions.appendChild(importInput);
+    inner.appendChild(historyActions);
+    inner.appendChild(historyMsg);
 
     menu.appendChild(inner);
 
@@ -2839,99 +2940,8 @@
     };
   }
 
-  function getChartSeries(stats, siteTodayKey) {
-    const keys = getHistoryDays(stats);
-    return keys.slice(-QUEUE_CHART_MAX_DAYS).map(key => {
-      const item = stats[key] || {};
-      const value = getDailyAnalyzedValue(stats, key);
-      return {
-        key,
-        analyzed: Number.isFinite(value) ? value : 0,
-        closed: Boolean(item.closed),
-        today: key === siteTodayKey,
-        samples: Number(item.samples || 0)
-      };
-    });
-  }
-
   let lastQueueRate = null; // guardado pra reaproveitar no cálculo por linha (fotos à frente / ritmo)
 
-
-  function renderQueueHistoryChart(stats, siteTodayKey) {
-    const host = document.getElementById('jp-queue-history');
-    if (!host) return;
-    const series = getChartSeries(stats, siteTodayKey);
-    const meaningful = series.filter(item => item.analyzed > 0);
-    if (!meaningful.length) {
-      host.innerHTML = `<div style="font-size:10px;opacity:.6;padding:8px 0;">${t('historyNoData')}</div>`;
-      return;
-    }
-
-    const W = 420, H = 176;
-    const pad = { left: 42, right: 8, top: 10, bottom: 28 };
-    const plotW = W - pad.left - pad.right;
-    const plotH = H - pad.top - pad.bottom;
-    const maxValue = Math.max(1, ...series.map(item => item.analyzed));
-    const tickCount = 4;
-    const barGap = series.length > 35 ? 2 : 5;
-    const barW = Math.max(2, (plotW / Math.max(1, series.length)) - barGap);
-    const fmt = value => value.toLocaleString(currentSettings.language === 'en' ? 'en-US' : 'pt-BR');
-    const shortDate = key => {
-      const [y,m,d] = key.split('-');
-      return `${d}/${m}`;
-    };
-
-    const yTicks = Array.from({length: tickCount + 1}, (_, i) => Math.round((maxValue / tickCount) * i));
-    const grid = yTicks.map(value => {
-      const y = pad.top + plotH - (value / maxValue) * plotH;
-      return `<line class="jp-queue-grid" x1="${pad.left}" y1="${y.toFixed(1)}" x2="${W-pad.right}" y2="${y.toFixed(1)}"></line><text class="jp-queue-axis" x="${pad.left-5}" y="${(y+3).toFixed(1)}" text-anchor="end">${fmt(value)}</text>`;
-    }).join('');
-
-    const bars = series.map((item, i) => {
-      const x = pad.left + i * (plotW / series.length) + barGap / 2;
-      const height = (item.analyzed / maxValue) * plotH;
-      const y = pad.top + plotH - height;
-      const cls = item.today ? 'jp-queue-bar jp-today' : 'jp-queue-bar';
-      const title = item.closed ? '' : ' • ' + (currentSettings.language === 'en' ? 'today / partial' : 'hoje / parcial');
-      return `<rect class="${cls}" data-index="${i}" x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${Math.max(2,barW).toFixed(2)}" height="${Math.max(0.8,height).toFixed(2)}" rx="2"><title>${shortDate(item.key)} — ${fmt(item.analyzed)} ${currentSettings.language === 'en' ? 'photos' : 'fotos'}${title}</title></rect>`;
-    }).join('');
-
-    const labelIndexes = series.length <= 10
-      ? series.map((_, i) => i)
-      : [0, Math.floor((series.length-1)/2), series.length-1];
-    const labels = labelIndexes.map(i => {
-      const x = pad.left + i * (plotW / series.length) + (plotW / series.length)/2;
-      return `<text class="jp-queue-axis" x="${x.toFixed(1)}" y="${H-7}" text-anchor="middle">${shortDate(series[i].key)}</text>`;
-    }).join('');
-
-    host.innerHTML = `
-      <div class="jp-queue-history-title"><span>${t('historyChart')}</span><span class="jp-queue-history-hint">${t('historyChartHint')}</span></div>
-      <div class="jp-queue-history-chart">
-        <svg class="jp-queue-history-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" aria-label="${t('historyChart')}">${grid}${bars}${labels}</svg>
-        <div class="jp-queue-tooltip" id="jp-queue-history-tooltip"></div>
-      </div>`;
-
-    const svg = host.querySelector('.jp-queue-history-svg');
-    const tooltip = host.querySelector('.jp-queue-tooltip');
-    const chart = host.querySelector('.jp-queue-history-chart');
-    if (!svg || !tooltip || !chart) return;
-    svg.querySelectorAll('.jp-queue-bar').forEach(bar => {
-      const show = event => {
-        const index = Number(bar.dataset.index);
-        const item = series[index];
-        tooltip.innerHTML = `<strong>${fmt(item.analyzed)} ${currentSettings.language === 'en' ? 'photos' : 'fotos'}</strong>${shortDate(item.key)}${item.today ? ` · ${currentSettings.language === 'en' ? 'today' : 'hoje'}` : ''}`;
-        tooltip.style.display = 'block';
-        const rect = chart.getBoundingClientRect();
-        const b = bar.getBoundingClientRect();
-        const left = Math.max(4, Math.min(rect.width - 145, b.left - rect.left + b.width / 2 - 66));
-        tooltip.style.left = `${left}px`;
-        tooltip.style.top = `${Math.max(0, b.top - rect.top - 42)}px`;
-      };
-      bar.addEventListener('mouseenter', show);
-      bar.addEventListener('mousemove', show);
-      bar.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
-    });
-  }
 
   // Mostra o estado do coletor automático diretamente na página do JetPhotos.
   // Isso é apenas uma interface de diagnóstico/experimental: a fonte dos
@@ -3058,15 +3068,12 @@
           </tr>
         </tbody>
       </table>
-      <div class="jp-queue-history" id="jp-queue-history"></div>
-
       <div class="jp-plus-queue-note">
         <span>${basisText}</span>
         <button id="jp-site-queue-tracker-refresh" type="button">${t('collectNow')}</button>
       </div>
     `;
 
-    renderQueueHistoryChart(dailyStats, siteTodayKey);
 
     const styleId = 'jp-plus-queue-native-style';
     if (!document.getElementById(styleId)) {
@@ -3175,44 +3182,6 @@
         #jp-site-queue-tracker button:hover {
           opacity: .7;
         }
-
-        #jp-site-queue-tracker .jp-queue-history {
-          margin-top: 14px;
-          padding-top: 10px;
-          border-top: 1px solid currentColor;
-          opacity: .92;
-        }
-        #jp-site-queue-tracker .jp-queue-history-title {
-          display:flex; align-items:baseline; justify-content:space-between; gap:10px;
-          margin-bottom:8px; font-size:12px; font-weight:600;
-        }
-        #jp-site-queue-tracker .jp-queue-history-hint {
-          font-size:10px; font-weight:400; opacity:.62;
-        }
-        #jp-site-queue-tracker .jp-queue-history-chart {
-          position:relative; width:100%; overflow:visible;
-        }
-        #jp-site-queue-tracker .jp-queue-history-svg {
-          display:block; width:100%; height:176px; overflow:visible;
-        }
-        #jp-site-queue-tracker .jp-queue-grid {
-          stroke: currentColor; stroke-width:1; opacity:.14; vector-effect:non-scaling-stroke;
-        }
-        #jp-site-queue-tracker .jp-queue-axis {
-          fill:currentColor; opacity:.62; font-size:10px;
-        }
-        #jp-site-queue-tracker .jp-queue-bar {
-          fill:#4299dc; opacity:.84; rx:2;
-        }
-        #jp-site-queue-tracker .jp-queue-bar.jp-today { opacity:1; }
-        #jp-site-queue-tracker .jp-queue-tooltip {
-          position:absolute; z-index:5; pointer-events:none; display:none;
-          min-width:132px; padding:7px 9px; box-sizing:border-box;
-          border:1px solid rgba(255,255,255,.18); border-radius:5px;
-          background:#202124; color:#fff; box-shadow:0 3px 12px rgba(0,0,0,.28);
-          font-size:10px; line-height:1.35; white-space:nowrap;
-        }
-        #jp-site-queue-tracker .jp-queue-tooltip strong { display:block; font-size:12px; margin-bottom:2px; }
 
         @media (max-width: 700px) {
           #jp-site-queue-tracker .jp-plus-queue-note {

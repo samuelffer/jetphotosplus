@@ -20,26 +20,19 @@ páginas que têm fotos com ação de Like. Ele mostra quantas fotos ainda estã
 faltando e quantas já foram curtidas.
 
 
-ACOMPANHANDO A FILA (popup do ícone)
-------------------------------------
-Clique no ícone do JetPhotos+ na barra do navegador para abrir o painel
-"Ritmo da fila". Não é preciso estar no JetPhotos nem abrir o queue.php.
-
-  · Hoje  — maior "Total Screened" observado no dia
-  · Média — média dos últimos dias concluídos
-  · Fila  — total de fotos na fila do site na última coleta
-
-Abaixo, o gráfico mostra as fotos analisadas por dia nos últimos até 60 dias.
-Passe o mouse sobre uma barra para ver a data e o valor exato.
+ACOMPANHANDO A FILA
+-------------------
+Na página queue.php, o estimador mostra analisadas hoje, média dos dias
+concluídos e tempo estimado. A coleta roda sozinha em background a cada
+10 minutos, enquanto o navegador estiver aberto.
 
 O número no badge do ícone é a quantidade de dias acompanhados.
-
-A coleta acontece sozinha em background, a cada 10 minutos, enquanto o
-navegador estiver aberto — inclusive sem você visitar o site.
 
 
 EXPORTAR E IMPORTAR O HISTÓRICO
 -------------------------------
+Nas configurações da extensão (menu JetPhotos+ no site):
+
 · Exportar histórico — baixa um JSON com todos os dias acompanhados, útil
   para backup ou para levar os dados para outro navegador.
 · Importar histórico — mescla um JSON exportado ao histórico atual, sem
