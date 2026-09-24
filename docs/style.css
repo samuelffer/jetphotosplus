@@ -480,9 +480,10 @@ button.donate-card { appearance: none; }
 .donate-card:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 14px 28px -6px rgba(20, 30, 50, .3); border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); }
 .donate-card:active { transform: translateY(0) scale(.98); }
 .donate-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-.donate-img { display: block; width: auto; height: auto; max-width: 132px; max-height: 52px; object-fit: contain; }
-/* O logo do Pix é um lockup largo: precisa de caixa maior pra não sumir. */
-#icon-pix { max-width: 150px; max-height: 66px; }
+.donate-brandbox { display: flex; align-items: center; justify-content: center; height: 64px; }
+.donate-img { display: block; width: auto; height: auto; max-width: 132px; max-height: 100%; object-fit: contain; }
+/* O logo do Pix é um lockup largo com respiro: caixa bem maior pra não sumir. */
+#icon-pix { max-width: 170px; }
 /* Texto que entra no lugar se o hotlink do ícone quebrar. */
 .donate-fallback { font: 800 25px var(--font-heading); letter-spacing: -.5px; }
 .donate-hint { font-size: 12px; font-weight: 700; color: var(--muted); }
@@ -505,7 +506,7 @@ button.donate-card { appearance: none; }
 
 @media (max-width: 600px) {
   .donate-options { flex-direction: column; align-items: center; }
-  .donate-card { width: min(280px, 100%); max-width: none; min-height: 0; }
+  .donate-card { flex: none; width: min(280px, 100%); max-width: none; min-height: 0; }
   footer { flex-wrap: wrap; row-gap: 4px; }
 }
 @media (prefers-reduced-motion: reduce) {
