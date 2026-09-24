@@ -1914,6 +1914,14 @@
     if (launcherHostEl) launcherHostEl.classList.remove('jp-settings-open');
     if (mobileHostEl) mobileHostEl.classList.remove('jp-settings-open');
     if (open && host) host.classList.add('jp-settings-open');
+    // No desktop, o launcherHostEl vive dentro de um stacking context
+    // criado pelo header do JetPhotos (header__account com position:absolute).
+    // O backdrop, que está no <body>, fica ACIMA desse stacking context —
+    // mesmo com z-index menor que o settings panel. Pra resolver, sobe o
+    // launcherHostEl acima do backdrop quando o painel está aberto.
+    if (launcherHostEl) {
+      launcherHostEl.style.zIndex = open && host === launcherHostEl ? '1000003' : '';
+    }
     updateBackdrop();
   }
 
@@ -1945,7 +1953,10 @@
   }
 
   function closeAllPlus() {
-    if (launcherHostEl) launcherHostEl.classList.remove('jp-settings-open');
+    if (launcherHostEl) {
+      launcherHostEl.classList.remove('jp-settings-open');
+      launcherHostEl.style.zIndex = '';
+    }
     if (mobileHostEl) {
       mobileHostEl.classList.remove('jp-settings-open');
       mobileHostEl.classList.remove('jp-mobile-menu-open');
@@ -1966,8 +1977,12 @@
     const wasOpen = (launcherHostEl.classList.contains('jp-settings-open') ||
       mobileHostEl.classList.contains('jp-settings-open'));
     launcherHostEl.classList.remove('jp-settings-open');
+    launcherHostEl.style.zIndex = '';
     mobileHostEl.classList.remove('jp-settings-open');
-    if (wasOpen) target.classList.add('jp-settings-open');
+    if (wasOpen) {
+      target.classList.add('jp-settings-open');
+      if (target === launcherHostEl) target.style.zIndex = '1000003';
+    }
     if (!fab) mobileHostEl.classList.remove('jp-mobile-menu-open');
     updateBackdrop();
   }
