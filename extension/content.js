@@ -1268,10 +1268,11 @@
          padrão de cada tema (claro: nativo do site; escuro: cinza claro). */
       a.social__link.social__link--like.social__link--active,
       a.social__link.social__link--like.social__link--active .social__text { color:#188038 !important; -webkit-text-fill-color:#188038 !important; }
-      a.social__link.social__link--like.social__link--active > :not(.social__text):not(:has(.social__text)),
-      a.social__link.social__link--like.social__link--active .social__text *,
-      a.social__link.social__link--like.social__link--active::before { filter:url(#jp-green-light) !important; opacity:1 !important; }
-      a.social__link.social__link--like.social__link--active::after { filter:url(#jp-green-light) !important; opacity:1 !important; }
+      a.social__link.social__link--like.social__link--active :not(.social__text):not(:has(.social__text)),
+      a.social__link.social__link--like.social__link--active::before,
+      a.social__link.social__link--like.social__link--active::after,
+      a.social__link.social__link--like.social__link--active .social__text::before,
+      a.social__link.social__link--like.social__link--active .social__text::after { filter:url(#jp-green-light) !important; opacity:1 !important; }
       .jp-mobile-like-btn.jp-mobile-like-btn--liked img { filter:url(#jp-green-light) !important; }
     `;
     document.head.appendChild(style);
@@ -1476,33 +1477,40 @@
        ícones; branco no hover; VERDE no Like curtido (rótulo nas regras
        acima; ícone: matriz SVG constante no tom exato, regra abaixo).
        brightness(0) zera a cor original e invert(0.78) chega no cinza
-       claro. Os seletores pegam o ícone como filho direto, aninhado no
-       rótulo ou ::before (o mobile varia) — i/svg vão por cor/fill exatas,
-       o resto por filtro. Opacidade 1 pra o tom não variar.
+       claro. Os seletores pegam o ícone em qualquer profundidade (o site
+       remonta a estrutura no toggle), ::before/::after do link e do rótulo
+       — i/svg vão por cor/fill exatas, o resto por filtro (todos
+       idempotentes, então aninhamento não duplica o efeito). Opacidade 1
+       pra o tom não variar.
        Modo claro: intocado (escopo dark). */
     html.jp-site-dark-active a.social__link,
     html.jp-site-dark-active a.social__link .social__text { color:#c3c9d2 !important; -webkit-text-fill-color:#c3c9d2 !important; }
-    html.jp-site-dark-active a.social__link > :not(.social__text):not(:has(.social__text)):not(i):not(svg),
-    html.jp-site-dark-active a.social__link .social__text > :not(i):not(svg),
-    html.jp-site-dark-active a.social__link::before { filter:brightness(0) invert(0.78) !important; opacity:1 !important; }
+    html.jp-site-dark-active a.social__link :not(.social__text):not(:has(.social__text)):not(i):not(svg),
+    html.jp-site-dark-active a.social__link::before,
+    html.jp-site-dark-active a.social__link::after,
+    html.jp-site-dark-active a.social__link .social__text::before,
+    html.jp-site-dark-active a.social__link .social__text::after { filter:brightness(0) invert(0.78) !important; opacity:1 !important; }
     html.jp-site-dark-active a.social__link > i,
     html.jp-site-dark-active a.social__link > svg,
     html.jp-site-dark-active a.social__link .social__text > i,
     html.jp-site-dark-active a.social__link .social__text > svg { color:#c3c9d2 !important; fill:#c3c9d2 !important; }
-    html.jp-site-dark-active a.social__link:hover > :not(.social__text):not(:has(.social__text)):not(i):not(svg),
-    html.jp-site-dark-active a.social__link:hover .social__text > :not(i):not(svg),
-    html.jp-site-dark-active a.social__link:hover::before { filter:invert(1) !important; opacity:1 !important; }
+    html.jp-site-dark-active a.social__link:hover :not(.social__text):not(:has(.social__text)):not(i):not(svg),
+    html.jp-site-dark-active a.social__link:hover::before,
+    html.jp-site-dark-active a.social__link:hover::after,
+    html.jp-site-dark-active a.social__link:hover .social__text::before,
+    html.jp-site-dark-active a.social__link:hover .social__text::after { filter:brightness(0) invert(1) !important; opacity:1 !important; }
     html.jp-site-dark-active a.social__link:hover > i,
     html.jp-site-dark-active a.social__link:hover > svg,
     html.jp-site-dark-active a.social__link:hover .social__text > i,
     html.jp-site-dark-active a.social__link:hover .social__text > svg { color:#ffffff !important; fill:#ffffff !important; }
     /* Verde EXATO do curtido = mesmo tom do rótulo (#3ddc84): matriz
-       constante, idempotente — vale em qualquer profundidade (filho
-       direto, aninhado no rótulo ou ::before), qualquer formato. */
-    html.jp-site-dark-active a.social__link.social__link--like.social__link--active > :not(.social__text):not(:has(.social__text)),
-    html.jp-site-dark-active a.social__link.social__link--like.social__link--active .social__text *,
-    html.jp-site-dark-active a.social__link.social__link--like.social__link--active::before { filter:url(#jp-green-dark) !important; opacity:1 !important; }
-    html.jp-site-dark-active a.social__link.social__link--like.social__link--active::after { filter:url(#jp-green-dark) !important; opacity:1 !important; }
+       constante, idempotente — qualquer profundidade, ::before/::after do
+       link e do rótulo, qualquer formato. */
+    html.jp-site-dark-active a.social__link.social__link--like.social__link--active :not(.social__text):not(:has(.social__text)),
+    html.jp-site-dark-active a.social__link.social__link--like.social__link--active::before,
+    html.jp-site-dark-active a.social__link.social__link--like.social__link--active::after,
+    html.jp-site-dark-active a.social__link.social__link--like.social__link--active .social__text::before,
+    html.jp-site-dark-active a.social__link.social__link--like.social__link--active .social__text::after { filter:url(#jp-green-dark) !important; opacity:1 !important; }
     /* Joinha injetado pela extensão nos cards do layout mobile: o arquivo
        é preto — branco (apagado) no escuro quando não-curtido, VERDE quando
        curtido. Modo claro: verde escuro quando curtido (regra no estilo

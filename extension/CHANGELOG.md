@@ -126,6 +126,10 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Backstop em JS: pinta o ícone (img/svg/i) inline com a matriz do tema em force/revoke, no botão injetado, no refresh e na troca de tema — qualquer estrutura, mesmo tom do rótulo.
 - Seletor verde cobre ::after também (antes só ::before).
 
+### Like descurtido volta ao cinza (TESTE)
+- Correção: no escuro, descurtir a foto deixava o joinha preto (o site remonta o ícone mais fundo e o cinza só ia até 1 nível) — cinza, branco-hover e verde agora valem em qualquer profundidade + ::before/::after do link e do rótulo.
+- Branco do hover virou brightness(0) invert(1) (idempotente, mesmo branco de antes): aninhamento não duplica o efeito.
+
 ---
 
 ## [2.0.0]
