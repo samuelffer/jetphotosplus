@@ -3510,6 +3510,400 @@
   let observerRef = null;
   let observeTarget = null;
 
+  // =======================================================================
+  // MOBILE SELECT ENHANCER
+  // -----------------------------------------------------------------------
+  // Na página de upload (/addphotos/), o site usa Chosen.js que no PC cria
+  // um dropdown com busca, mas no mobile desabilita e usa o <select> nativo.
+  // Com 1210 fabricantes ou 307 países, rolar manualmente é inviável.
+  // Este enhancer substitui esses selects por um input com autocomplete
+  // otimizado pra toque: campo grande, opções com altura de 44px, filtro
+  // em tempo real, e dispara change no <select> original pra manter os
+  // selects dependentes funcionando (aeroporto depende de país, modelo
+  // depende de fabricante, etc).
+  // =======================================================================
+
+  function isAddPhotosPage() {
+    return location.pathname.startsWith('/addphotos/');
+  }
+
+  function isMobileDevice() {
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 1024;
+  }
+
+  // IDs dos selects que o enhancer vai melhorar. Incluídos tanto os que
+  // têm centenas de opções quanto os dinâmicos que podem crescer.
+  const ENHANCER_TARGET_IDS = [
+    'modal-correct-info-location-country',
+    'modal-correct-info-location-airport',
+    'modal-correct-info-aircraft-manu',
+    'modal-correct-info-aircraft-type',
+    'modal-correct-info-aircraft-model',
+    'modal-correct-info-airline-category',
+    'modal-correct-info-airline-airline',
+    'modal-correct-info-camera',
+    'modal-correct-info-lens',
+    'modal-hot-photo-select',
+  ];
+
+  // Threshold: selects com até esse número de opções não ganham enhancer
+  // (são pequenos o suficiente pra rolar manualmente).
+  const ENHANCER_MIN_OPTIONS = 8;
+
+  function injectMobileEnhancerStyles() {
+    if (document.getElementById('jp-mobile-enhancer-style')) return;
+    const style = document.createElement('style');
+    style.id = 'jp-mobile-enhancer-style';
+    style.textContent = `
+      .jp-enhancer-wrapper {
+        position: relative;
+        width: 100%;
+      }
+      .jp-enhancer-input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 12px 14px;
+        font-size: 16px; /* 16px pra não dar zoom no iOS */
+        border: 1px solid #c8c8c8;
+        border-radius: 8px;
+        background: #fff;
+        color: #222;
+        outline: none;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      .jp-enhancer-input:focus {
+        border-color: #2c94e8;
+        box-shadow: 0 0 0 2px rgba(44,148,232,.2);
+      }
+      .jp-enhancer-input::placeholder {
+        color: #999;
+      }
+      .jp-enhancer-dropdown {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 260px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        background: #fff;
+        border: 1px solid #c8c8c8;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 6px 18px rgba(0,0,0,.18);
+        z-index: 1000010;
+      }
+      .jp-enhancer-dropdown.jp-enhancer-open {
+        display: block;
+      }
+      .jp-enhancer-option {
+        padding: 12px 14px;
+        font-size: 15px;
+        color: #222;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        min-height: 44px;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+      }
+      .jp-enhancer-option:last-child {
+        border-bottom: none;
+      }
+      .jp-enhancer-option:active,
+      .jp-enhancer-option.jp-enhancer-active {
+        background: #e8f4fd;
+      }
+      .jp-enhancer-option.jp-enhancer-selected {
+        background: #d4edfc;
+        font-weight: 600;
+      }
+      .jp-enhancer-no-results {
+        padding: 14px;
+        font-size: 14px;
+        color: #999;
+        text-align: center;
+      }
+      .jp-enhancer-group-label {
+        padding: 8px 14px 4px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        background: #f7f7f7;
+        position: sticky;
+        top: 0;
+      }
+      /* Modo escuro do site */
+      html.jp-site-dark-active .jp-enhancer-input {
+        background: #292929;
+        color: #eee;
+        border-color: #505050;
+      }
+      html.jp-site-dark-active .jp-enhancer-input::placeholder { color: #888; }
+      html.jp-site-dark-active .jp-enhancer-input:focus { border-color: #4299dc; }
+      html.jp-site-dark-active .jp-enhancer-dropdown {
+        background: #292929;
+        border-color: #505050;
+      }
+      html.jp-site-dark-active .jp-enhancer-option {
+        color: #eee;
+        border-bottom-color: #3a3a3a;
+      }
+      html.jp-site-dark-active .jp-enhancer-option:active,
+      html.jp-site-dark-active .jp-enhancer-option.jp-enhancer-active { background: #1a4a6e; }
+      html.jp-site-dark-active .jp-enhancer-option.jp-enhancer-selected { background: #1a5a8e; }
+      html.jp-site-dark-active .jp-enhancer-group-label { background: #333; color: #aaa; }
+      html.jp-site-dark-active .jp-enhancer-no-results { color: #777; }
+      /* Esconde o select nativo e o Chosen container no mobile */
+      .jp-enhancer-hidden-native {
+        display: none !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // Lê todas as opções de um <select> (incluindo <optgroup>) e retorna
+  // um array de { value, text, group }.
+  function getSelectOptions(select) {
+    const options = [];
+    Array.from(select.children).forEach(child => {
+      if (child.tagName === 'OPTGROUP') {
+        const groupName = child.label || '';
+        Array.from(child.children).forEach(opt => {
+          if (opt.tagName === 'OPTION') {
+            options.push({ value: opt.value, text: opt.textContent.trim(), group: groupName });
+          }
+        });
+      } else if (child.tagName === 'OPTION') {
+        options.push({ value: child.value, text: child.textContent.trim(), group: '' });
+      }
+    });
+    return options;
+  }
+
+  // Cria o autocomplete pro select. O select original fica escondido;
+  // o Chosen container (se existir) também. Nosso wrapper fica no lugar.
+  function enhanceSelect(select) {
+    // Não duplica se já foi enhanced
+    if (select.dataset.jpEnhanced === '1') return;
+
+    const options = getSelectOptions(select);
+    // Se tem poucas opções e não é dinâmico, deixa o nativo mesmo
+    if (options.length < ENHANCER_MIN_OPTIONS && !select.disabled) {
+      // Verifica se pode crescer (selects dinâmicos começam com 0 opções)
+      const dynamicIds = [
+        'modal-correct-info-location-airport',
+        'modal-correct-info-aircraft-type',
+        'modal-correct-info-aircraft-model',
+        'modal-correct-info-airline-airline',
+      ];
+      if (!dynamicIds.includes(select.id)) return;
+    }
+
+    select.dataset.jpEnhanced = '1';
+
+    // Pega placeholder do data-placeholder ou do primeiro option
+    const placeholder = select.dataset.placeholder
+      || select.querySelector('option')?.textContent?.trim()
+      || 'Select...';
+
+    // Esconde o select original
+    select.style.display = 'none';
+
+    // Esconde o Chosen container (irmão do select)
+    const chosenContainer = select.parentElement?.querySelector('.chosen-container');
+    if (chosenContainer) chosenContainer.style.display = 'none';
+
+    // Cria o wrapper
+    const wrapper = document.createElement('div');
+    wrapper.className = 'jp-enhancer-wrapper';
+
+    // Input de busca
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'jp-enhancer-input';
+    input.placeholder = placeholder;
+    input.autocomplete = 'off';
+    input.setAttribute('autocapitalize', 'off');
+    input.setAttribute('autocorrect', 'off');
+
+    // Mostra o texto da opção selecionada no input
+    const selectedOption = select.querySelector(`option[value="${CSS.escape(select.value)}"]`);
+    if (selectedOption && selectedOption.value && selectedOption.value !== '-1') {
+      input.value = selectedOption.textContent.trim();
+    }
+
+    // Dropdown
+    const dropdown = document.createElement('div');
+    dropdown.className = 'jp-enhancer-dropdown';
+
+    wrapper.appendChild(input);
+    wrapper.appendChild(dropdown);
+
+    // Insere o wrapper no lugar do select (depois dele)
+    select.parentElement.appendChild(wrapper);
+
+    // Estado
+    let allOptions = getSelectOptions(select);
+    let isOpen = false;
+
+    function renderDropdown(filter) {
+      const query = (filter || '').toLowerCase().trim();
+      dropdown.innerHTML = '';
+
+      const filtered = allOptions.filter(opt => {
+        if (!opt.value && !opt.text) return false; // pula opções vazias
+        // Pula a opção "Choose..." / "Select..." quando há filtro
+        if (query && (opt.value === '-1' || opt.value === '')) return false;
+        if (!query) return true;
+        return opt.text.toLowerCase().includes(query);
+      });
+
+      if (!filtered.length) {
+        const noResults = document.createElement('div');
+        noResults.className = 'jp-enhancer-no-results';
+        noResults.textContent = currentSettings.language === 'en' ? 'No results found' : 'Nenhum resultado encontrado';
+        dropdown.appendChild(noResults);
+        return;
+      }
+
+      let currentGroup = null;
+      filtered.forEach(opt => {
+        // Label de grupo (optgroup)
+        if (opt.group && opt.group !== currentGroup) {
+          currentGroup = opt.group;
+          const groupLabel = document.createElement('div');
+          groupLabel.className = 'jp-enhancer-group-label';
+          groupLabel.textContent = opt.group;
+          dropdown.appendChild(groupLabel);
+        }
+
+        const optionEl = document.createElement('div');
+        optionEl.className = 'jp-enhancer-option';
+        if (opt.value === select.value) optionEl.classList.add('jp-enhancer-selected');
+        optionEl.textContent = opt.text;
+        optionEl.addEventListener('click', () => {
+          selectOption(opt);
+        });
+        // Touch feedback
+        optionEl.addEventListener('touchstart', () => {
+          optionEl.classList.add('jp-enhancer-active');
+        }, { passive: true });
+        optionEl.addEventListener('touchend', () => {
+          optionEl.classList.remove('jp-enhancer-active');
+        }, { passive: true });
+        dropdown.appendChild(optionEl);
+      });
+    }
+
+    function selectOption(opt) {
+      // Atualiza o select original
+      select.value = opt.value;
+      input.value = opt.text;
+      closeDropdown();
+      // Dispara change pro site atualizar selects dependentes
+      // (aeroporto depende de país, modelo depende de fabricante, etc)
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function openDropdown() {
+      if (select.disabled) return;
+      isOpen = true;
+      renderDropdown(input.value);
+      dropdown.classList.add('jp-enhancer-open');
+    }
+
+    function closeDropdown() {
+      isOpen = false;
+      dropdown.classList.remove('jp-enhancer-open');
+      // Restaura o texto da opção selecionada
+      const selected = allOptions.find(o => o.value === select.value);
+      if (selected) input.value = selected.text;
+      else if (!select.value || select.value === '-1') input.value = '';
+    }
+
+    // Eventos do input
+    input.addEventListener('focus', () => {
+      openDropdown();
+    });
+
+    input.addEventListener('input', () => {
+      renderDropdown(input.value);
+      if (!isOpen) openDropdown();
+    });
+
+    // Fecha ao clicar fora
+    document.addEventListener('click', (e) => {
+      if (!wrapper.contains(e.target)) {
+        closeDropdown();
+      }
+    });
+
+    // Re-renderiza quando o select é desabilitado/habilitado (muda estado
+    // de selects dependentes após seleção do pai)
+    const selectObserver = new MutationObserver(() => {
+      if (select.disabled) {
+        input.disabled = true;
+        input.placeholder = placeholder;
+        input.value = '';
+        closeDropdown();
+      } else {
+        input.disabled = false;
+      }
+      // Recarrega as opções (podem ter sido adicionadas via AJAX)
+      allOptions = getSelectOptions(select);
+      if (isOpen) renderDropdown(input.value);
+      // Atualiza o texto do input com a opção selecionada
+      const selected = allOptions.find(o => o.value === select.value);
+      if (selected && selected.value && selected.value !== '-1') {
+        input.value = selected.text;
+      }
+    });
+    selectObserver.observe(select, { childList: true, attributes: true, subtree: true });
+
+    // Limpa o input quando o select é resetado
+    select.addEventListener('change', () => {
+      const selected = allOptions.find(o => o.value === select.value);
+      if (selected) input.value = selected.text;
+    });
+  }
+
+  function initMobileSelectEnhancer() {
+    // Só ativa no mobile/tablet
+    if (!isMobileDevice()) return;
+
+    // Espera o DOM carregar completamente (o Chosen.js precisa ter
+    // rodado primeiro pra a gente poder esconder o container dele)
+    function tryEnhance() {
+      injectMobileEnhancerStyles();
+      let enhanced = 0;
+      ENHANCER_TARGET_IDS.forEach(id => {
+        const select = document.getElementById(id);
+        if (select && select.dataset.jpEnhanced !== '1') {
+          enhanceSelect(select);
+          enhanced++;
+        }
+      });
+      return enhanced;
+    }
+
+    // Tenta imediatamente; se os selects ainda não existem, tenta de novo
+    // em intervalos curtos (o Chosen pode demorar pra inicializar).
+    if (tryEnhance() === 0) {
+      let attempts = 0;
+      const retry = setInterval(() => {
+        attempts++;
+        if (tryEnhance() > 0 || attempts >= 20) {
+          clearInterval(retry);
+        }
+      }, 300);
+    }
+  }
+
   async function init() {
     currentSettings = await getSettings();
 
@@ -3580,6 +3974,15 @@
     // nem tentamos chamá-la.
     if (isQueue && currentSettings.queueEstimatorEnabled) {
       initQueueEstimator();
+    }
+
+    // Mobile Select Enhancer: na página de upload (/addphotos/), melhora os
+    // selects gigantes (fabricante, país, aeroporto, etc) com um autocomplete
+    // mobile-friendly. No PC o site já usa Chosen.js que funciona bem; no
+    // mobile o Chosen desabilita e sobra o <select> nativo com centenas de
+    // opções pra rolar manualmente — esse enhancer resolve isso.
+    if (isAddPhotosPage()) {
+      initMobileSelectEnhancer();
     }
 
   }
