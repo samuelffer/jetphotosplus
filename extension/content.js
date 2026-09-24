@@ -991,6 +991,59 @@
         outline: none !important;
       }
 
+      /* Host mobile (FAB): visível só quando o launcher do header não
+         está renderizado (layout mobile). Disco branco com a logo preta,
+         no canto oposto ao da bolha de likes. */
+      #jp-plus-mobile-host { position:fixed; left:16px; bottom:16px; z-index:999999; }
+      #jp-plus-mobile-fab {
+        display:flex; align-items:center; justify-content:center;
+        width:52px; height:52px; border-radius:50%;
+        background:#ffffff; border:1px solid rgba(0,0,0,.12);
+        box-shadow:0 5px 20px rgba(0,0,0,.30);
+        cursor:pointer; padding:0;
+      }
+      #jp-plus-mobile-fab img { display:block; width:30px; height:32px; object-fit:contain; }
+      #jp-plus-mobile-fab:hover { background:#f0f0f0; }
+      #jp-plus-mobile-fab:focus-visible { outline:2px solid #2c94e8; outline-offset:2px; }
+      /* Submenu mobile: os mesmos 4 itens do PC, em folha acima do FAB. */
+      #jp-plus-mobile-host > #jp-plus-mobile-submenu {
+        display:none;
+        position:absolute; left:0; bottom:62px;
+        width:230px; box-sizing:border-box;
+        background:#ffffff; color:#222222;
+        border:1px solid rgba(0,0,0,.12); border-radius:12px;
+        box-shadow:0 8px 28px rgba(0,0,0,.32);
+        overflow:hidden; padding:6px;
+        font-family:inherit;
+      }
+      #jp-plus-mobile-host.jp-mobile-menu-open > #jp-plus-mobile-submenu { display:block; }
+      #jp-plus-mobile-host.jp-settings-open > #jp-plus-mobile-submenu { display:none !important; }
+      #jp-plus-mobile-submenu a {
+        display:block; padding:11px 12px; border-radius:8px;
+        color:#222222; background:transparent; text-decoration:none;
+        font-size:15px; line-height:1.3;
+      }
+      #jp-plus-mobile-submenu a:active { background:#e8e8e8; }
+      #jp-plus-mobile-submenu.jp-dark { background:#292929; }
+      #jp-plus-mobile-submenu.jp-dark a { color:#eeeeee; }
+      #jp-plus-mobile-submenu.jp-dark a:active { background:#3d3d3d; }
+      /* Painel de configs no host mobile: folha sobre o FAB. */
+      #jp-plus-mobile-host > #jp-plus-settings-panel {
+        position:absolute !important; left:0 !important; bottom:62px !important;
+        top:auto !important; right:auto !important;
+        width:min(330px, calc(100vw - 32px)) !important;
+        transform:translateY(8px);
+      }
+      #jp-plus-mobile-host.jp-settings-open > #jp-plus-settings-panel { display:block !important; }
+      #jp-plus-mobile-host.jp-settings-open #jp-plus-settings-panel { opacity:1; transform:none; }
+      /* Backdrop invisível: garante o fechar-ao-clicar-fora (PC e mobile). */
+      #jp-plus-backdrop {
+        display:none;
+        position:fixed; inset:0; z-index:999998;
+        background:rgba(0,0,0,0); border:0; padding:0; margin:0;
+      }
+      #jp-plus-backdrop.jp-backdrop-show { display:block; }
+
       /* Bolha de curtidas: o único UI de likes — aparece somente em páginas
          que realmente possuem links/ícones de Like. Não é launcher.
          Sempre visível; compacta — coração + faltantes. */
@@ -1585,6 +1638,9 @@
   let panelEl = null;
   let settingsMenuEl = null;
   let settingsPanelEl = null;
+  let launcherHostEl = null;
+  let mobileHostEl = null;
+  let fabModeActive = false;
   let currentSettings = { siteDarkMode: false, queueEstimatorEnabled: true, language: 'pt-BR' };
 
   function buildToggleSwitch(initialOn, onChange) {
@@ -1663,6 +1719,7 @@
       applySiteDarkMode(isOn);
       if (panelEl) panelEl.classList.toggle('jp-dark', isOn);
       if (settingsPanelEl) settingsPanelEl.classList.toggle('jp-dark', isOn);
+      document.getElementById('jp-plus-mobile-submenu')?.classList.toggle('jp-dark', isOn);
     });
 
     siteDarkRow.appendChild(siteDarkLabel);
@@ -1789,20 +1846,143 @@
     host.style.lineHeight = launcher.style.lineHeight;
   }
 
-  function installSettingsOutsideClick() {
-    if (document.documentElement.dataset.jpSettingsOutsideClick === '1') return;
-    document.documentElement.dataset.jpSettingsOutsideClick = '1';
-    document.addEventListener('click', event => {
-      const host = document.getElementById('jp-plus-launcher-host');
-      if (!host || !host.classList.contains('jp-settings-open')) return;
-      if (host.contains(event.target)) return;
-      host.classList.remove('jp-settings-open');
-    }, true);
+  // Constrói o menu de configs uma vez só, onde quer que o painel esteja.
+  function ensureSettingsMenu() {
+    if (!settingsMenuEl && settingsPanelEl) {
+      const body = settingsPanelEl.querySelector('.jp-settings-body');
+      if (body) {
+        body.appendChild(buildSettingsMenu());
+        settingsMenuEl = body.firstElementChild;
+      }
+    }
+  }
+
+  function updateBackdrop() {
+    const backdrop = document.getElementById('jp-plus-backdrop');
+    if (!backdrop) return;
+    const open = (launcherHostEl?.classList.contains('jp-settings-open') ||
+      mobileHostEl?.classList.contains('jp-settings-open') ||
+      mobileHostEl?.classList.contains('jp-mobile-menu-open'));
+    backdrop.classList.toggle('jp-backdrop-show', !!open);
+  }
+
+  function setSettingsOpen(open) {
+    const host = fabModeActive && mobileHostEl ? mobileHostEl : launcherHostEl;
+    if (launcherHostEl) launcherHostEl.classList.remove('jp-settings-open');
+    if (mobileHostEl) mobileHostEl.classList.remove('jp-settings-open');
+    if (open && host) host.classList.add('jp-settings-open');
+    updateBackdrop();
+  }
+
+  function setMobileMenuOpen(open) {
+    if (!mobileHostEl) return;
+    if (open) {
+      if (launcherHostEl) launcherHostEl.classList.remove('jp-settings-open');
+      mobileHostEl.classList.remove('jp-settings-open');
+    }
+    mobileHostEl.classList.toggle('jp-mobile-menu-open', open);
+    updateBackdrop();
+  }
+
+  function closeAllPlus() {
+    if (launcherHostEl) launcherHostEl.classList.remove('jp-settings-open');
+    if (mobileHostEl) {
+      mobileHostEl.classList.remove('jp-settings-open');
+      mobileHostEl.classList.remove('jp-mobile-menu-open');
+    }
+    updateBackdrop();
+  }
+
+  // Modo FAB: o launcher do header não está visível (layout mobile), então
+  // o painel de configs mora no host mobile. Reavaliado no resize.
+  function applyFabMode() {
+    if (!launcherHostEl || !mobileHostEl || !settingsPanelEl) return;
+    const fab = launcherHostEl.offsetParent === null;
+    fabModeActive = fab;
+    mobileHostEl.style.display = fab ? '' : 'none';
+    const target = fab ? mobileHostEl : launcherHostEl;
+    if (settingsPanelEl.parentElement !== target) target.appendChild(settingsPanelEl);
+    const wasOpen = (launcherHostEl.classList.contains('jp-settings-open') ||
+      mobileHostEl.classList.contains('jp-settings-open'));
+    launcherHostEl.classList.remove('jp-settings-open');
+    mobileHostEl.classList.remove('jp-settings-open');
+    if (wasOpen) target.classList.add('jp-settings-open');
+    if (!fab) mobileHostEl.classList.remove('jp-mobile-menu-open');
+    updateBackdrop();
+  }
+
+  let fabResizeTimer = null;
+  function installFabModeWatcher() {
+    if (document.documentElement.dataset.jpFabWatcher === '1') return;
+    document.documentElement.dataset.jpFabWatcher = '1';
+    window.addEventListener('resize', () => {
+      clearTimeout(fabResizeTimer);
+      fabResizeTimer = setTimeout(applyFabMode, 200);
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') closeAllPlus();
+    });
+  }
+
+  // Host mobile: FAB redondo com a logo + submenu igual ao do PC. O painel
+  // de configs (único) muda pra cá quando o modo FAB está ativo.
+  function buildMobileHost() {
+    document.querySelectorAll('#jp-plus-mobile-host').forEach(el => el.remove());
+    let backdrop = document.getElementById('jp-plus-backdrop');
+    if (!backdrop) {
+      backdrop = document.createElement('button');
+      backdrop.type = 'button';
+      backdrop.id = 'jp-plus-backdrop';
+      backdrop.setAttribute('tabindex', '-1');
+      backdrop.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(backdrop);
+      backdrop.addEventListener('click', () => closeAllPlus());
+    }
+    const mhost = document.createElement('div');
+    mhost.id = 'jp-plus-mobile-host';
+    mhost.style.display = 'none';
+    const fab = document.createElement('button');
+    fab.type = 'button';
+    fab.id = 'jp-plus-mobile-fab';
+    fab.setAttribute('aria-label', t('settings'));
+    fab.title = 'JetPhotos+';
+    const logo = document.createElement('img');
+    logo.src = chrome.runtime.getURL('icons/logo.png');
+    logo.alt = '';
+    logo.setAttribute('aria-hidden', 'true');
+    fab.appendChild(logo);
+    fab.addEventListener('click', event => {
+      event.stopPropagation();
+      const anyOpen = mhost.classList.contains('jp-mobile-menu-open') || mhost.classList.contains('jp-settings-open');
+      if (anyOpen) closeAllPlus();
+      else setMobileMenuOpen(true);
+    });
+    const submenu = document.createElement('div');
+    submenu.id = 'jp-plus-mobile-submenu';
+    submenu.setAttribute('role', 'menu');
+    submenu.innerHTML = `
+      <a href="https://github.com/samuelffer/jetphotosplus/releases" id="jp-plus-mobile-releases-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('viewReleases')}</a>
+      <a href="https://github.com/samuelffer/jetphotosplus/issues" id="jp-plus-mobile-issues-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('reportIssue')}</a>
+      <a href="https://samuelffer.github.io/jetphotosplus/" id="jp-plus-mobile-about-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('aboutJetPhotosPlus')}</a>
+      <a href="#" id="jp-plus-mobile-settings-link" role="menuitem">${t('settings')}</a>
+    `;
+    if (currentSettings.siteDarkMode) submenu.classList.add('jp-dark');
+    submenu.querySelector('#jp-plus-mobile-settings-link').addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      ensureSettingsMenu();
+      setMobileMenuOpen(false);
+      setSettingsOpen(true);
+    });
+    mhost.appendChild(fab);
+    mhost.appendChild(submenu);
+    document.body.appendChild(mhost);
+    mobileHostEl = mhost;
+    installFabModeWatcher();
   }
 
   function buildPanel(isPhotoContext, isQueueMode) {
     injectStyles();
-    installSettingsOutsideClick();
 
     const headerTarget = findHeaderIntegrationTarget();
     if (!headerTarget) {
@@ -1813,9 +1993,12 @@
     document.querySelectorAll('#jp-plus-launcher-host').forEach(el => el.remove());
     document.querySelectorAll('#jp-like-widget-bubble').forEach(el => el.remove());
     document.querySelectorAll('#jp-plus-settings-panel').forEach(el => el.remove());
+    document.querySelectorAll('#jp-plus-mobile-host').forEach(el => el.remove());
+    mobileHostEl = null;
 
     const host = document.createElement(headerTarget.mode === 'account-list' ? 'li' : 'span');
     host.id = 'jp-plus-launcher-host';
+    launcherHostEl = host;
     if (headerTarget.mode === 'account-list') host.className = 'nav-desktop__item';
 
     const launcher = document.createElement('span');
@@ -1865,17 +2048,15 @@
     settingsLink.addEventListener('click', event => {
       event.preventDefault();
       event.stopPropagation();
-      if (!settingsMenuEl) {
-        settingsBody.appendChild(buildSettingsMenu());
-        settingsMenuEl = settingsBody.firstElementChild;
-      }
-      host.classList.add('jp-settings-open');
+      ensureSettingsMenu();
+      setSettingsOpen(true);
     });
 
     settingsTitle.querySelector('.jp-settings-close').addEventListener('click', event => {
       event.preventDefault();
       event.stopPropagation();
-      host.classList.remove('jp-settings-open');
+      setSettingsOpen(false);
+      if (fabModeActive) setMobileMenuOpen(true);
     });
 
     if (headerTarget.after && headerTarget.after.parentElement === headerTarget.container) {
@@ -1884,6 +2065,8 @@
       headerTarget.container.appendChild(host);
     }
     styleLauncherFromReference(launcher, host, headerTarget.reference, headerTarget.container);
+    buildMobileHost();
+    applyFabMode();
 
     panelEl = submenu;
 

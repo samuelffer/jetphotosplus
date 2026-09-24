@@ -148,6 +148,10 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Respiro do joinha no anel: viewBox com folga + 1px na caixa — mesmo tamanho visual, sem encostar no anel.
 - Centralização óptica do joinha (sobe 2u no viewBox, o punho pesava pra baixo) + anel +2px em cada layout.
 
+### Botão flutuante mobile + fechar-fora garantido
+- Novo: quando o launcher do header não está visível (mobile), aparece um FAB redondo com a logo no canto inferior esquerdo — abre o mesmo menu do PC (novidades, issue, sobre, configs).
+- Novo: backdrop invisível + Escape fecham submenu mobile e configs; no PC, clicar fora das configs agora fecha de verdade (antes só o X).
+
 ---
 
 ## [2.0.0]
