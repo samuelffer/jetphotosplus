@@ -109,7 +109,7 @@
 
   // URL de doação (provisória: repositório). Troque pela página definitiva
   // (Ko-fi, Apoia.se, Pix...) quando ela existir.
-  const DONATE_URL = 'https://github.com/samuelffer/jetphotosplus';
+  const DONATE_URL = 'https://samuelffer.github.io/jetphotosplus/doar.html';
   const I18N = {
     'pt-BR': {
       settings: 'Configurações', close: 'Fechar',
@@ -157,6 +157,7 @@
       historyChartHint: 'Fotos analisadas por dia. Passe o mouse para ver os dados.',
       historyNoData: 'Ainda não há dias suficientes para montar o gráfico.',
       trackedDays: (n) => `${n} dia${n === 1 ? '' : 's'} acompanhado${n === 1 ? '' : 's'}`,
+      estimatedReview: 'Estimativa de análise:',
     },
     en: {
       settings: 'Settings', close: 'Close', viewReleases: "See what's new", reportIssue: 'Report an issue', aboutJetPhotosPlus: 'About JetPhotos+', donate: 'Donate', analyzing: 'Analyzing page...',
@@ -182,6 +183,7 @@
       historyChartHint: 'Photos reviewed per day. Hover a point for details.',
       historyNoData: 'Not enough tracked days to build the chart yet.',
       trackedDays: (n) => `${n} tracked day${n === 1 ? '' : 's'}`,
+      estimatedReview: 'Estimated review:',
     }
   };
 
@@ -1106,7 +1108,7 @@
       #jp-like-widget-bubble .jp-bubble-thumb { position:relative; width:19px; height:19px; }
       /* Selo de concluído: quando tudo está curtido, o anel + joinha dão
          lugar a um disco verde com confere branco (troca seca, sem pop). */
-      #jp-like-widget-bubble .jp-bubble-check { display:none; position:absolute; inset:0; width:100%; height:100%; }
+      #jp-like-widget-bubble .jp-bubble-check { display:none; position:absolute; inset:0; width:100%; height:100%; padding:4px; box-sizing:border-box; }
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-ring,
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-thumb { display:none; }
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-check { display:block; }
@@ -1539,9 +1541,15 @@
     html.jp-site-dark-active a.tabnav__btn--active { color:#ffffff !important; }
     /* Upload: dropdowns Chosen + pílulas de checkbox/radio. A pílula ativa
        ganha borda azul pra não perder a distinção (o tema uniformiza bg). */
-    html.jp-site-dark-active .chosen-drop { background-color:#2b2d31 !important; border-color:#4b4e55 !important; }
+    html.jp-site-dark-active .chosen-drop { background-color:#2b2d31 !important; border-color:#4b4e55 !important; border-width:1px !important; border-style:solid !important; }
+    html.jp-site-dark-active .chosen-results { background-color:#2b2d31 !important; }
     html.jp-site-dark-active .chosen-results li { color:#e8e8e8 !important; }
     html.jp-site-dark-active .chosen-results li.highlighted { background-color:#1e659f !important; color:#ffffff !important; }
+    html.jp-site-dark-active .chosen-results li.group-result { color:#ffffff !important; background-color:#1a1b1e !important; font-weight:700 !important; text-transform:uppercase !important; font-size:11px !important; letter-spacing:.5px !important; padding:8px 10px !important; }
+    html.jp-site-dark-active .chosen-results li.group-option { padding-left:18px !important; }
+    html.jp-site-dark-active .chosen-single { color:#e8e8e8 !important; border-color:#4b4e55 !important; }
+    html.jp-site-dark-active .chosen-single span { color:#e8e8e8 !important; }
+    html.jp-site-dark-active .chosen-search input { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#4b4e55 !important; }
     html.jp-site-dark-active .checkbox,
     html.jp-site-dark-active .radio__pill { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#4b4e55 !important; }
     html.jp-site-dark-active .radio__pill--active { border-color:#2c94e8 !important; }
@@ -1901,9 +1909,15 @@
   function updateBackdrop() {
     const backdrop = document.getElementById('jp-plus-backdrop');
     if (!backdrop) return;
-    const open = (launcherHostEl?.classList.contains('jp-settings-open') ||
-      mobileHostEl?.classList.contains('jp-settings-open') ||
-      mobileHostEl?.classList.contains('jp-mobile-menu-open'));
+    // O backdrop só deve ser mostrado quando o SUBMENU ou mobile menu
+    // estão abertos (pra fechar ao clicar fora). Quando o SETTINGS PANEL
+    // está aberto, o backdrop NÃO deve ficar visível — senão ele fica
+    // por cima do painel e captura os cliques (bug no desktop devido a
+    // stacking contexts diferentes).
+    const settingsOpen = launcherHostEl?.classList.contains('jp-settings-open') ||
+      mobileHostEl?.classList.contains('jp-settings-open');
+    const menuOpen = mobileHostEl?.classList.contains('jp-mobile-menu-open');
+    const open = !settingsOpen && menuOpen;
     backdrop.classList.toggle('jp-backdrop-show', !!open);
   }
 
@@ -1913,6 +1927,41 @@
     if (mobileHostEl) mobileHostEl.classList.remove('jp-settings-open');
     if (open && host) host.classList.add('jp-settings-open');
     updateBackdrop();
+    installClickOutsideSettings(open);
+  }
+
+  // Fecha o settings ao clicar fora dele (no desktop). Usa mousedown no
+  // document em vez do backdrop, porque o backdrop fica preso num
+  // stacking context diferente do header do JetPhotos e acaba cobrindo
+  // o painel. Aqui, verificamos se o clique foi fora do launcherHostEl
+  // e fora do settingsPanel (que pode estar no mobileHostEl).
+  let clickOutsideSettingsHandler = null;
+  function installClickOutsideSettings(active) {
+    // Remove handler anterior, se existir
+    if (clickOutsideSettingsHandler) {
+      document.removeEventListener('mousedown', clickOutsideSettingsHandler, true);
+      clickOutsideSettingsHandler = null;
+    }
+    if (!active) return;
+    // Usa capture:true pra pegar o evento antes de qualquer stopPropagation
+    // que os próprios elementos da extensão possam ter.
+    clickOutsideSettingsHandler = (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      // Se clicou dentro do launcherHostEl (que contém o settings panel
+      // no desktop) ou dentro do mobileHostEl (que contém no mobile),
+      // não fecha.
+      if (launcherHostEl?.contains(target)) return;
+      if (mobileHostEl?.contains(target)) return;
+      // Clique foi fora — fecha tudo.
+      closeAllPlus();
+    };
+    // setTimeout pra não pegar o próprio clique que abriu o settings
+    setTimeout(() => {
+      if (clickOutsideSettingsHandler) {
+        document.addEventListener('mousedown', clickOutsideSettingsHandler, true);
+      }
+    }, 0);
   }
 
   // Docagem do FAB: ao fechar o menu, o botão fica visível por um instante
@@ -1948,6 +1997,7 @@
       mobileHostEl.classList.remove('jp-settings-open');
       mobileHostEl.classList.remove('jp-mobile-menu-open');
     }
+    installClickOutsideSettings(false);
     scheduleFabDock();
     updateBackdrop();
   }
@@ -2023,7 +2073,7 @@
       <a href="https://github.com/samuelffer/jetphotosplus/releases" id="jp-plus-mobile-releases-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('viewReleases')}</a>
       <a href="https://github.com/samuelffer/jetphotosplus/issues" id="jp-plus-mobile-issues-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('reportIssue')}</a>
       <a href="https://samuelffer.github.io/jetphotosplus/" id="jp-plus-mobile-about-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('aboutJetPhotosPlus')}</a>
-      <a href="${DONATE_URL}" id="jp-plus-mobile-donate-link" role="menuitem" target="_blank" rel="noopener noreferrer">\u2665 ${t('donate')}</a>
+      <a href="${DONATE_URL}" id="jp-plus-mobile-donate-link" role="menuitem" target="_blank" rel="noopener noreferrer"><svg width="16" height="16" viewBox="0 0 24 24" fill="#e74c3c" style="vertical-align:middle;margin-right:6px"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>${t('donate')}</a>
       <a href="#" id="jp-plus-mobile-settings-link" role="menuitem">${t('settings')}</a>
     `;
     if (currentSettings.siteDarkMode) submenu.classList.add('jp-dark');
@@ -2065,6 +2115,12 @@
     host.id = 'jp-plus-launcher-host';
     launcherHostEl = host;
     if (headerTarget.mode === 'account-list') host.className = 'nav-desktop__item';
+    // Impede que eventos de mouse propaguem para o header do JetPhotos,
+    // que pode ter listeners globais fechando menus dropdown (especialmente
+    // no desktop, onde o launcher é um <li> na nav principal).
+    ['mousedown', 'pointerdown'].forEach(eventType => {
+      host.addEventListener(eventType, event => event.stopPropagation());
+    });
 
     const launcher = document.createElement('span');
     launcher.id = 'jp-plus-launcher';
@@ -2089,7 +2145,7 @@
       <a href="https://github.com/samuelffer/jetphotosplus/releases" id="jp-plus-releases-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('viewReleases')}</a>
       <a href="https://github.com/samuelffer/jetphotosplus/issues" id="jp-plus-issues-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('reportIssue')}</a>
       <a href="https://samuelffer.github.io/jetphotosplus/" id="jp-plus-about-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('aboutJetPhotosPlus')}</a>
-      <a href="${DONATE_URL}" id="jp-plus-donate-link" role="menuitem" target="_blank" rel="noopener noreferrer">\u2665 ${t('donate')}</a>
+      <a href="${DONATE_URL}" id="jp-plus-donate-link" role="menuitem" target="_blank" rel="noopener noreferrer"><svg width="16" height="16" viewBox="0 0 24 24" fill="#e74c3c" style="vertical-align:middle;margin-right:6px"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>${t('donate')}</a>
       <a href="#" id="jp-plus-settings-link" role="menuitem">${t('settings')}</a>
     `;
     if (currentSettings.siteDarkMode) submenu.classList.add('jp-dark');
@@ -2100,6 +2156,13 @@
     settingsPanel.setAttribute('role', 'dialog');
     settingsPanel.setAttribute('aria-label', t('settings'));
     if (currentSettings.siteDarkMode) settingsPanel.classList.add('jp-dark');
+    // Impede que cliques dentro do painel propaguem para o header do
+    // JetPhotos, que pode ter listeners globais fechando menus dropdown.
+    // Usa múltiplos eventos (click, mousedown, pointerdown) porque o
+    // JetPhotos pode estar usando qualquer um deles.
+    ['click', 'mousedown', 'pointerdown'].forEach(eventType => {
+      settingsPanel.addEventListener(eventType, event => event.stopPropagation());
+    });
     const settingsTitle = document.createElement('div');
     settingsTitle.className = 'jp-settings-title';
     settingsTitle.innerHTML = `<span>${t('settings')}</span><button type="button" class="jp-settings-close" aria-label="${t('close')}">×</button>`;
@@ -2151,7 +2214,7 @@
         <span class="jp-bubble-ring-wrap" aria-hidden="true">
           <svg class="jp-bubble-ring" viewBox="0 0 28 28"><circle class="jp-bubble-ring-track" cx="14" cy="14" r="12"></circle><circle class="jp-bubble-ring-fill" id="jp-bubble-ring-fill" cx="14" cy="14" r="12"></circle></svg>
           <svg class="jp-bubble-thumb" viewBox="0 1 26 26"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <svg class="jp-bubble-check" viewBox="0 0 28 28"><circle cx="14" cy="14" r="13" fill="#22c55e"></circle><path d="M8.5 14.5l4 4L19.5 10" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg class="jp-bubble-check" viewBox="0 0 28 28"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" fill="#22c55e" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
         <span id="jp-like-widget-bubble-count">\u2026</span>
         <span id="jp-like-widget-bubble-label" class="jp-bubble-label"></span>`;
@@ -2536,57 +2599,65 @@
   // "processed" e snapshots da fila foram removidos porque não são mais
   // necessários e podiam introduzir estimativas inconsistentes.
 
-  // Localiza, no DOM, a tabela cujo cabeçalho contém "QUEUE INFO" (a
-  // tabela "YOUR QUEUE STATUS" do print) e tenta extrair, de cada linha, o
-  // número de fotos à frente na fila.
+  // Localiza as fotos do usuário na fila ("YOUR QUEUE STATUS") e extrai,
+  // de cada uma, o número de fotos à frente (campo "Position") e uma
+  // referência ao <li> do "Time in Queue" — é logo abaixo dele que a
+  // estimativa individual será injetada.
   //
-  // A legenda do rodapé ("¹ Number of photos ahead of this one in the
-  // queue") indica que a célula provavelmente só tem um número (com uma
-  // marca ¹), não a frase inteira — então a extração é por POSIÇÃO da
-  // coluna (índice do cabeçalho "QUEUE INFO"), pegando o primeiro número
-  // daquela célula específica, em vez de procurar uma frase que
-  // provavelmente não existe linha a linha.
+  // Estrutura real observada no site (cada foto tem duas cópias no DOM,
+  // uma pra desktop e outra pra mobile; ambas ganham o badge pra não
+  // depender de qual está visível):
   //
-  // Ainda é best-effort (não tenho o HTML real de uma linha preenchida com
-  // fotos pra confirmar 100%) — se detectar algo errado na prática, me
-  // manda o HTML de uma linha preenchida (botão direito > Inspecionar) que
-  // eu ajusto o seletor.
-  const AHEAD_TEXT_RE = /(\d[\d,]*)\s*photos?\s*ahead/i; // fallback: caso alguma linha escreva a frase por extenso
-  const LEADING_NUMBER_RE = /(\d[\d,]*)/;
-
+  //   <li class="list__item">
+  //     <span>Position:</span>
+  //     <span><strong>6,379</strong><sup>1</sup></span>
+  //   </li>
+  //   <li class="list__item">
+  //     <span>Date Uploaded:</span>
+  //     <span><strong>Sep 4, 2026</strong></span>
+  //   </li>
+  //   <li class="list__item">
+  //     <span>Time in Queue:</span>
+  //     <span><strong>20 days 12 hours</strong></span>
+  //   </li>
   function findQueueInfoRows() {
-    const tables = document.querySelectorAll('table');
-    for (const table of tables) {
-      const headerCells = Array.from(table.querySelectorAll('th, thead td'));
-      const headerTexts = headerCells.map(c => c.textContent.trim().toUpperCase());
-      const queueInfoIdx = headerTexts.findIndex(h => h.includes('QUEUE INFO'));
-      if (queueInfoIdx === -1) continue; // essa tabela não é a que queremos
+    const matches = [];
+    const positionItems = document.querySelectorAll('li.list__item');
 
-      const bodyRows = Array.from(table.querySelectorAll('tbody tr, tr'))
-        .filter(tr => !tr.querySelector('th')); // pula a linha de cabeçalho
+    positionItems.forEach(li => {
+      const spans = li.querySelectorAll(':scope > span');
+      if (spans.length < 2) return;
+      const label = (spans[0].textContent || '').trim();
+      if (!/^Position:/i.test(label)) return;
 
-      const matches = [];
-      bodyRows.forEach(tr => {
-        const cells = tr.querySelectorAll('td');
-        const cell = cells[queueInfoIdx];
-        if (!cell) return;
-        const m = (cell.textContent || '').match(LEADING_NUMBER_RE);
-        if (m) matches.push({ rowEl: tr, ahead: numFromMatch(m[1]) });
-      });
+      // Extrai o número de <strong> dentro do segundo <span>; ignora o
+      // <sup> da nota de rodapé ("¹").
+      const valueEl = spans[1].querySelector('strong');
+      if (!valueEl) return;
+      const m = (valueEl.textContent || '').match(/(\d[\d,]*)/);
+      if (!m) return;
+      const ahead = numFromMatch(m[1]);
+      if (!Number.isFinite(ahead)) return;
 
-      if (matches.length) return matches;
+      // Localiza o <li> do "Time in Queue" no mesmo <ul> pai (é onde
+      // vamos injetar a estimativa individual logo abaixo).
+      const parentUl = li.parentElement;
+      if (!parentUl) return;
+      const siblings = parentUl.querySelectorAll(':scope > li.list__item');
+      let timeLi = null;
+      for (const sib of siblings) {
+        const sibLabel = sib.querySelector(':scope > span');
+        if (sibLabel && /^Time in Queue:/i.test((sibLabel.textContent || '').trim())) {
+          timeLi = sib;
+          break;
+        }
+      }
+      if (!timeLi) return; // sem "Time in Queue" ao lado — layout mudou, não injeta
 
-      // Fallback: tenta a frase por extenso em qualquer lugar da linha,
-      // pro caso da coluna QUEUE INFO estar vazia mas a info aparecer
-      // escrita em texto corrido em outra célula.
-      bodyRows.forEach(tr => {
-        const m = (tr.textContent || '').match(AHEAD_TEXT_RE);
-        if (m) matches.push({ rowEl: tr, ahead: numFromMatch(m[1]) });
-      });
+      matches.push({ rowEl: li, timeLi, ahead });
+    });
 
-      return matches; // achou a tabela certa (tinha "QUEUE INFO"), retorna o que conseguiu
-    }
-    return [];
+    return matches;
   }
 
   // Formato curto para o monitor da fila. Mantém a estimativa legível
@@ -2632,31 +2703,71 @@
     return `≈ ${duration} (${t('aroundDate')} ${formatDateShort(target)})`;
   }
 
-  // Injeta (ou atualiza, se já existir) um pequeno texto de estimativa
-  // logo após a célula "QUEUE INFO" de cada linha detectada. Marca a linha
-  // com um data-attribute pra não duplicar o badge em reprocessamentos
-  // (ex: reobservação do DOM depois de trocar o período no dropdown).
-  function injectInlineEstimate(rowEl, days) {
-    const text = formatEtaText(days);
-    let badge = rowEl.querySelector('.jp-queue-eta-badge');
+  // Formata a estimativa individual de cada foto, com data completa (dia/mês/ano)
+  // e texto mais direto: "16 dias estimado (26/09/2026)".
+  function formatPhotoEtaText(days) {
+    if (days == null || !Number.isFinite(days)) return null;
+    const totalHours = Math.max(0, Math.round(days * 24));
+    const wholeDays = Math.floor(totalHours / 24);
+    const hours = totalHours % 24;
+    const target = addDaysToDate(new Date(), totalHours / 24);
+
+    // Data completa com ano
+    const day = String(target.getDate()).padStart(2, '0');
+    const month = String(target.getMonth() + 1).padStart(2, '0');
+    const year = target.getFullYear();
+    const dateStr = currentSettings.language === 'en'
+      ? `${month}/${day}/${year}`
+      : `${day}/${month}/${year}`;
+
+    let duration;
+    if (wholeDays > 0 && hours > 0) {
+      duration = currentSettings.language === 'en'
+        ? `${wholeDays} day${wholeDays === 1 ? '' : 's'} ${hours}h`
+        : `${wholeDays} dia${wholeDays === 1 ? '' : 's'} e ${hours}h`;
+    } else if (wholeDays > 0) {
+      duration = currentSettings.language === 'en'
+        ? `${wholeDays} day${wholeDays === 1 ? '' : 's'}`
+        : `${wholeDays} dia${wholeDays === 1 ? '' : 's'}`;
+    } else {
+      duration = `${hours}h`;
+    }
+
+    const estimatedLabel = currentSettings.language === 'en' ? 'estimated' : 'estimado';
+    return `≈ ${duration} ${estimatedLabel} (${dateStr})`;
+  }
+
+  // Injeta (ou atualiza, se já existir) um <li> de estimativa logo após o
+  // <li class="list__item"> do "Time in Queue". Usa a mesma estrutura
+  // visual dos outros itens da coluna "Queue Info" (label + valor em
+  // <strong>) pra ficar visualmente integrado ao site. Marca o <li>
+  // injetado com uma classe própria pra não duplicar em reprocessamentos
+  // (ex: troca de período no dropdown da página).
+  function injectInlineEstimate(timeLi, days) {
+    const text = formatPhotoEtaText(days);
+    // O badge é irmão do <li> de "Time in Queue" — fica logo abaixo dele
+    // no mesmo <ul>. Se já existir um nosso, reutiliza; senão cria.
+    let badge = timeLi.nextElementSibling;
+    if (badge && !badge.classList.contains('jp-queue-eta-badge')) badge = null;
+
     if (!text) {
       if (badge) badge.remove();
       return;
     }
+
     if (!badge) {
-      badge = document.createElement('div');
-      badge.className = 'jp-queue-eta-badge';
-      badge.style.cssText = `
-        margin-top:4px; font-size:12px; font-weight:600; color:#1a73e8;
-        display:flex; align-items:center; gap:4px;
-      `;
-      // Anexa na última célula da linha (geralmente QUEUE INFO ou ACTIONS,
-      // qualquer uma das duas é um lugar visualmente razoável).
-      const cells = rowEl.querySelectorAll('td');
-      const target = cells[cells.length - 1] || rowEl;
-      target.appendChild(badge);
+      badge = document.createElement('li');
+      badge.className = 'list__item jp-queue-eta-badge';
+      badge.innerHTML = '<span></span><span><strong></strong></span>';
+      // Insere imediatamente após o <li> do "Time in Queue", mantendo a
+      // ordem visual dos campos da coluna.
+      timeLi.insertAdjacentElement('afterend', badge);
     }
-    badge.textContent = text;
+
+    const spans = badge.querySelectorAll(':scope > span');
+    if (spans[0]) spans[0].textContent = t('estimatedReview');
+    const strong = badge.querySelector('strong');
+    if (strong) strong.textContent = text;
   }
 
   // -----------------------------------------------------------------------
@@ -2956,6 +3067,11 @@
       const style = document.createElement('style');
       style.id = styleId;
       style.textContent = `
+        /* Estimativa individual por foto — fica dentro do <ul> do "Queue Info"
+           de cada foto, logo abaixo do "Time in Queue". Usa exatamente a
+           mesma tipografia e cores dos outros campos nativos do site
+           (label e valor herdam do <li class="list__item">). */
+
         #jp-site-queue-tracker {
           font-family: inherit;
         }
@@ -3204,13 +3320,18 @@
   const QUEUE_LIST_MAX_HEIGHT_PX = 180;
 
   function renderQueuePhotoEstimates(rows) {
+    // Injeta os badges de estimativa individual em cada foto — isso NÃO
+    // depende do painel da extensão, vai direto no DOM do site (nos <li>
+    // do "Time in Queue"). Faz primeiro porque o restante desta função
+    // (a lista resumida) depende de um elemento do painel que pode não
+    // existir mais.
+    rows.forEach(({ timeLi, ahead }) => {
+      injectInlineEstimate(timeLi, lastQueueRate != null ? ahead / lastQueueRate : null);
+    });
+
     const listEl = document.getElementById('jp-queue-list');
     const labelEl = document.getElementById('jp-queue-list-label');
     if (!listEl) return;
-
-    rows.forEach(({ rowEl, ahead }) => {
-      injectInlineEstimate(rowEl, lastQueueRate != null ? ahead / lastQueueRate : null);
-    });
 
     if (!rows.length) {
       if (labelEl) labelEl.style.display = 'none';
@@ -3395,6 +3516,481 @@
   let observerRef = null;
   let observeTarget = null;
 
+  // =======================================================================
+  // MOBILE SELECT ENHANCER
+  // -----------------------------------------------------------------------
+  // Na página de upload (/addphotos/), o site usa Chosen.js que no PC cria
+  // um dropdown com busca, mas no mobile desabilita e usa o <select> nativo.
+  // Com 1210 fabricantes ou 307 países, rolar manualmente é inviável.
+  // Este enhancer substitui esses selects por um input com autocomplete
+  // otimizado pra toque: campo grande, opções com altura de 44px, filtro
+  // em tempo real, e dispara change no <select> original pra manter os
+  // selects dependentes funcionando (aeroporto depende de país, modelo
+  // depende de fabricante, etc).
+  // =======================================================================
+
+  function isAddPhotosPage() {
+    return location.pathname.startsWith('/addphotos/');
+  }
+
+  function isMobileDevice() {
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 1024;
+  }
+
+  // IDs dos selects que o enhancer vai melhorar. Incluídos tanto os que
+  // têm centenas de opções quanto os dinâmicos que podem crescer.
+  const ENHANCER_TARGET_IDS = [
+    'modal-correct-info-location-country',
+    'modal-correct-info-location-airport',
+    'modal-correct-info-aircraft-manu',
+    'modal-correct-info-aircraft-type',
+    'modal-correct-info-aircraft-model',
+    'modal-correct-info-airline-category',
+    'modal-correct-info-airline-airline',
+    'modal-correct-info-camera',
+    'modal-correct-info-lens',
+    'modal-hot-photo-select',
+  ];
+
+  function injectMobileEnhancerStyles() {
+    if (document.getElementById('jp-mobile-enhancer-style')) return;
+    const style = document.createElement('style');
+    style.id = 'jp-mobile-enhancer-style';
+    style.textContent = `
+      .jp-enhancer-wrapper {
+        position: relative;
+        width: 100%;
+      }
+      .jp-enhancer-input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 8px 10px;
+        font-size: 14px;
+        border: 1px solid #c8c8c8;
+        border-radius: 6px;
+        background: #fff;
+        color: #222;
+        outline: none;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      .jp-enhancer-input:focus {
+        border-color: #2c94e8;
+        box-shadow: 0 0 0 2px rgba(44,148,232,.2);
+      }
+      .jp-enhancer-input::placeholder {
+        color: #999;
+      }
+      .jp-enhancer-dropdown {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 260px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        background: #fff;
+        border: 1px solid #c8c8c8;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 6px 18px rgba(0,0,0,.18);
+        z-index: 1000010;
+      }
+      .jp-enhancer-dropdown.jp-enhancer-open {
+        display: block;
+      }
+      .jp-enhancer-option {
+        padding: 12px 14px;
+        font-size: 15px;
+        color: #222;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        min-height: 44px;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+      }
+      .jp-enhancer-option:last-child {
+        border-bottom: none;
+      }
+      .jp-enhancer-option:active,
+      .jp-enhancer-option.jp-enhancer-active {
+        background: #e8f4fd;
+      }
+      .jp-enhancer-option.jp-enhancer-selected {
+        background: #d4edfc;
+        font-weight: 600;
+      }
+      .jp-enhancer-no-results {
+        padding: 14px;
+        font-size: 14px;
+        color: #999;
+        text-align: center;
+      }
+      .jp-enhancer-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #e0e0e0;
+        border-top-color: #666;
+        border-radius: 50%;
+        animation: jp-enhancer-spin 0.6s linear infinite;
+      }
+      @keyframes jp-enhancer-spin {
+        to { transform: rotate(360deg); }
+      }
+      .jp-enhancer-counter {
+        padding: 8px 12px;
+        font-size: 11px;
+        color: #888;
+        text-align: center;
+        background: #f7f7f7;
+        border-bottom: 1px solid #eee;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+      }
+      .jp-enhancer-group-label {
+        padding: 8px 14px 4px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        background: #f7f7f7;
+        position: sticky;
+        top: 0;
+      }
+      /* Modo escuro do site */
+      html.jp-site-dark-active .jp-enhancer-input {
+        background: #292929;
+        color: #eee;
+        border-color: #505050;
+      }
+      html.jp-site-dark-active .jp-enhancer-input::placeholder { color: #888; }
+      html.jp-site-dark-active .jp-enhancer-input:focus { border-color: #4299dc; }
+      html.jp-site-dark-active .jp-enhancer-dropdown {
+        background: #292929;
+        border-color: #505050;
+      }
+      html.jp-site-dark-active .jp-enhancer-option {
+        color: #eee;
+        border-bottom-color: #3a3a3a;
+      }
+      html.jp-site-dark-active .jp-enhancer-option:active,
+      html.jp-site-dark-active .jp-enhancer-option.jp-enhancer-active { background: #1a4a6e; }
+      html.jp-site-dark-active .jp-enhancer-option.jp-enhancer-selected { background: #1a5a8e; }
+      html.jp-site-dark-active .jp-enhancer-group-label { background: #333; color: #aaa; }
+      html.jp-site-dark-active .jp-enhancer-no-results { color: #777; }
+      html.jp-site-dark-active .jp-enhancer-counter { background: #333; color: #888; border-bottom-color: #444; }
+      html.jp-site-dark-active .jp-enhancer-spinner {
+        border-color: #444;
+        border-top-color: #aaa;
+      }
+      /* Esconde o select nativo e o Chosen container no mobile */
+      .jp-enhancer-hidden-native {
+        display: none !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // Lê todas as opções de um <select> (incluindo <optgroup>) e retorna
+  // um array de { value, text, group }.
+  function getSelectOptions(select) {
+    const options = [];
+    Array.from(select.children).forEach(child => {
+      if (child.tagName === 'OPTGROUP') {
+        const groupName = child.label || '';
+        Array.from(child.children).forEach(opt => {
+          if (opt.tagName === 'OPTION') {
+            options.push({ value: opt.value, text: opt.textContent.trim(), group: groupName });
+          }
+        });
+      } else if (child.tagName === 'OPTION') {
+        options.push({ value: child.value, text: child.textContent.trim(), group: '' });
+      }
+    });
+    return options;
+  }
+
+  // Cria o autocomplete pro select. O select original fica escondido;
+  // o Chosen container (se existir) também. Nosso wrapper fica no lugar.
+  function enhanceSelect(select) {
+    // Não duplica se já foi enhanced
+    if (select.dataset.jpEnhanced === '1') return;
+
+    select.dataset.jpEnhanced = '1';
+
+    // Pega placeholder do data-placeholder ou do primeiro option
+    const placeholder = select.dataset.placeholder
+      || select.querySelector('option')?.textContent?.trim()
+      || 'Select...';
+
+    // Esconde o select original
+    select.style.display = 'none';
+
+    // Esconde o Chosen container (irmão do select)
+    const chosenContainer = select.parentElement?.querySelector('.chosen-container');
+    if (chosenContainer) chosenContainer.style.display = 'none';
+
+    // Cria o wrapper
+    const wrapper = document.createElement('div');
+    wrapper.className = 'jp-enhancer-wrapper';
+
+    // Input de busca
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'jp-enhancer-input';
+    input.placeholder = placeholder;
+    input.autocomplete = 'off';
+    input.setAttribute('autocapitalize', 'off');
+    input.setAttribute('autocorrect', 'off');
+
+    // Mostra o texto da opção selecionada no input
+    const selectedOption = select.querySelector(`option[value="${CSS.escape(select.value)}"]`);
+    if (selectedOption && selectedOption.value && selectedOption.value !== '-1') {
+      input.value = selectedOption.textContent.trim();
+    }
+
+    // Dropdown
+    const dropdown = document.createElement('div');
+    dropdown.className = 'jp-enhancer-dropdown';
+
+    wrapper.appendChild(input);
+    wrapper.appendChild(dropdown);
+
+    // Insere o wrapper no lugar do select (depois dele)
+    select.parentElement.appendChild(wrapper);
+
+    // Estado
+    let allOptions = getSelectOptions(select);
+    let isOpen = false;
+    const MAX_RENDERED = 50; // Reduzido de 80 pra 50 — mais rápido no mobile
+    let renderTimer = null;
+
+    function renderDropdown(filter) {
+      // Cancela render anterior se ainda estiver pendente
+      if (renderTimer) { clearTimeout(renderTimer); renderTimer = null; }
+
+      const query = (filter || '').toLowerCase().trim();
+
+      // Mostra loading imediatamente
+      dropdown.innerHTML = `<div class="jp-enhancer-no-results"><div class="jp-enhancer-spinner"></div></div>`;
+
+      // Renderiza assincronamente pra não bloquear a thread principal
+      renderTimer = setTimeout(() => {
+        renderTimer = null;
+        dropdown.innerHTML = '';
+
+        // Pré-filtra com text lowercase cacheado (evita toLowerCase repetido)
+        const filtered = allOptions.filter(opt => {
+          if (!opt.value && !opt.text) return false;
+          if (query && (opt.value === '-1' || opt.value === '')) return false;
+          if (!query) return true;
+          return opt.text.toLowerCase().includes(query);
+        });
+
+        if (!filtered.length) {
+          const noResults = document.createElement('div');
+          noResults.className = 'jp-enhancer-no-results';
+          noResults.textContent = currentSettings.language === 'en' ? 'No results found' : 'Nenhum resultado encontrado';
+          dropdown.appendChild(noResults);
+          return;
+        }
+
+        const toRender = filtered.slice(0, MAX_RENDERED);
+        const hasMore = filtered.length > MAX_RENDERED;
+
+        // Usa DocumentFragment pra inserir tudo de uma vez (mais rápido que
+        // appendChild individual, que força reflow a cada elemento)
+        const fragment = document.createDocumentFragment();
+
+        if (hasMore) {
+          const counter = document.createElement('div');
+          counter.className = 'jp-enhancer-counter';
+          counter.textContent = currentSettings.language === 'en'
+            ? `Showing ${MAX_RENDERED} of ${filtered.length} — type to filter`
+            : `Mostrando ${MAX_RENDERED} de ${filtered.length} — digite para filtrar`;
+          fragment.appendChild(counter);
+        }
+
+        let currentGroup = null;
+        toRender.forEach(opt => {
+          if (opt.group && opt.group !== currentGroup) {
+            currentGroup = opt.group;
+            const groupLabel = document.createElement('div');
+            groupLabel.className = 'jp-enhancer-group-label';
+            groupLabel.textContent = opt.group;
+            fragment.appendChild(groupLabel);
+          }
+
+          const optionEl = document.createElement('div');
+          optionEl.className = 'jp-enhancer-option';
+          if (opt.value === select.value) optionEl.classList.add('jp-enhancer-selected');
+          optionEl.textContent = opt.text;
+          // Usa um único listener com delegation (mais leve que 50 listeners individuais)
+          optionEl.dataset.value = opt.value;
+          optionEl.dataset.text = opt.text;
+          fragment.appendChild(optionEl);
+        });
+
+        dropdown.appendChild(fragment);
+      }, 10); // setTimeout mínimo pra liberar a thread antes de renderizar
+    }
+
+    // Event delegation: um único listener no dropdown em vez de um por opção
+    dropdown.addEventListener('click', (e) => {
+      const optionEl = e.target.closest('.jp-enhancer-option');
+      if (!optionEl) return;
+      const opt = { value: optionEl.dataset.value, text: optionEl.dataset.text };
+      selectOption(opt);
+    });
+    dropdown.addEventListener('touchstart', (e) => {
+      const optionEl = e.target.closest('.jp-enhancer-option');
+      if (optionEl) optionEl.classList.add('jp-enhancer-active');
+    }, { passive: true });
+    dropdown.addEventListener('touchend', (e) => {
+      const optionEl = e.target.closest('.jp-enhancer-option');
+      if (optionEl) optionEl.classList.remove('jp-enhancer-active');
+    }, { passive: true });
+
+    function selectOption(opt) {
+      // Atualiza o select original
+      select.value = opt.value;
+      input.value = opt.text;
+      closeDropdown();
+      // Dispara change pro site atualizar selects dependentes
+      // (aeroporto depende de país, modelo depende de fabricante, etc)
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function openDropdown() {
+      if (select.disabled) return;
+      isOpen = true;
+      renderDropdown(input.value);
+      dropdown.classList.add('jp-enhancer-open');
+    }
+
+    function closeDropdown() {
+      isOpen = false;
+      dropdown.classList.remove('jp-enhancer-open');
+      // Restaura o texto da opção selecionada
+      const selected = allOptions.find(o => o.value === select.value);
+      if (selected) input.value = selected.text;
+      else if (!select.value || select.value === '-1') input.value = '';
+    }
+
+    // Eventos do input
+    input.addEventListener('focus', () => {
+      openDropdown();
+    });
+
+    // Debounce no filtro: espera 150ms antes de renderizar, pra não
+    // travar o celular filtrando a cada tecla pressionada.
+    let filterTimer = null;
+    input.addEventListener('input', () => {
+      if (filterTimer) clearTimeout(filterTimer);
+      filterTimer = setTimeout(() => {
+        renderDropdown(input.value);
+        if (!isOpen) openDropdown();
+      }, 150);
+    });
+
+    // Fecha ao clicar fora
+    document.addEventListener('click', (e) => {
+      if (!wrapper.contains(e.target)) {
+        closeDropdown();
+      }
+    });
+
+    // Re-renderiza quando o select é desabilitado/habilitado (muda estado
+    // de selects dependentes após seleção do pai)
+    const selectObserver = new MutationObserver(() => {
+      if (select.disabled) {
+        input.disabled = true;
+        input.placeholder = placeholder;
+        input.value = '';
+        closeDropdown();
+      } else {
+        input.disabled = false;
+      }
+      // Recarrega as opções (podem ter sido adicionadas via AJAX)
+      allOptions = getSelectOptions(select);
+      if (isOpen) renderDropdown(input.value);
+      // Atualiza o texto do input com a opção selecionada
+      const selected = allOptions.find(o => o.value === select.value);
+      if (selected && selected.value && selected.value !== '-1') {
+        input.value = selected.text;
+      }
+    });
+    selectObserver.observe(select, { childList: true, attributes: true, subtree: true });
+
+    // Mantém o input sincronizado quando o select é atualizado externamente
+    // (autofill do site, outro script, etc). O autofill nem sempre dispara
+    // o evento 'change', então fazemos polling do valor do select.
+    let lastSelectValue = select.value;
+
+    function syncInputFromSelect() {
+      if (select.value === lastSelectValue) return;
+      lastSelectValue = select.value;
+      // Recarrega opções (podem ter sido adicionadas via AJAX pelo autofill)
+      allOptions = getSelectOptions(select);
+      const selected = allOptions.find(o => o.value === select.value);
+      if (selected && selected.value && selected.value !== '-1') {
+        input.value = selected.text;
+      } else if (!select.value || select.value === '-1') {
+        input.value = '';
+      }
+    }
+
+    select.addEventListener('change', syncInputFromSelect);
+
+    // Polling a cada 500ms — pega mudanças que não disparam 'change'
+    // (autofill do site, scripts externos, etc)
+    const pollInterval = setInterval(() => {
+      // Para de fazer polling se o select foi removido do DOM
+      if (!document.contains(select)) {
+        clearInterval(pollInterval);
+        return;
+      }
+      syncInputFromSelect();
+    }, 500);
+  }
+
+  function initMobileSelectEnhancer() {
+    // Só ativa no mobile/tablet
+    if (!isMobileDevice()) return;
+
+    // Espera o DOM carregar completamente (o Chosen.js precisa ter
+    // rodado primeiro pra a gente poder esconder o container dele)
+    function tryEnhance() {
+      injectMobileEnhancerStyles();
+      let enhanced = 0;
+      ENHANCER_TARGET_IDS.forEach(id => {
+        const select = document.getElementById(id);
+        if (select && select.dataset.jpEnhanced !== '1') {
+          enhanceSelect(select);
+          enhanced++;
+        }
+      });
+      return enhanced;
+    }
+
+    // Tenta imediatamente; se os selects ainda não existem, tenta de novo
+    // em intervalos curtos (o Chosen pode demorar pra inicializar).
+    if (tryEnhance() === 0) {
+      let attempts = 0;
+      const retry = setInterval(() => {
+        attempts++;
+        if (tryEnhance() > 0 || attempts >= 20) {
+          clearInterval(retry);
+        }
+      }, 300);
+    }
+  }
+
   async function init() {
     currentSettings = await getSettings();
 
@@ -3465,6 +4061,15 @@
     // nem tentamos chamá-la.
     if (isQueue && currentSettings.queueEstimatorEnabled) {
       initQueueEstimator();
+    }
+
+    // Mobile Select Enhancer: na página de upload (/addphotos/), melhora os
+    // selects gigantes (fabricante, país, aeroporto, etc) com um autocomplete
+    // mobile-friendly. No PC o site já usa Chosen.js que funciona bem; no
+    // mobile o Chosen desabilita e sobra o <select> nativo com centenas de
+    // opções pra rolar manualmente — esse enhancer resolve isso.
+    if (isAddPhotosPage()) {
+      initMobileSelectEnhancer();
     }
 
   }
