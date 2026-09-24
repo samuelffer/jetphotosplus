@@ -2067,6 +2067,12 @@
     host.id = 'jp-plus-launcher-host';
     launcherHostEl = host;
     if (headerTarget.mode === 'account-list') host.className = 'nav-desktop__item';
+    // Impede que eventos de mouse propaguem para o header do JetPhotos,
+    // que pode ter listeners globais fechando menus dropdown (especialmente
+    // no desktop, onde o launcher é um <li> na nav principal).
+    ['mousedown', 'pointerdown'].forEach(eventType => {
+      host.addEventListener(eventType, event => event.stopPropagation());
+    });
 
     const launcher = document.createElement('span');
     launcher.id = 'jp-plus-launcher';
@@ -2104,7 +2110,11 @@
     if (currentSettings.siteDarkMode) settingsPanel.classList.add('jp-dark');
     // Impede que cliques dentro do painel propaguem para o header do
     // JetPhotos, que pode ter listeners globais fechando menus dropdown.
-    settingsPanel.addEventListener('click', event => event.stopPropagation());
+    // Usa múltiplos eventos (click, mousedown, pointerdown) porque o
+    // JetPhotos pode estar usando qualquer um deles.
+    ['click', 'mousedown', 'pointerdown'].forEach(eventType => {
+      settingsPanel.addEventListener(eventType, event => event.stopPropagation());
+    });
     const settingsTitle = document.createElement('div');
     settingsTitle.className = 'jp-settings-title';
     settingsTitle.innerHTML = `<span>${t('settings')}</span><button type="button" class="jp-settings-close" aria-label="${t('close')}">×</button>`;
@@ -3010,21 +3020,9 @@
       style.id = styleId;
       style.textContent = `
         /* Estimativa individual por foto — fica dentro do <ul> do "Queue Info"
-           de cada foto, logo abaixo do "Time in Queue". Usa a mesma tipografia
-           dos outros <li> do site, com destaque sutil em itálico no label
-           pra diferenciar dos campos nativos sem destoar do layout. */
-        .jp-queue-eta-badge > span:first-child {
-          font-style: italic;
-          opacity: .85;
-        }
-        .jp-queue-eta-badge > span:last-child strong {
-          color: #1a73e8;
-          font-weight: 700;
-        }
-        /* No modo escuro do site, ajusta pra um azul mais visível. */
-        html.jp-site-dark-active .jp-queue-eta-badge > span:last-child strong {
-          color: #8ab4f8;
-        }
+           de cada foto, logo abaixo do "Time in Queue". Usa exatamente a
+           mesma tipografia e cores dos outros campos nativos do site
+           (label e valor herdam do <li class="list__item">). */
 
         #jp-site-queue-tracker {
           font-family: inherit;
