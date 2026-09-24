@@ -1026,12 +1026,12 @@
       #jp-like-widget-bubble .jp-bubble-ring { position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); }
       #jp-like-widget-bubble .jp-bubble-ring-track { fill:none; stroke:rgba(255,255,255,.16); stroke-width:2.5; }
       #jp-like-widget-bubble .jp-bubble-ring-fill { fill:none; stroke:#4caf50; stroke-width:2.5; stroke-linecap:round; stroke-dasharray:75.4; stroke-dashoffset:75.4; transition:stroke-dashoffset .15s linear, opacity .15s linear; }
-      #jp-like-widget-bubble .jp-bubble-heart { position:relative; width:18px; height:18px; }
-      /* Selo de concluído: quando tudo está curtido, o anel + coração dão
+      #jp-like-widget-bubble .jp-bubble-thumb { position:relative; width:18px; height:18px; }
+      /* Selo de concluído: quando tudo está curtido, o anel + joinha dão
          lugar a um disco verde com confere branco (troca seca, sem pop). */
       #jp-like-widget-bubble .jp-bubble-check { display:none; position:absolute; inset:0; width:100%; height:100%; }
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-ring,
-      #jp-like-widget-bubble.jp-bubble-done .jp-bubble-heart { display:none; }
+      #jp-like-widget-bubble.jp-bubble-done .jp-bubble-thumb { display:none; }
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-check { display:block; }
       /* Rótulo só no desktop largo (ex: "10 faltando"): deixa a bolha mais
          larga e autoexplicativa onde há espaço; some no mobile. */
@@ -1041,12 +1041,12 @@
       @media (min-width:700px) {
         #jp-like-widget-bubble { min-height:58px; padding:13px 20px 13px 17px; font-size:16px; }
         #jp-like-widget-bubble .jp-bubble-ring-wrap { width:32px; height:32px; }
-        #jp-like-widget-bubble .jp-bubble-heart { width:19px; height:19px; }
+        #jp-like-widget-bubble .jp-bubble-thumb { width:19px; height:19px; }
       }
       @media (min-width:1100px) {
         #jp-like-widget-bubble { min-height:62px; padding:14px 22px 14px 18px; font-size:16px; gap:10px; }
         #jp-like-widget-bubble .jp-bubble-ring-wrap { width:34px; height:34px; }
-        #jp-like-widget-bubble .jp-bubble-heart { width:20px; height:20px; }
+        #jp-like-widget-bubble .jp-bubble-thumb { width:20px; height:20px; }
         #jp-like-widget-bubble .jp-bubble-label { display:inline; }
       }
       @media (prefers-reduced-motion: reduce) {
@@ -1901,7 +1901,7 @@
       bubble.innerHTML = `
         <span class="jp-bubble-ring-wrap" aria-hidden="true">
           <svg class="jp-bubble-ring" viewBox="0 0 28 28"><circle class="jp-bubble-ring-track" cx="14" cy="14" r="12"></circle><circle class="jp-bubble-ring-fill" id="jp-bubble-ring-fill" cx="14" cy="14" r="12"></circle></svg>
-          <svg class="jp-bubble-heart" viewBox="0 0 24 24"><path d="M20.8 8.9c0 5.2-8.8 10.1-8.8 10.1S3.2 14.1 3.2 8.9A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          <svg class="jp-bubble-thumb" viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <svg class="jp-bubble-check" viewBox="0 0 28 28"><circle cx="14" cy="14" r="13" fill="#22c55e"></circle><path d="M8.5 14.5l4 4L19.5 10" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
         <span id="jp-like-widget-bubble-count">\u2026</span>

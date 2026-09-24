@@ -143,6 +143,9 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Halo dos rótulos da pizza agora 100% preto.
 - Rótulos da pizza: interior 100% preto com halo branco (preto no preto sumiria).
 
+### Bolha com joinha
+- O ícone da bolha de likes agora é um joinha de contorno (antes era um coração) — combina com o Like do site. O selo verde de concluído não muda.
+
 ---
 
 ## [2.0.0]
