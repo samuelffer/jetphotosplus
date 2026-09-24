@@ -1108,7 +1108,7 @@
       #jp-like-widget-bubble .jp-bubble-thumb { position:relative; width:19px; height:19px; }
       /* Selo de concluído: quando tudo está curtido, o anel + joinha dão
          lugar a um disco verde com confere branco (troca seca, sem pop). */
-      #jp-like-widget-bubble .jp-bubble-check { display:none; position:absolute; inset:0; width:100%; height:100%; }
+      #jp-like-widget-bubble .jp-bubble-check { display:none; position:absolute; inset:0; width:100%; height:100%; padding:4px; box-sizing:border-box; }
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-ring,
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-thumb { display:none; }
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-check { display:block; }
