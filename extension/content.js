@@ -2102,6 +2102,9 @@
     settingsPanel.setAttribute('role', 'dialog');
     settingsPanel.setAttribute('aria-label', t('settings'));
     if (currentSettings.siteDarkMode) settingsPanel.classList.add('jp-dark');
+    // Impede que cliques dentro do painel propaguem para o header do
+    // JetPhotos, que pode ter listeners globais fechando menus dropdown.
+    settingsPanel.addEventListener('click', event => event.stopPropagation());
     const settingsTitle = document.createElement('div');
     settingsTitle.className = 'jp-settings-title';
     settingsTitle.innerHTML = `<span>${t('settings')}</span><button type="button" class="jp-settings-close" aria-label="${t('close')}">×</button>`;
@@ -3008,16 +3011,17 @@
       style.textContent = `
         /* Estimativa individual por foto — fica dentro do <ul> do "Queue Info"
            de cada foto, logo abaixo do "Time in Queue". Usa a mesma tipografia
-           dos outros <li> do site, mas com cor de destaque pra diferenciar. */
+           dos outros <li> do site, com destaque sutil em itálico no label
+           pra diferenciar dos campos nativos sem destoar do layout. */
         .jp-queue-eta-badge > span:first-child {
-          color: #1a73e8;
-          font-weight: 600;
+          font-style: italic;
+          opacity: .85;
         }
         .jp-queue-eta-badge > span:last-child strong {
           color: #1a73e8;
+          font-weight: 700;
         }
         /* No modo escuro do site, ajusta pra um azul mais visível. */
-        html.jp-site-dark-active .jp-queue-eta-badge > span:first-child,
         html.jp-site-dark-active .jp-queue-eta-badge > span:last-child strong {
           color: #8ab4f8;
         }
