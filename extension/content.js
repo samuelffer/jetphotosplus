@@ -1903,9 +1903,15 @@
   function updateBackdrop() {
     const backdrop = document.getElementById('jp-plus-backdrop');
     if (!backdrop) return;
-    const open = (launcherHostEl?.classList.contains('jp-settings-open') ||
-      mobileHostEl?.classList.contains('jp-settings-open') ||
-      mobileHostEl?.classList.contains('jp-mobile-menu-open'));
+    // O backdrop só deve ser mostrado quando o SUBMENU ou mobile menu
+    // estão abertos (pra fechar ao clicar fora). Quando o SETTINGS PANEL
+    // está aberto, o backdrop NÃO deve ficar visível — senão ele fica
+    // por cima do painel e captura os cliques (bug no desktop devido a
+    // stacking contexts diferentes).
+    const settingsOpen = launcherHostEl?.classList.contains('jp-settings-open') ||
+      mobileHostEl?.classList.contains('jp-settings-open');
+    const menuOpen = mobileHostEl?.classList.contains('jp-mobile-menu-open');
+    const open = !settingsOpen && menuOpen;
     backdrop.classList.toggle('jp-backdrop-show', !!open);
   }
 
@@ -1914,14 +1920,6 @@
     if (launcherHostEl) launcherHostEl.classList.remove('jp-settings-open');
     if (mobileHostEl) mobileHostEl.classList.remove('jp-settings-open');
     if (open && host) host.classList.add('jp-settings-open');
-    // No desktop, o launcherHostEl vive dentro de um stacking context
-    // criado pelo header do JetPhotos (header__account com position:absolute).
-    // O backdrop, que está no <body>, fica ACIMA desse stacking context —
-    // mesmo com z-index menor que o settings panel. Pra resolver, sobe o
-    // launcherHostEl acima do backdrop quando o painel está aberto.
-    if (launcherHostEl) {
-      launcherHostEl.style.zIndex = open && host === launcherHostEl ? '1000003' : '';
-    }
     updateBackdrop();
   }
 
@@ -1953,10 +1951,7 @@
   }
 
   function closeAllPlus() {
-    if (launcherHostEl) {
-      launcherHostEl.classList.remove('jp-settings-open');
-      launcherHostEl.style.zIndex = '';
-    }
+    if (launcherHostEl) launcherHostEl.classList.remove('jp-settings-open');
     if (mobileHostEl) {
       mobileHostEl.classList.remove('jp-settings-open');
       mobileHostEl.classList.remove('jp-mobile-menu-open');
@@ -1977,12 +1972,8 @@
     const wasOpen = (launcherHostEl.classList.contains('jp-settings-open') ||
       mobileHostEl.classList.contains('jp-settings-open'));
     launcherHostEl.classList.remove('jp-settings-open');
-    launcherHostEl.style.zIndex = '';
     mobileHostEl.classList.remove('jp-settings-open');
-    if (wasOpen) {
-      target.classList.add('jp-settings-open');
-      if (target === launcherHostEl) target.style.zIndex = '1000003';
-    }
+    if (wasOpen) target.classList.add('jp-settings-open');
     if (!fab) mobileHostEl.classList.remove('jp-mobile-menu-open');
     updateBackdrop();
   }
