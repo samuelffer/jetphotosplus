@@ -1013,11 +1013,11 @@
       #jp-plus-mobile-fab:focus-visible { outline:2px solid #2c94e8; outline-offset:2px; }
       #jp-plus-mobile-host.jp-dark #jp-plus-mobile-fab { background:#1c1c1c; border-color:#464646; }
       #jp-plus-mobile-host.jp-dark #jp-plus-mobile-fab img { filter:brightness(0) invert(1); }
-      /* Docagem do FAB: parado, meio escondido no canto + translúcido. A classe
+      /* Docagem do FAB: parado, meio escondido na lateral esquerda + translúcido. A classe
          jp-fab-docked vai no host, mas o efeito vai no invólucro — o submenu e
          o painel moram no mesmo host e não podem ser arrastados juntos. */
       #jp-plus-mobile-fab-wrap { display:block; width:52px; height:52px; transition:transform .22s ease, opacity .22s ease; }
-      #jp-plus-mobile-host.jp-fab-docked #jp-plus-mobile-fab-wrap { transform:translate(-50%, 50%); opacity:.5; }
+      #jp-plus-mobile-host.jp-fab-docked #jp-plus-mobile-fab-wrap { transform:translateX(calc(-50% - 16px)); opacity:.5; }
       @media (prefers-reduced-motion: reduce) {
         #jp-plus-mobile-fab-wrap { transition:none; }
       }
@@ -1913,7 +1913,7 @@
   }
 
   // Docagem do FAB: ao fechar o menu, o botão fica visível por um instante
-  // e depois volta sozinho pro canto (meio escondido + translúcido).
+  // e depois volta sozinho pra lateral (meio escondido + translúcido).
   let fabDockTimer = null;
   function scheduleFabDock() {
     if (!mobileHostEl || typeof window === 'undefined') return;
