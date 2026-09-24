@@ -8,164 +8,45 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 
 ## [2.0.1]
 
-### Botão de Like no layout mobile
-- Aumentado o ícone do botão de Like injetado no layout mobile de 16px para 20px (caixa de toque de 28px para 30px, sem alterar a altura da fileira de estatísticas).
-- Alinhado o botão verticalmente com os demais ícones da fileira (remoção da folga de baseline do `<img>` + `vertical-align: middle` no stat), com ajuste fino de 2px pra cima.
+Versão de refinamento da experiência de curtir + cobertura do modo escuro: a bolha virou o UI único de likes no PC e no celular, o mobile ganhou botão flutuante com o menu completo, as configs foram redesenhadas e o modo escuro cobre muito mais páginas.
 
-### Curtidas no mobile: instantâneas + animação pop
-- O joinha agora acende na hora do toque (UI otimista), sem esperar a resposta do servidor; se o servidor recusar ou a rede falhar, o estado é desfeito sozinho via evento `!ok` do hook de rede.
-- Nova microanimação de "pop" (escala 1 → 1.35 → 0.95 → 1, 0.2s) ao curtir no mobile; respeita `prefers-reduced-motion`.
-- Cada confirmação de rede agora atualiza só a própria foto (busca mirada por `data-photo`/`data-id`) em vez de revarrer a página inteira; durante o "curtir faltantes" o `refresh()` completo roda uma vez só no final — elimina as dezenas de reflows seguidos que travavam o celular.
-- Janela anti-duplo-toque reduzida de 500ms para 300ms e removido o dim do botão durante o clique (brigava com o feedback instantâneo).
+### Curtidas: a bolha é o UI único (PC + celular)
+- O widget grande e o sistema de expandir/minimizar foram removidos — a bolha é o único UI de curtidas em qualquer tela.
+- A bolha mostra as fotos faltando + anel de progresso da leva; tocar nela curte todas as faltantes de uma vez.
+- Tudo curtido = só o selo verde (sem número do lado); clicar nele mostra um toast avisando que a página já está toda curtida.
+- Ícone novo: joinha de contorno (antes era coração), combinando com o Like do site; selo verde de concluído mantido.
+- Visual sóbrio, sem pulsar nem pops: o estado é comunicado por cor + anel + contagem.
+- Tamanho responsivo: maior no celular (54px), tablet (58px) e desktop (62px + rótulo "faltando").
 
-### Widget de curtidas: minimizar pra bolha
-- Novo botão `−` no canto do widget que recolhe ele pra uma bolha compacta (coração + faltantes, `✓` verde quando termina); um clique na bolha expande de volta.
-- Estado aberto/recolhido salvo em `chrome.storage.local`, continua igual ao trocar de página.
-- A bolha acompanha a contagem ao vivo, inclusive durante o "curtir faltantes".
+### Curtidas no mobile: instantâneas e sem travar
+- O joinha acende na hora do toque (UI otimista); se o servidor recusar, o estado se desfaz sozinho.
+- Botão de Like injetado nos cards: maior (20px), alinhado com os ícones e sem travar o celular durante a leva (revarredura única no fim).
+- Janela anti-duplo-toque mais curta (300ms).
 
-### Bolha vira o widget principal no celular
-- Em telas de até 520px o widget já abre recolhido na bolha (coração + faltantes); girar/redimensionar alterna sozinho, sem mexer na preferência salva do desktop.
-- Tocar na bolha no celular curte todas as faltantes direto (via o botão escondido, com a mesma contagem ao vivo); tocar sem nada faltando, durante a leva ou no desktop continua expandindo.
-- Durante a leva a bolha pulsa verde; ao terminar o anel fecha completo (ver abaixo).
+### Menu mobile: botão flutuante com a logo (novo)
+- Quando o launcher do header não está visível (mobile), um botão redondo com a logo abre o mesmo menu do PC (novidades, issue, sobre, doar, configs).
+- O botão "doca" sozinho: parado, fica meio escondido na lateral + translúcido; o toque mostra ele + abre o menu; ao fechar, espera ~1,4s e volta.
+- O disco segue o tema (branco no claro; no escuro, sempre o preto da bolha, em qualquer estado).
+- O menu abre com fade + subida suave; backdrop invisível + Escape fecham; no PC, clicar fora das configs também fecha.
 
-### Bolha: anel de progresso no lugar do ✓
-- O `✓` de conclusão foi substituído por um anel de progresso em volta do coração: o contorno sutil fica sempre visível, o arco verde preenche durante a leva e fecha completo quando tudo está curtido (o número passa a mostrar `0`).
-- Pop de conclusão na bolha ao terminar uma leva que curtiu algo (respeita `prefers-reduced-motion`).
-- No celular o toque na bolha não expande mais — só curte tudo quando há faltantes; no desktop o toque continua expandindo como antes.
+### Configurações redesenhadas
+- Faixa azul JetPhotos, botão fechar redondo, cartão arredondado com sombra, seção Geral (idioma) + Experimental; no mobile vira folha arredondada.
 
-### Bolha: selo de concluído + centralização do anel
-- Corrigida a centralização do coração dentro do anel (agora por flex, à prova de desalinhamento) e removida a regra genérica de `svg` que podia interferir nos tamanhos.
-- Quando tudo está curtido, o anel + coração dão lugar a um selo verde com confere branco (entra com um pop); o número continua mostrando `0` em verde.
+### Doar (novo)
+- Item ♥ Doar no menu (PC + mobile), abrindo a página de doação em nova aba. (URL ainda provisória: trocar pela definitiva.)
 
-### Bolha: padrão em todo lugar + tamanho responsivo
-- A bolha agora é o UI padrão também no PC (o widget grande continua acessível tocando na bolha no desktop); preferência salva continua valendo.
-- Corrigido pontinho verde no topo do anel com progresso zerado (arco de comprimento 0 com ponta redonda ainda renderizava) — o arco some de verdade no zero.
-- Tamanho responsivo: maior no celular (54px, fonte 15px), cresce no tablet (58px) e no desktop (62px + rótulo "faltando", ex: "10 faltando").
-
-### Bolha: UI único de curtidas (widget grande removido)
-- O widget grande e todo o sistema de expandir/minimizar foram removidos — a bolha é agora o único UI de curtidas em qualquer tela, sem exceção.
-- Tocar na bolha curte todas as fotos faltantes de uma vez (quando há algo faltando); sem nada faltando, o toque não faz nada.
-- Removida a preferência salva de recolhido/expandido e o maquinário de colapso (menos código, sem mudança no visual da bolha).
-
-### Bolha: visual sóbrio + selo sozinho + toast de aviso
-- Bolha mais discreta: sem pulsar durante a leva (só a borda fica verde), sem pop de conclusão e entrada só com fade — o progresso continua no anel e na contagem regressiva.
-- Tudo curtido = só o selo verde, sem o número 0 do lado: a bolha encolhe pra um disco com o confere.
-- Clicar na bolha verde mostra um toast ("Todas as fotos da página já estão curtidas"), no PC e no celular; some sozinho e nunca bloqueia toques.
+### Modo escuro do site (beta): motor novo + cobertura ampliada
+- Motor trocado: tema CSS manual por seletores no lugar da recoloração elemento a elemento — sem varredura de DOM, sem flash em conteúdo novo, toggle instantâneo e sem custo de CPU.
+- Cobertura nova: sidebar e carrossel da home, perfil (nome sobre a capa, câmeras), área de membros (abas), upload (dropdowns Chosen, pílulas), zebra escuro em todas as tabelas nativas (fila, stats...), paginação (com a página atual destacada em azul), filtros dos resultados, badges, modal de login, rodapé e menu mobile.
+- Album/Like/Share: cinza neutro no escuro, branco no hover (só com mouse de verdade); Like curtido = verde nos dois temas, no tom exato do rótulo, em qualquer formato de ícone.
+- Gráficos (perfil + stats): textos clareados e halo dos rótulos da pizza ajustado pra não estourar.
+- Fotos, header, azul picton, botões de compartilhar e o UI da extensão continuam intocados.
 
 ### Toast com a cara do site
-- O toast agora é um cartão claro como os cards de resultado (fundo branco, texto escuro, filete azul como os botões) em vez da pílula escura.
-- Fonte declarada explícita com a mesma pilha sans do JetPhotos (antes herdada do body, o que podia cair em fonte errada); aplicada também na bolha.
-- O toast fica de fora da recolorida do modo escuro do site, mantendo o visual.
+- Toast virou cartão claro como os cards de resultado (texto escuro, filete azul, fonte explícita) e fica de fora da recolorida do modo escuro.
 
-### Modo escuro: tema manual caprichado
-- O motor antigo (recoloração por elemento via getComputedStyle + observer) foi aposentado e trocado por um tema CSS escrito à mão para os seletores reais do JetPhotos — sem varredura de DOM, sem flash em conteúdo novo, sem custo de CPU e com toggle instantâneo.
-- Cobertura inicial (extração da página inicial): página, cards, títulos, links, submenu, galeria, formulários, selects, botões genéricos, alertas, modal de login, rodapé, carrossel e tabelas; fotos, header, azul picton, shares de marca e nosso UI nunca são tocados.
-- Bolha e toast agora usam Fira Sans (a fonte do site) quando disponível.
-- Próximo passo: extrações da página de resultados e da página de foto pra completar a cobertura (linhas de resultado, paginação, comentários).
-
-### Modo escuro: zebra da fila + links em fundo escuro
-- queue.php: as tabelas nativas da fila agora herdam o zebra escuro (linhas alternadas legíveis, sem fileira branca com texto branco); vale no carregamento e no toggle.
-- Links sobre fundos que já eram escuros (header, popups, dropdowns) herdam o branco do contexto em vez de forçar o azul.
-
-### Modo escuro: cobertura da auditoria (home, perfil, membros, upload, stats)
-- Home: coluna lateral (.index-col) e cards do carrossel de perfis (.slick-profile__layout) escurecidos; títulos e textos da sidebar voltam a ser legíveis.
-- Perfil: nome sobre a foto de capa volta a ser branco.
-- Área de membros: painel das abas (.tabnav__content) e botões das abas (.tabnav__btn, ativa em destaque) escurecidos.
-- Upload: dropdowns Chosen (.chosen-drop, opções e destaque) e pílulas de checkbox/radio escurecidos; pílula ativa ganha borda azul pra manter a distinção.
-- Zebra escuro generalizado: todas as tabelas nativas (fila, photostats, Period Totals...) herdam o striping escuro, não só a fila.
-
-### Modo escuro: teste A/B com filtro total (CSS puro v2)
-- Novo método "Filtro": inverte a página inteira com invert(1)+hue-rotate(180) e restaura mídia e chrome — cobertura total instantânea em qualquer página, sem varredura de DOM.
-- Fotos pixel-idênticas por construção: o par invert(1) puro aplicado 2x volta à cor exata; o contra-filtro mira só img/video (nunca containers); header (já escuro, logo branco) e todo o UI da extensão voltam verbatim; mapa vira "noturno" de propósito.
-- Chave nas configurações: Método do modo escuro = Manual (tema r14) ou Filtro (teste, padrão). Troca ao vivo, sem reinstalar; o perdedor será removido na próxima versão.
-
-### Modo escuro: filtro v2 removido, manual volta a ser único
-- Veredito do teste A/B: o filtro total foi aposentado e o tema manual (r14) volta a ser o método único — chave removida das configurações, todo o código do filtro deletado (~100 linhas a menos).
-- Próximo passo: completar a cobertura manual com auditorias das páginas restantes (resultados, foto individual, fórum...).
-
-### Modo escuro: paginação, filtros, badges, Like branco
-- Paginação (.paging__pager) escurecida — vale pra álbum, /new, resultados e todas as listas.
-- Barra de filtros dos resultados (.show-photos-header) escurecida.
-- Cards de badges (.badge-overview__frame) + nomes escurecidos; imagens dos badges intactas.
-- Títulos avulsos escuros (.title) clareados (ex: upload guidelines).
-- Like 100% branco no escuro (texto + joinha, qualquer estado, resultados e foto): o ícone preto fixo vira branco via invert(1), com a opacidade de estado intacta; modo claro intocado.
-- Nome do perfil sobre a capa: regra blindada com -webkit-text-fill-color (o site pinta links com ele).
-
-### Modo escuro: paginação branca, câmeras do perfil, menu mobile
-- Números da paginação (.paging__pager) agora brancos no escuro (antes seguiam azuis).
-- Ícones de câmera do perfil (trocar avatar/capa) brancos no escuro — só nas páginas de fotógrafo, modo claro intocado.
-- Menu lateral mobile (.header__extended-section--navigation) escurecido + links (.nav__link) brancos.
-
-### Modo escuro: social cinza/branco + menu mobile azul
-- Album/Like/Share (resultados + foto): rótulos e ícones em cinza neutro (#9aa0a6, tom do joinha não-curtido); branco no hover e no Like curtido.
-- Links do menu lateral mobile (.nav__link) agora no azul padrão do JetPhotos (#2c94e8).
-
-### Modo escuro: social mais claro + joinha da extensão branco
-- Album/Like/Share: cinza clareado (#c3c9d2 nos rótulos, invert(0.78) nos ícones); continua branco no hover e no Like curtido.
-- Filtros dos ícones agora valem pra img, svg e fonte de ícone (o layout mobile pode usar qualquer um dos três).
-- Joinha injetado pela extensão nos cards mobile (.jp-mobile-like-btn) vira branco no escuro (opacidade .4/1 de estado mantida).
-
-### Like curtido verde (TESTE) + ícone do mobile corrigido
-- Correção: o seletor do ícone do Like agora pega qualquer formato (img, svg, fonte de ícone ou span com fundo) — o joinha da página de foto no mobile estava escapando e ficava preto.
-- Like curtido = verde nos dois temas (rótulo + joinha, PC e mobile, resultados e foto): verde-claro (#3ddc84) no escuro, verde-escuro (#188038) no claro.
-- Não-curtido segue o padrão de cada tema (claro: nativo do site; escuro: cinza claro, branco no hover).
-- Joinha injetado pela extensão nos cards mobile acompanha: verde quando curtido (tom por tema).
-
-### Like verde exato + barrinha do mobile (TESTE)
-- Verde desbotado corrigido: o JS agora troca o joinha curtido pela máscara verde no tom exato do rótulo (#3ddc84 no escuro, #188038 no claro) — vale pro site (resultados + foto, PC + mobile) e pro botão injetado nos cards.
-- Barrinha da foto no mobile: seletores expandidos (ícone como filho direto, aninhado no rótulo ou ::before; i/svg por cor exata) pra pegar o formato que escapava e ficava preto.
-- Filtros verdes do CSS viraram fallback pra arquivos de ícone desconhecidos.
-
-### Like verde unificado: ícone = tom exato do rótulo (TESTE)
-- Troca de técnica (máscara + JS removidos): o verde do joinha curtido agora é feColorMatrix constante — todo pixel vira exatamente #3ddc84 (escuro) ou #188038 (claro), igual ao rótulo LIKE, em qualquer formato de ícone.
-- Seletor verde aprofunda (.social__text *): cobre ícone aninhado em qualquer nível da barrinha da foto no mobile.
-- Botão injetado nos cards mobile usa a mesma matriz (tom por tema).
-
-### Like verde à prova de estrutura inicial (TESTE)
-- Correção: na foto já curtida (mobile, dois temas), o ícone abria num verde escuro nativo e só igualava ao rótulo após descurtir/curtir — o ícone inicial escapa dos seletores (o site remonta a estrutura no toggle).
-- Backstop em JS: pinta o ícone (img/svg/i) inline com a matriz do tema em force/revoke, no botão injetado, no refresh e na troca de tema — qualquer estrutura, mesmo tom do rótulo.
-- Seletor verde cobre ::after também (antes só ::before).
-
-### Like descurtido volta ao cinza (TESTE)
-- Correção: no escuro, descurtir a foto deixava o joinha preto (o site remonta o ícone mais fundo e o cinza só ia até 1 nível) — cinza, branco-hover e verde agora valem em qualquer profundidade + ::before/::after do link e do rótulo.
-- Branco do hover virou brightness(0) invert(1) (idempotente, mesmo branco de antes): aninhamento não duplica o efeito.
-
-### Hover branco só com mouse (TESTE)
-- Correção: no touch, o :hover gruda após o toque e o joinha descurtido ficava branco em vez de cinza — as regras de hover (ícones + rótulos) agora só valem com (hover:hover) e (pointer:fine). No PC nada muda.
-
-### Página atual da paginação destacada
-- O quadradinho da página atual agora é azul com número branco no escuro (antes todos eram iguais e o usuário se perdia). Modo claro intocado.
-- Correção (sonda do console): a atual é a.paging__pager.paging__pager--active — seletor refeito com o `a` pra vencer a regra geral na especificidade.
-
-### Textos dos gráficos no escuro
-- Gráficos Highcharts (perfil + stats): textos SVG clareados via fill (base #c3c9d2, títulos #f2f2f2) — antes ficavam camuflados no fundo escuro. Cores dos dados intactas.
-- Rótulos da pizza: halo branco do Highcharts vira escuro (era ele que estourava o texto), texto em #e8e8e8.
-- Halo dos rótulos da pizza agora 100% preto.
-- Rótulos da pizza: interior 100% preto com halo branco (preto no preto sumiria).
-
-### Bolha com joinha
-- O ícone da bolha de likes agora é um joinha de contorno (antes era um coração) — combina com o Like do site. O selo verde de concluído não muda.
-- Respiro do joinha no anel: viewBox com folga + 1px na caixa — mesmo tamanho visual, sem encostar no anel.
-- Centralização óptica do joinha (sobe 2u no viewBox, o punho pesava pra baixo) + anel +2px em cada layout.
-
-### Botão flutuante mobile + fechar-fora garantido
-- Novo: quando o launcher do header não está visível (mobile), aparece um FAB redondo com a logo no canto inferior esquerdo — abre o mesmo menu do PC (novidades, issue, sobre, configs).
-- Novo: backdrop invisível + Escape fecham submenu mobile e configs; no PC, clicar fora das configs agora fecha de verdade (antes só o X).
-
-### Menu mobile com cores certas + configs redesenhadas
-- Correção: links do submenu mobile ficavam azuis no escuro (a guarda do tema só cobria o submenu do PC) — agora herdam preto/cinza do tema.
-- Novo: FAB segue o tema (disco branco + logo preta no claro; disco escuro + logo branca no escuro).
-- Configs redesenhadas (PC + mobile): faixa azul JetPhotos com botão fechar redondo, cartão arredondado, sem divisor duplo, seção Geral (idioma) + Experimental, folha arredondada no mobile.
-
-### FAB e menu mobile afinados
-- FAB escuro agora no tom exato da bolha de likes (#1c1c1c + borda #464646, hover igual).
-- Correção: submenu mobile abria branco no escuro (a regra base vencia a variante dark na especificidade) — fundo/cores do tema agora valem.
-- Novo: menu mobile aparece com fade + subida suave (respeita reduced-motion); FAB afunda de leve ao toque.
-- Micro-interações mais secas: menu .16s→.11s, toque do FAB com resposta rápida (.06s).
-- FAB agora "doca" sozinho: parado fica meio escondido no canto + translúcido; toque mostra ele + menu; ao fechar, espera ~1,4s e volta.
-- Preto do disco no escuro travado no tom da bolha (#1c1c1c) em toda ocasião: sem hover/cinza no toque (hover claro só onde há mouse; sem flash de toque).
-- Docagem só pra lateral esquerda (sem descer): metade do botão pra fora da borda + translúcido.
-- Novo item ♥ Doar no menu (PC + mobile, 5º item, abre em nova aba); URL provisória (repositório) até definirmos a definitiva.
+### Documentação
+- `manifest.json`, `CHANGELOG.md` e `leia-me.txt` sincronizados na versão 2.0.1.
 
 ---
 

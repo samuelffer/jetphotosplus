@@ -107,3 +107,4 @@ scripts/
 - Texto novo visível no site: sempre nas duas línguas (`data-i18n` + dicionários pt/en).
 - Não reformate o que não foi pedido.
 - Sempre avise quando algo foi **inferido** em vez de confirmado.
+- Nunca edite o **mesmo arquivo** em duas chamadas paralelas: uma sobrescreve a outra (isso já apagou chaves i18n — edições no mesmo arquivo sempre em sequência).

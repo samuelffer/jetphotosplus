@@ -129,3 +129,4 @@ docs/                site de divulgação (GitHub Pages — mexendo aqui, leia A
   segmentado por blocos de comentário.
 - Sempre avise quando algo foi **inferido** em vez de confirmado,
   principalmente em texto de changelog.
+- Nunca edite o **mesmo arquivo** em duas chamadas paralelas: uma sobrescreve a outra (isso já apagou chaves i18n — edições no mesmo arquivo sempre em sequência).
