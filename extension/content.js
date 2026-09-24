@@ -3622,6 +3622,18 @@
         color: #999;
         text-align: center;
       }
+      .jp-enhancer-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #e0e0e0;
+        border-top-color: #666;
+        border-radius: 50%;
+        animation: jp-enhancer-spin 0.6s linear infinite;
+      }
+      @keyframes jp-enhancer-spin {
+        to { transform: rotate(360deg); }
+      }
       .jp-enhancer-counter {
         padding: 8px 12px;
         font-size: 11px;
@@ -3666,6 +3678,10 @@
       html.jp-site-dark-active .jp-enhancer-group-label { background: #333; color: #aaa; }
       html.jp-site-dark-active .jp-enhancer-no-results { color: #777; }
       html.jp-site-dark-active .jp-enhancer-counter { background: #333; color: #888; border-bottom-color: #444; }
+      html.jp-site-dark-active .jp-enhancer-spinner {
+        border-color: #444;
+        border-top-color: #aaa;
+      }
       /* Esconde o select nativo e o Chosen container no mobile */
       .jp-enhancer-hidden-native {
         display: none !important;
@@ -3755,7 +3771,7 @@
       const query = (filter || '').toLowerCase().trim();
 
       // Mostra loading imediatamente
-      dropdown.innerHTML = `<div class="jp-enhancer-no-results">⏳</div>`;
+      dropdown.innerHTML = `<div class="jp-enhancer-no-results"><div class="jp-enhancer-spinner"></div></div>`;
 
       // Renderiza assincronamente pra não bloquear a thread principal
       renderTimer = setTimeout(() => {
