@@ -1480,6 +1480,10 @@
        titulo ganha branco. */
     html.jp-site-dark-active .highcharts-container text { fill:#c3c9d2 !important; }
     html.jp-site-dark-active .highcharts-title { fill:#f2f2f2 !important; }
+    /* Rotulos dos graficos (ex: nomes na pizza): o Highcharts poe halo
+       branco pra contraste — no escuro ele estoura, entao o halo vira
+       escuro e o texto claro. */
+    html.jp-site-dark-active .highcharts-data-label text { fill:#e8e8e8 !important; stroke:rgba(0,0,0,0.6) !important; paint-order:stroke !important; }
     /* Barra de filtros dos resultados (contagem, Modify search, Sort by). */
     html.jp-site-dark-active .show-photos-header { background-color:#26272b !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
     html.jp-site-dark-active .show-photos-header span { color:#e8e8e8 !important; }
