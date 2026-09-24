@@ -31,7 +31,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=r6">
+  <link rel="stylesheet" href="style.css?v=r7">
 </head>
 <body>
   <div class="photo-background" aria-hidden="true">
@@ -65,6 +65,9 @@
         <button class="donate-card" id="pixCard" type="button" data-i18n-attr="aria-label:donatePixCard|title:donatePixCard">
           <span class="donate-brandbox"><img class="donate-img" id="icon-pix" src="" alt="Pix" width="120" height="48"></span>
           <span class="donate-hint" data-i18n="donatePixHint">Copy Pix key</span>
+          <!-- Nome fixo (não entra no i18n): é o titular da chave, que a
+               pessoa confere no app do banco na hora de enviar. -->
+          <span class="donate-name" data-i18n-attr="title:donatePixNameLabel|aria-label:donatePixNameLabel">(Samuel Ferreira)</span>
         </button>
       </div>
     </section>
@@ -86,6 +89,7 @@
       donatePaypalHint: 'Open donation page',
       donatePaypalCard: 'Donate via PayPal (opens in a new tab)',
       donatePixHint: 'Copy Pix key',
+      donatePixNameLabel: 'Pix key holder: Samuel Ferreira',
       donatePixCard: 'Copy the Pix key to donate',
       donatePixCopied: 'Pix key copied!',
       donatePixFailed: 'Could not copy the key.',
@@ -100,6 +104,7 @@
       donatePaypalHint: 'Abrir página de doação',
       donatePaypalCard: 'Doar via PayPal (abre em nova aba)',
       donatePixHint: 'Copiar chave Pix',
+      donatePixNameLabel: 'Titular da chave Pix: Samuel Ferreira',
       donatePixCard: 'Copiar a chave Pix para doar',
       donatePixCopied: 'Chave Pix copiada!',
       donatePixFailed: 'Não foi possível copiar a chave.',
