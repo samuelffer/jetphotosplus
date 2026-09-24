@@ -1469,6 +1469,13 @@
     /* Paginação (álbum, /new, resultados...): caixas brancas viram escuras;
        o número segue azul (regra genérica), legível no escuro. */
     html.jp-site-dark-active a.paging__pager { background-color:#2b2d31 !important; border-color:#3a3d43 !important; color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; }
+    /* Página atual da paginação: destaque azul (a atual não é link, é
+       span — as variantes cobrem modificadores/aria, seja qual for). */
+    html.jp-site-dark-active span.paging__pager,
+    html.jp-site-dark-active a.paging__pager[aria-current],
+    html.jp-site-dark-active .paging__pager--current,
+    html.jp-site-dark-active .paging__pager--active,
+    html.jp-site-dark-active .paging__pager--selected { background-color:#2c94e8 !important; border-color:#2c94e8 !important; color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; }
     /* Barra de filtros dos resultados (contagem, Modify search, Sort by). */
     html.jp-site-dark-active .show-photos-header { background-color:#26272b !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
     html.jp-site-dark-active .show-photos-header span { color:#e8e8e8 !important; }

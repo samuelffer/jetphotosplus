@@ -133,6 +133,9 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 ### Hover branco só com mouse (TESTE)
 - Correção: no touch, o :hover gruda após o toque e o joinha descurtido ficava branco em vez de cinza — as regras de hover (ícones + rótulos) agora só valem com (hover:hover) e (pointer:fine). No PC nada muda.
 
+### Página atual da paginação destacada
+- O quadradinho da página atual agora é azul com número branco no escuro (antes todos eram iguais e o usuário se perdia). Modo claro intocado.
+
 ---
 
 ## [2.0.0]
