@@ -102,7 +102,7 @@ extension/
   leia-me.txt        instruções de instalação pro usuário final
 scripts/
   build-zip.mjs      gera o pacote de teste (Node puro, zero dependência)
-docs/                site de divulgação (GitHub Pages)
+docs/                site de divulgação (GitHub Pages — mexendo aqui, leia AGENTS_ONLY_FOR_WEBSITE.MD)
 ```
 
 ### Armazenamento
