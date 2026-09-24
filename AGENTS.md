@@ -21,8 +21,10 @@ Idioma do projeto: **português (Brasil)** nos comentários, changelog,
 
 ## 🔴 Fluxo de trabalho (obrigatório)
 
-O usuário **testa no próprio PC antes de qualquer commit**. O GitHub é o
-destino final, não o ambiente de teste.
+O chat **não transfere arquivos zip** — por isso o teste roda via GitHub:
+o agente publica cada versão de teste como um `.zip` commitado na branch
+da sessão (Arena), o usuário baixa esse zip pelo navegador e testa a
+extensão no próprio PC. O GitHub é a ponte, não o destino final.
 
 1. Receba o pedido e altere o código em `extension/`.
 2. Gere o pacote de teste:
@@ -30,25 +32,46 @@ destino final, não o ambiente de teste.
    node scripts/build-zip.mjs
    ```
    Isso cria `zips/jetphotosplus-v<versão>.zip` (a versão vem do
-   `manifest.json`). O zip sai com o `manifest.json` na **raiz**.
-3. **Mostre o arquivo .zip ao usuário** (`present_file`) e aguarde.
-4. O usuário baixa, descompacta e carrega via "Carregar sem compactação"
+   `manifest.json`). O zip sai com o `manifest.json` na **raiz** e contém
+   **só os arquivos de instalação** — `CHANGELOG.md` fica de fora (é
+   documento do repositório, ver `ZIP_EXCLUDE` no script).
+   Cada modificação gera um zip novo e **nunca sobrescreve** um anterior:
+   como a versão só muda quando o usuário mandar, testes repetidos na
+   mesma versão ganham sufixo automático (`-r2`, `-r3`, ...).
+3. Commite e dê push **na branch da sessão (Arena)** — código + zip juntos:
+   ```bash
+   git add -A
+   git add -f zips/<nome-do-zip-gerado>.zip
+   git commit -m "..."
+   git push origin <branch-da-sessão>
+   ```
+   (`zips/` está no `.gitignore`, por isso o `-f`: os zips vivem SÓ nas
+   branches de sessão, nunca no `main`.)
+4. Avise o usuário com o link do zip na branch pra ele baixar e testar.
+5. O usuário baixa, descompacta e carrega via "Carregar sem compactação"
    (`chrome://extensions`). Se ele já tiver a pasta carregada, basta
    sobrescrever os arquivos e clicar no **↻**.
-5. **Só commite depois que o usuário disser explicitamente que aprovou.**
-   Se ele reportar problema, corrija e gere um novo zip — sem commitar.
+6. Se ele reportar problema, corrija, gere um novo zip e dê push de novo —
+   tudo ainda só na branch da sessão, **sem trocar a versão**.
 
 ### Regras que decorrem disso
 
-- **Nunca** faça commit, push, abra PR ou publique release sem aprovação
-  explícita do usuário depois do teste.
-- `zips/` está no `.gitignore` — os pacotes de teste nunca são commitados.
-- Não crie branches de teste nem espere que o usuário faça `git pull` pra
-  testar. O teste é via zip.
+- Trabalhe **sempre** na branch da sessão (Arena), nunca no `main`.
+- **Nunca** faça push pro `main`, abra PR ou publique release sem o usuário
+  pedir explicitamente. Quando uma versão estiver satisfatória, é **o próprio
+  usuário** quem pega os arquivos do zip e commita no `main` manualmente —
+  a branch da sessão serve só como área de download dos zips de teste,
+  não para merge.
+- `zips/` está no `.gitignore` de propósito: os pacotes de teste são
+  commitados com `-f` só nas branches de sessão e nunca chegam ao `main`.
 
 ## Versão: manter tudo sincronizado
 
-Sempre que subir a versão, atualize **todos** os lugares abaixo — eles já
+**Não troque a versão a cada alteração.** A versão só muda quando o usuário
+disser explicitamente qual deve ser (enquanto isso, os zips de teste da
+mesma versão se diferenciam pelo sufixo `-rN`).
+
+Quando ele mandar subir a versão, atualize **todos** os lugares abaixo — eles já
 ficaram divergentes uma vez e isso gerou confusão:
 
 | Arquivo | Onde |
@@ -79,7 +102,7 @@ extension/
   leia-me.txt        instruções de instalação pro usuário final
 scripts/
   build-zip.mjs      gera o pacote de teste (Node puro, zero dependência)
-docs/                site de divulgação (GitHub Pages)
+docs/                site de divulgação (GitHub Pages — mexendo aqui, leia AGENTS_ONLY_FOR_WEBSITE.MD)
 ```
 
 ### Armazenamento
@@ -106,3 +129,4 @@ docs/                site de divulgação (GitHub Pages)
   segmentado por blocos de comentário.
 - Sempre avise quando algo foi **inferido** em vez de confirmado,
   principalmente em texto de changelog.
+- Nunca edite o **mesmo arquivo** em duas chamadas paralelas: uma sobrescreve a outra (isso já apagou chaves i18n — edições no mesmo arquivo sempre em sequência).
