@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- Doação: PayPal (link externo) + Pix (copia a chave + toast). Textos em
+       PT/EN no mesmo esquema da index; o idioma persiste entre as páginas
+       pela mesma chave do localStorage. -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Support JetPhotos+ — a free, unofficial community extension. Donate via PayPal or Pix.">
+  <meta name="author" content="samuelffer">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://samuelffer.github.io/jetphotosplus/doar.html">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="JetPhotos+ — Doar">
+  <meta property="og:description" content="Apoie o JetPhotos+ via PayPal ou Pix.">
+  <meta property="og:image" content="https://samuelffer.github.io/jetphotosplus/assets/og-image.png">
+  <meta property="og:url" content="https://samuelffer.github.io/jetphotosplus/doar.html">
+  <meta property="og:site_name" content="JetPhotos+">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:locale:alternate" content="en_US">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="manifest" href="assets/site.webmanifest">
+
+  <title>Donate — JetPhotos+</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="photo-background" aria-hidden="true">
+    <div class="photo-layer photo-layer-a"></div>
+    <div class="photo-layer photo-layer-b"></div>
+    <div class="photo-overlay"></div>
+  </div>
+  <header class="topbar">
+    <a class="brand" href="index.html" aria-label="JetPhotos+ home" data-i18n-attr="aria-label:brandHome">
+      <span class="brand-mark"><img src="assets/jetphotosplus-logo.png" alt=""></span>
+      <span>JetPhotos+</span>
+    </a>
+    <div class="top-actions">
+      <div class="language-switcher">
+        <button type="button" class="language-toggle" id="languageToggle" aria-label="Switch language" title="Switch language">EN</button>
+      </div>
+      <a class="github-link" href="https://github.com/samuelffer/jetphotosplus" target="_blank" rel="noreferrer" aria-label="View on GitHub" title="View on GitHub" data-i18n-attr="aria-label:githubView|title:githubView">
+        <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path></svg>
+      </a>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="hero" aria-labelledby="donate-title">
+      <div class="hero-mark"><img src="assets/jetphotosplus-logo.png" alt="JetPhotos+ logo"></div>
+      <div class="ext-badge">
+        <span aria-hidden="true">♥</span>
+        <span data-i18n="donateBadge">Support the project</span>
+      </div>
+      <h1 id="donate-title" data-i18n-html="donateTitle">Support <span>JetPhotos+</span></h1>
+      <p class="description" data-i18n="donateDescription">JetPhotos+ is free and built in spare time. If it helps you every day, consider supporting it with any amount — every donation keeps the project alive.</p>
+
+      <div class="donate-options">
+        <a class="donate-card" id="paypalCard" href="https://www.paypal.com/" target="_blank" rel="noreferrer" data-i18n-attr="aria-label:donatePaypalCard|title:donatePaypalCard">
+          <span class="donate-brand paymark" aria-hidden="true"><span class="paymark-dark">Pay</span><span class="paymark-light">Pal</span></span>
+          <span class="donate-hint" data-i18n="donatePaypalHint">Open donation page ↗</span>
+        </a>
+        <button class="donate-card" id="pixCard" type="button" data-i18n-attr="aria-label:donatePixCard|title:donatePixCard">
+          <span class="donate-brand pix-brand" aria-hidden="true"><span class="pix-mark"></span>Pix</span>
+          <span class="donate-hint" data-i18n="donatePixHint">Copy Pix key</span>
+        </button>
+      </div>
+      <p class="pix-key"><span data-i18n="donatePixKeyLabel">Pix key:</span> <code id="pixKeyText"></code></p>
+    </section>
+  </main>
+
+  <footer>
+    <span>JetPhotos+</span>
+    <a class="donate-link" href="index.html"><span data-i18n="backHome">← Home</span></a>
+    <span data-i18n="footerDisclaimer">Unofficial community extension · Not affiliated with JetPhotos</span>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"><span class="toast-check" aria-hidden="true">✓</span><span id="toastText"></span></div>
+
+<script>
+// ===== I18N SYSTEM (mesmo esquema da index; mesma chave de idioma) =====
+(() => {
+  const STORAGE_KEY = 'jetphotosplus_lang';
+
+  const translations = {
+    en: {
+      brandHome: 'JetPhotos+ home',
+      githubView: 'View on GitHub',
+      donateBadge: 'Support the project',
+      donateTitle: 'Support <span>JetPhotos+</span>',
+      donateDescription: 'JetPhotos+ is free and built in spare time. If it helps you every day, consider supporting it with any amount — every donation keeps the project alive.',
+      donatePaypalHint: 'Open donation page ↗',
+      donatePaypalCard: 'Donate via PayPal (opens in a new tab)',
+      donatePixHint: 'Copy Pix key',
+      donatePixCard: 'Copy the Pix key to donate',
+      donatePixKeyLabel: 'Pix key:',
+      donatePixCopied: 'Pix key copied!',
+      donatePixFailed: 'Could not copy the key.',
+      backHome: '← Home',
+      footerDisclaimer: 'Unofficial community extension · Not affiliated with JetPhotos'
+    },
+    pt: {
+      brandHome: 'Página inicial do JetPhotos+',
+      githubView: 'Ver no GitHub',
+      donateBadge: 'Apoie o projeto',
+      donateTitle: 'Apoie o <span>JetPhotos+</span>',
+      donateDescription: 'O JetPhotos+ é gratuito e feito nas horas vagas. Se ele te ajuda no dia a dia, considere apoiar com qualquer valor — cada doação mantém o projeto vivo.',
+      donatePaypalHint: 'Abrir página de doação ↗',
+      donatePaypalCard: 'Doar via PayPal (abre em nova aba)',
+      donatePixHint: 'Copiar chave Pix',
+      donatePixCard: 'Copiar a chave Pix para doar',
+      donatePixKeyLabel: 'Chave Pix:',
+      donatePixCopied: 'Chave Pix copiada!',
+      donatePixFailed: 'Não foi possível copiar a chave.',
+      backHome: '← Início',
+      footerDisclaimer: 'Extensão comunitária não oficial · Não afiliada ao JetPhotos'
+    }
+  };
+
+  function getBrowserLanguage() {
+    const languages = Array.isArray(navigator.languages) && navigator.languages.length
+      ? navigator.languages
+      : [navigator.language || 'en'];
+    return languages.some(lang => String(lang).toLowerCase().startsWith('pt')) ? 'pt' : 'en';
+  }
+
+  function getSavedLanguage() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved === 'pt' || saved === 'en' ? saved : null;
+    } catch (error) {
+      console.warn('JetPhotos+ i18n: unable to read saved language preference.', error);
+      return null;
+    }
+  }
+
+  function getInitialLanguage() {
+    return getSavedLanguage() || getBrowserLanguage();
+  }
+
+  function saveLanguagePreference(lang) {
+    try {
+      localStorage.setItem(STORAGE_KEY, lang);
+      return localStorage.getItem(STORAGE_KEY) === lang;
+    } catch (error) {
+      console.warn('JetPhotos+ i18n: unable to save language preference.', error);
+      return false;
+    }
+  }
+
+  function applyLanguage(lang, persist = false) {
+    const active = translations[lang] ? lang : 'en';
+
+    document.documentElement.lang = active === 'pt' ? 'pt-BR' : 'en';
+    document.querySelectorAll('[data-i18n]').forEach(element => {
+      const key = element.dataset.i18n;
+      if (translations[active][key] !== undefined) element.textContent = translations[active][key];
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(element => {
+      const key = element.dataset.i18nHtml;
+      if (translations[active][key] !== undefined) element.innerHTML = translations[active][key];
+    });
+    document.querySelectorAll('[data-i18n-attr]').forEach(element => {
+      element.dataset.i18nAttr.split('|').forEach(pair => {
+        const [attribute, key] = pair.split(':');
+        if (attribute && key && translations[active][key] !== undefined) {
+          element.setAttribute(attribute, translations[active][key]);
+        }
+      });
+    });
+
+    const languageToggle = document.getElementById('languageToggle');
+    if (languageToggle) {
+      languageToggle.style.opacity = '0.35';
+      languageToggle.textContent = active === 'pt' ? 'PT' : 'EN';
+      languageToggle.setAttribute('aria-label', active === 'pt' ? 'Switch to English' : 'Mudar para português');
+      languageToggle.setAttribute('title', active === 'pt' ? 'Switch to English' : 'Mudar para português');
+      requestAnimationFrame(() => { languageToggle.style.opacity = '1'; });
+    }
+
+    document.title = active === 'pt' ? 'Doar — JetPhotos+' : 'Donate — JetPhotos+';
+    const description = document.querySelector('meta[name="description"]');
+    if (description) {
+      description.content = active === 'pt'
+        ? 'Apoie o JetPhotos+ — extensão comunitária gratuita. Doe via PayPal ou Pix.'
+        : 'Support JetPhotos+ — a free, unofficial community extension. Donate via PayPal or Pix.';
+    }
+
+    window.JPP_LANG = active;
+    window.JPP_TRANSLATIONS = translations;
+
+    if (persist) {
+      const saved = saveLanguagePreference(active);
+      if (!saved) console.warn('JetPhotos+ i18n: language preference could not be persisted.');
+    }
+
+    window.dispatchEvent(new CustomEvent('jpp:languagechange', { detail: { lang: active } }));
+  }
+
+  const languageToggle = document.getElementById('languageToggle');
+  if (languageToggle) {
+    languageToggle.addEventListener('click', () => {
+      const nextLanguage = window.JPP_LANG === 'pt' ? 'en' : 'pt';
+      applyLanguage(nextLanguage, true);
+    });
+  }
+
+  applyLanguage(getInitialLanguage(), false);
+})();
+</script>
+
+<script>
+// ===== Doação: destinos (provisórios — trocar pelos definitivos) =====
+// TODO: trocar pelo link paypal.me definitivo quando ele existir.
+const PAYPAL_URL = 'https://www.paypal.com/';
+// TODO: trocar pela chave Pix definitiva quando ela existir.
+const PIX_KEY = 'SUA-CHAVE-PIX-AQUI';
+
+document.getElementById('paypalCard').href = PAYPAL_URL;
+document.getElementById('pixKeyText').textContent = PIX_KEY;
+
+// Copia com fallback: a Clipboard API pode não existir/ser negada (ex.:
+// contexto não seguro), então tenta o textarea + execCommand antes de
+// desistir — o toast de erro só aparece se os dois falharem.
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (error) {
+    try {
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.setAttribute('readonly', '');
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
+      const ok = document.execCommand('copy');
+      area.remove();
+      return ok;
+    } catch (fallbackError) {
+      return false;
+    }
+  }
+}
+
+let toastTimer = null;
+function showToast(message, isError) {
+  const toast = document.getElementById('toast');
+  document.getElementById('toastText').textContent = message;
+  toast.classList.toggle('error', !!isError);
+  // Re-dispara a transição quando o usuário clica várias vezes seguidas.
+  toast.classList.remove('show');
+  void toast.offsetWidth;
+  toast.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+}
+
+document.getElementById('pixCard').addEventListener('click', async () => {
+  const lang = window.JPP_LANG === 'pt' ? 'pt' : 'en';
+  const t = (window.JPP_TRANSLATIONS && window.JPP_TRANSLATIONS[lang]) || {};
+  const ok = await copyText(PIX_KEY);
+  showToast(ok ? (t.donatePixCopied || 'OK') : (t.donatePixFailed || 'Error'), !ok);
+});
+</script>
+
+<script src="assets/photos.js"></script>
+<script>
+// Mesmo fundo rotativo da index (as fotos ficam atrás do cartão de vidro).
+const photoLayers = [
+  document.querySelector('.photo-layer-a'),
+  document.querySelector('.photo-layer-b')
+];
+
+function initPhotoBackground() {
+  const photos = Array.isArray(window.JPP_PHOTOS) ? window.JPP_PHOTOS : [];
+  if (!photos.length) return;
+
+  let deck = [];
+  let activeLayer = 0;
+  let previous = null;
+
+  function refillDeck() {
+    deck = [...photos];
+    for (let i = deck.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    if (deck.length > 1 && deck[0] === previous) [deck[0], deck[1]] = [deck[1], deck[0]];
+  }
+
+  function nextPhoto() {
+    if (!deck.length) refillDeck();
+    const photo = deck.shift();
+    if (!photo) return;
+    previous = photo;
+    const nextLayer = 1 - activeLayer;
+    const layer = photoLayers[nextLayer];
+    layer.style.backgroundImage = `url("${encodeURI(photo)}")`;
+    layer.classList.add('is-visible');
+    photoLayers[activeLayer].classList.remove('is-visible');
+    activeLayer = nextLayer;
+  }
+
+  photoLayers[activeLayer].style.backgroundImage = `url("${encodeURI(photos[0])}")`;
+  previous = photos[0];
+  photoLayers[activeLayer].classList.add('is-visible');
+  deck = photos.filter(photo => photo !== previous);
+
+  const PHOTO_DURATION_MS = 8500;
+  function scheduleNext() {
+    setTimeout(() => {
+      nextPhoto();
+      scheduleNext();
+    }, PHOTO_DURATION_MS);
+  }
+  scheduleNext();
+}
+
+initPhotoBackground();
+</script>
+</body>
+</html>

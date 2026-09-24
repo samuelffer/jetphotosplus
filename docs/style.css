@@ -462,4 +462,60 @@ footer {
   .language-switcher { height: 34px; padding: 0 8px; }
 }
 
+/* Doação: link no rodapé + página doar.html */
+.donate-link { font-weight: 800; white-space: nowrap; transition: color .15s ease; }
+.donate-link:hover { color: var(--accent); }
+
+.donate-options { display: flex; gap: 12px; justify-content: center; margin-top: 26px; }
+.donate-card {
+  flex: 1 1 0; max-width: 220px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  min-height: 132px; padding: 20px 16px 18px;
+  background: #ffffff; border: 1px solid var(--border); border-radius: 18px;
+  box-shadow: 0 10px 22px -6px rgba(20, 30, 50, .22);
+  color: var(--text); cursor: pointer; font: inherit;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+button.donate-card { appearance: none; }
+.donate-card:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 14px 28px -6px rgba(20, 30, 50, .3); border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); }
+.donate-card:active { transform: translateY(0) scale(.98); }
+.donate-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.donate-brand { min-height: 46px; display: flex; align-items: center; justify-content: center; }
+/* Wordmark PayPal em texto (itálico bicolor), sem depender de imagem externa. */
+.paymark { font: italic 800 27px var(--font-heading); letter-spacing: -1px; }
+.paymark-dark { color: #003087; }
+.paymark-light { color: #009cde; }
+/* Losango estilo Pix em CSS puro, sem imagem externa. */
+.pix-brand { display: flex; align-items: center; gap: 10px; font: 800 25px var(--font-heading); letter-spacing: -.5px; color: #1f1f1f; }
+.pix-mark { position: relative; flex: none; width: 30px; height: 30px; transform: rotate(45deg); border-radius: 9px; background: linear-gradient(135deg, #3bd2bf, #00a78c); }
+.pix-mark::after { content: ""; position: absolute; inset: 9px; border-radius: 3px; background: #ffffff; }
+.donate-hint { font-size: 12px; font-weight: 700; color: var(--muted); }
+.pix-key { margin: 16px 0 0; font-size: 12px; color: var(--muted); }
+.pix-key code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--text); background: var(--surface-strong); border: 1px solid var(--border); border-radius: 8px; padding: 2px 8px; }
+
+/* Toast da doação: cartão claro no padrão do site, some sozinho. */
+.toast {
+  position: fixed; left: 50%; bottom: 28px; z-index: 50;
+  display: flex; align-items: center; gap: 9px;
+  max-width: calc(100% - 40px); padding: 12px 18px;
+  background: rgba(255, 255, 255, .94); border: 1px solid var(--border); border-radius: 999px;
+  box-shadow: 0 16px 40px rgba(20, 30, 50, .25);
+  backdrop-filter: blur(12px);
+  font-size: 13px; font-weight: 700; color: var(--text);
+  opacity: 0; transform: translate(-50%, 12px); pointer-events: none;
+  transition: opacity .22s ease, transform .22s ease;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast-check { flex: none; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: var(--success); color: #ffffff; font-size: 13px; }
+.toast.error .toast-check { background: #d64545; }
+
+@media (max-width: 600px) {
+  .donate-options { flex-direction: column; align-items: center; }
+  .donate-card { width: min(280px, 100%); max-width: none; min-height: 0; }
+  footer { flex-wrap: wrap; row-gap: 4px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast { transition: none; }
+}
+
 
