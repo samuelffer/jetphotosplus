@@ -157,6 +157,11 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Novo: FAB segue o tema (disco branco + logo preta no claro; disco escuro + logo branca no escuro).
 - Configs redesenhadas (PC + mobile): faixa azul JetPhotos com botão fechar redondo, cartão arredondado, sem divisor duplo, seção Geral (idioma) + Experimental, folha arredondada no mobile.
 
+### FAB e menu mobile afinados
+- FAB escuro agora no tom exato da bolha de likes (#1c1c1c + borda #464646, hover igual).
+- Correção: submenu mobile abria branco no escuro (a regra base vencia a variante dark na especificidade) — fundo/cores do tema agora valem.
+- Novo: menu mobile aparece com fade + subida suave (respeita reduced-motion); FAB afunda de leve ao toque.
+
 ---
 
 ## [2.0.0]

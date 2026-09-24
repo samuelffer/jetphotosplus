@@ -1005,9 +1005,10 @@
       }
       #jp-plus-mobile-fab img { display:block; width:30px; height:32px; object-fit:contain; }
       #jp-plus-mobile-fab:hover { background:#f0f0f0; }
+      #jp-plus-mobile-fab:active { transform:scale(.94); }
       #jp-plus-mobile-fab:focus-visible { outline:2px solid #2c94e8; outline-offset:2px; }
-      #jp-plus-mobile-host.jp-dark #jp-plus-mobile-fab { background:#2b2d31; border-color:#3a3d43; }
-      #jp-plus-mobile-host.jp-dark #jp-plus-mobile-fab:hover { background:#35383e; }
+      #jp-plus-mobile-host.jp-dark #jp-plus-mobile-fab { background:#1c1c1c; border-color:#464646; }
+      #jp-plus-mobile-host.jp-dark #jp-plus-mobile-fab:hover { background:#2a2a2a; border-color:#686868; }
       #jp-plus-mobile-host.jp-dark #jp-plus-mobile-fab img { filter:brightness(0) invert(1); }
       /* Submenu mobile: os mesmos 4 itens do PC, em folha acima do FAB. */
       #jp-plus-mobile-host > #jp-plus-mobile-submenu {
@@ -1020,7 +1021,11 @@
         overflow:hidden; padding:6px;
         font-family:inherit;
       }
-      #jp-plus-mobile-host.jp-mobile-menu-open > #jp-plus-mobile-submenu { display:block; }
+      #jp-plus-mobile-host.jp-mobile-menu-open > #jp-plus-mobile-submenu { display:block; animation:jpMobileMenuIn .16s ease; }
+      @keyframes jpMobileMenuIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+      @media (prefers-reduced-motion: reduce) {
+        #jp-plus-mobile-host.jp-mobile-menu-open > #jp-plus-mobile-submenu { animation:none; }
+      }
       #jp-plus-mobile-host.jp-settings-open > #jp-plus-mobile-submenu { display:none !important; }
       #jp-plus-mobile-submenu a {
         display:block; padding:11px 12px; border-radius:8px;
@@ -1028,7 +1033,7 @@
         font-size:15px; line-height:1.3;
       }
       #jp-plus-mobile-submenu a:active { background:#e8e8e8; }
-      #jp-plus-mobile-submenu.jp-dark { background:#292929; color:#eeeeee; }
+      #jp-plus-mobile-host > #jp-plus-mobile-submenu.jp-dark { background:#292929; color:#eeeeee; }
       #jp-plus-mobile-submenu.jp-dark a { color:#eeeeee; }
       #jp-plus-mobile-submenu.jp-dark a:active { background:#3d3d3d; }
       /* Painel de configs no host mobile: folha sobre o FAB. */
