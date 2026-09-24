@@ -1,4 +1,4 @@
-JETPHOTOS+ — VERSÃO 2.0.0
+JETPHOTOS+ — VERSÃO 2.0.1
 ==========================
 
 
@@ -53,4 +53,4 @@ O idioma inicial segue o idioma do navegador; outros idiomas usam English
 como fallback. Uma escolha manual em Configurações tem prioridade.
 
 
-Versão atual: 2.0.0.
+Versão atual: 2.0.1.

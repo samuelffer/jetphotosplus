@@ -58,8 +58,8 @@
   // o script em "document_start" (o mais cedo possível) e, aqui em cima,
   // fazemos uma checagem rápida e isolada: se o modo escuro estiver ligado,
   // escondemos a página (fundo escuro neutro + body invisível) até o
-  // restante do script (init() -> applySiteDarkMode()) terminar a primeira
-  // recolorização. Um timeout de segurança garante que a página nunca
+  // restante do script (init() -> applySiteDarkMode()) aplicar o tema.
+  // Um timeout de segurança garante que a página nunca
   // fique escondida por muito tempo, mesmo se algo falhar.
   // ---------------------------------------------------------------------
   const PRELOAD_HIDE_CLASS = 'jp-dark-preload-hide';
@@ -78,9 +78,9 @@
     (document.head || document.documentElement).appendChild(style);
   }
 
-  // Chamado depois que applySiteDarkMode() já rodou a primeira recolorização
-  // (ou pelo timeout de segurança). Idempotente: pode ser chamado mais de
-  // uma vez sem problema.
+  // Chamado depois que applySiteDarkMode() já aplicou o tema (ou pelo
+  // timeout de segurança). Idempotente: pode ser chamado mais de uma vez
+  // sem problema.
   function removePreloadHide() {
     if (preloadHideRemoved) return;
     preloadHideRemoved = true;
@@ -107,14 +107,18 @@
     setTimeout(removePreloadHide, PRELOAD_SAFETY_MS);
   })();
 
+  // URL de doação (provisória: repositório). Troque pela página definitiva
+  // (Ko-fi, Apoia.se, Pix...) quando ela existir.
+  const DONATE_URL = 'https://github.com/samuelffer/jetphotosplus';
   const I18N = {
     'pt-BR': {
       settings: 'Configurações', close: 'Fechar',
-      viewReleases: 'Ver novidades', reportIssue: 'Reportar um problema', aboutJetPhotosPlus: 'Sobre o JetPhotos+',
+      viewReleases: 'Ver novidades', reportIssue: 'Reportar um problema', aboutJetPhotosPlus: 'Sobre o JetPhotos+', donate: 'Doar',
       analyzing: 'Analisando página...',
       likeMissing: 'Curtir faltantes',
-      noneFound: 'Nenhuma foto encontrada ainda (aguardando carregar)...',
-      missing: 'faltando', liked: 'já curtidas',
+      missing: 'faltando',
+      allLikedToast: 'Todas as fotos da página já estão curtidas',
+      settingsGeneral: 'Geral',
       experimental: 'Experimental',
       siteDarkMode: 'Modo escuro (beta)',
       siteDarkModeHelp: 'Escurece o JetPhotos e também a interface da extensão (painel, submenu e widget). Fotos e cores de marca não são alteradas.',
@@ -155,11 +159,11 @@
       trackedDays: (n) => `${n} dia${n === 1 ? '' : 's'} acompanhado${n === 1 ? '' : 's'}`,
     },
     en: {
-      settings: 'Settings', close: 'Close', viewReleases: "See what's new", reportIssue: 'Report an issue', aboutJetPhotosPlus: 'About JetPhotos+', analyzing: 'Analyzing page...',
+      settings: 'Settings', close: 'Close', viewReleases: "See what's new", reportIssue: 'Report an issue', aboutJetPhotosPlus: 'About JetPhotos+', donate: 'Donate', analyzing: 'Analyzing page...',
       likeMissing: 'Like missing photos',
-      noneFound: 'No photos found yet (waiting for the page to load)...',
-      missing: 'missing', liked: 'already liked',
-      experimental: 'Experimental', siteDarkMode: 'Site dark mode (beta)', siteDarkModeHelp: 'Darkens JetPhotos backgrounds and light text. Photos and brand colors are not changed.',
+      missing: 'missing',
+      allLikedToast: 'All photos on this page are already liked',
+      experimental: 'Experimental', settingsGeneral: 'General', siteDarkMode: 'Site dark mode (beta)', siteDarkModeHelp: 'Darkens JetPhotos backgrounds and light text. Photos and brand colors are not changed.',
       queueEstimator: 'Queue days estimator (beta)', queueEstimatorHelp: 'Estimates how long your photo may take to be reviewed on queue.php. Reload the page after changing.',
       language: 'Language', languageHelp: 'Choose the extension language.', portugueseBrazil: 'Português (Brasil)', english: 'English',
       queueEstimate: 'Queue estimate', likeWidgetLabel: 'JETPHOTOS+ · Likes', screenedToday: 'Screened today:', dailyAverage: 'Daily average:', estimatedQueueTime: 'Estimated time:', lastCollection: 'Last collection:',
@@ -347,44 +351,103 @@
     return null;
   }
 
+  // Backstop do verde exato (TESTE): o CSS cobre (quase) toda estrutura,
+  // mas o ícone inicial da barrinha do mobile escapa e o site o remonta
+  // diferente no toggle — por isso pintar inline aqui garante o tom em
+  // qualquer estrutura, nos dois temas. Só img/svg/i (nunca um invólucro
+  // que possa conter o rótulo). Idempotente e barato: pode rodar sempre.
+  function greenFilterUrl() {
+    return document.documentElement.classList.contains(SITE_DARK_HTML_CLASS) ? 'url(#jp-green-dark)' : 'url(#jp-green-light)';
+  }
+
+  function paintLikeIconGreen(scope, liked) {
+    if (!scope) return;
+    const icon = scope.querySelector('img, svg, i');
+    if (!icon) return;
+    if (liked) {
+      icon.style.setProperty('filter', greenFilterUrl(), 'important');
+      icon.style.setProperty('opacity', '1', 'important');
+    } else {
+      icon.style.removeProperty('filter');
+      icon.style.removeProperty('opacity');
+    }
+  }
+
+  function repaintLikeIcons() {
+    document.querySelectorAll('a.social__link--like').forEach(anchor => paintLikeIconGreen(anchor, anchor.classList.contains('social__link--active')));
+    document.querySelectorAll('.' + MOBILE_LIKE_BTN_CLASS).forEach(btn => paintLikeIconGreen(btn, btn.classList.contains(MOBILE_LIKE_BTN_LIKED_CLASS)));
+  }
+
   function forceLikedVisual(anchor) {
-    if (!anchor || anchor.classList.contains('social__link--active')) return;
-    anchor.classList.add('social__link--active');
-    anchor.setAttribute('aria-pressed', 'true');
+    if (!anchor) return;
+    if (!anchor.classList.contains('social__link--active')) {
+      anchor.classList.add('social__link--active');
+      anchor.setAttribute('aria-pressed', 'true');
+    }
+    paintLikeIconGreen(anchor, true);
   }
 
   function revokeLikedVisual(anchor) {
     if (!anchor) return;
     anchor.classList.remove('social__link--active');
     anchor.removeAttribute('aria-pressed');
+    paintLikeIconGreen(anchor, false);
   }
 
-  // Aplica o estado confirmado (liked/unliked) em toda âncora de Like
-  // visível cujo ID bata com o da resposta de rede. Normalmente é só uma
-  // (a foto que gerou a requisição), mas percorrer todas é barato e cobre
-  // o caso raro da mesma foto aparecer 2x na mesma página.
+  // Aplica o estado confirmado (liked/unliked) direto nos elementos dessa
+  // foto, sem varrer a página inteira: mira pelo data-photo/data-id, que é
+  // o mesmo ID da resposta de rede. Isso importa porque esta função roda a
+  // cada confirmação — durante uma leva em massa, o findPhotoCards()
+  // completo aqui dentro significava N varreduras (era parte da lentidão
+  // no celular). O querySelectorAll cobre o caso raro da mesma foto
+  // aparecer 2x na mesma página. Fotos sem data-photo/data-id (só
+  // detectáveis pelo fallback de href) não são pegas aqui, mas o
+  // refresh() periódico corrige elas normalmente.
   function syncPhotoVisualById(photoId, liked) {
     if (!photoId) return;
-    findPhotoCards().forEach(({ anchor, card }) => {
-      if (getPhotoId(anchor, card) !== photoId) return;
-      if (liked) forceLikedVisual(anchor); else revokeLikedVisual(anchor);
+    const id = CSS.escape(String(photoId));
+    document.querySelectorAll(`.result[data-photo="${id}"], .social[data-id="${id}"]`).forEach(scope => {
+      const img = scope.querySelector('img[alt="Like"], img[title="Like"]');
+      const anchor = img?.closest('a');
+      // O closest() pode subir pra fora do scope se o img não estiver num
+      // link — nesse caso a âncora não é o Like desta foto, então pula.
+      if (anchor && scope.contains(anchor)) {
+        if (liked) forceLikedVisual(anchor); else revokeLikedVisual(anchor);
+      }
+      scope.querySelectorAll('.' + MOBILE_LIKE_BTN_CLASS).forEach(btn => applyMobileButtonState(btn, liked));
     });
   }
 
   function handleLikeNetResult(event) {
     const { id, action, ok } = event.detail || {};
-    if (!id || !action || !ok) return; // sem ID/ação reconhecidos, ou o servidor não confirmou: não mexe em nada
+    if (!id || !action) return; // sem ID/ação reconhecidos: não dá pra casar com nenhuma foto
 
-    if (action === 'add') {
-      markPhotoLikedInCache(id);
-      syncPhotoVisualById(id, true);
-    } else if (action === 'remove') {
-      unmarkPhotoLikedInCache(id);
-      syncPhotoVisualById(id, false);
+    if (ok) {
+      if (action === 'add') {
+        markPhotoLikedInCache(id);
+        syncPhotoVisualById(id, true);
+      } else if (action === 'remove') {
+        unmarkPhotoLikedInCache(id);
+        syncPhotoVisualById(id, false);
+      }
+    } else {
+      // O servidor recusou (ou a rede falhou): desfaz a UI otimista que o
+      // toque aplicou na hora — sem isso o joinha ficaria "curtido" pra
+      // sempre numa foto que na verdade não foi curtida.
+      if (action === 'add') {
+        unmarkPhotoLikedInCache(id);
+        syncPhotoVisualById(id, false);
+      } else if (action === 'remove') {
+        markPhotoLikedInCache(id);
+        syncPhotoVisualById(id, true);
+      }
     }
 
-    // Atualiza contador/realce na hora — cobre tanto a leva em massa quanto
-    // um clique manual avulso do usuário, sem esperar o debounce normal.
+    // Num clique avulso, atualiza contador/realce na hora, sem esperar o
+    // debounce. Durante a leva em massa o refresh() se auto-pula (ver
+    // refresh) e o settle acontece uma vez só no final — sem isso seriam N
+    // varreduras completas do DOM, uma por foto, que é o que travava o
+    // celular.
     refresh();
   }
 
@@ -516,6 +579,18 @@
   function applyMobileButtonState(button, liked) {
     button.classList.toggle(MOBILE_LIKE_BTN_LIKED_CLASS, liked);
     button.setAttribute('aria-pressed', liked ? 'true' : 'false');
+    paintLikeIconGreen(button, liked);
+  }
+
+  const MOBILE_LIKE_BTN_POP_CLASS = 'jp-mobile-like-btn--pop';
+
+  // Dispara o pop do joinha (ver CSS jpLikePop). Remove e readiciona a
+  // classe com um reflow forçado no meio pra animação reiniciar mesmo se o
+  // usuário curtir/descurtir/curtir rápido em sequência.
+  function popMobileButton(button) {
+    button.classList.remove(MOBILE_LIKE_BTN_POP_CLASS);
+    void button.offsetWidth;
+    button.classList.add(MOBILE_LIKE_BTN_POP_CLASS);
   }
 
   async function handleMobileLikeClick(button, photoId, nativeAnchor) {
@@ -523,31 +598,40 @@
     button.disabled = true;
     button.classList.add('jp-mobile-like-btn--pending');
 
+    // UI otimista: o joinha acende NA HORA do toque, sem esperar a resposta
+    // do servidor (no celular essa confirmação demora e o botão parecia
+    // "morto"). Se o servidor recusar, o evento de rede (!ok) desfaz tudo
+    // em handleLikeNetResult — ver comentário lá.
+    const willLike = !button.classList.contains(MOBILE_LIKE_BTN_LIKED_CLASS);
+    applyMobileButtonState(button, willLike);
+    if (willLike) popMobileButton(button);
+
     if (nativeAnchor) {
       // Aciona o link nativo do JetPhotos (existe no DOM, só escondido pelo
       // layout mobile). O content-hook.js confirma via rede e
       // handleLikeNetResult já cuida do cache + realce + contador — aqui só
-      // reabilitamos o botão depois, dando tempo da resposta chegar.
+      // reabilitamos o botão depois de uma janela curta anti-duplo-toque.
       nativeAnchor.click();
       setTimeout(() => {
         button.disabled = false;
         button.classList.remove('jp-mobile-like-btn--pending');
-      }, 500);
+      }, 300);
       return;
     }
 
     // Sem link nativo disponível nesse card (não deveria acontecer no
     // layout atual do site, mas evita deixar o botão sem função caso o
     // JetPhotos mude a estrutura): usa o mesmo endpoint diretamente.
-    const alreadyLiked = button.classList.contains(MOBILE_LIKE_BTN_LIKED_CLASS);
-    const action = alreadyLiked ? 'remove' : 'add';
+    const action = willLike ? 'add' : 'remove';
     const ok = await performLikeRequest(photoId, action);
     button.disabled = false;
     button.classList.remove('jp-mobile-like-btn--pending');
-    if (!ok) return;
+    if (!ok) {
+      applyMobileButtonState(button, !willLike); // desfaz o otimismo
+      return;
+    }
     if (action === 'add') markPhotoLikedInCache(photoId); else unmarkPhotoLikedInCache(photoId);
-    applyMobileButtonState(button, action === 'add');
-    refresh();
+    if (!isLiking) refresh(); // durante a leva em massa o refresh final cobre tudo
   }
 
   // Varre os cards e injeta o botão como último ".result__stat" só onde o
@@ -603,6 +687,9 @@
         event.stopPropagation();
         handleMobileLikeClick(button, photoId, nativeAnchor);
       });
+      button.addEventListener('animationend', event => {
+        if (event.animationName === 'jpLikePop') button.classList.remove(MOBILE_LIKE_BTN_POP_CLASS);
+      });
     });
   }
 
@@ -633,6 +720,25 @@
   // Respeita prefers-reduced-motion pra usuários sensíveis a movimento.
   // ---------------------------------------------------------------------
   const STYLE_ID = 'jp-plus-styles';
+  // Filtros SVG de cor exata (like curtido = mesmo tom do rótulo).
+  // feColorMatrix constante: todo pixel opaco vira o verde alvo (o alfa
+  // é preservado, então anti-serrilhado continua suave). Referência
+  // same-document (url(#id)): sem fetch, sem problema de CSP/encoding.
+  const LIKE_GREEN_SVG_ID = 'jp-like-green-filters';
+  function ensureLikeGreenFilters() {
+    if (document.getElementById(LIKE_GREEN_SVG_ID)) return;
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('id', LIKE_GREEN_SVG_ID);
+    svg.setAttribute('width', '0');
+    svg.setAttribute('height', '0');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.style.position = 'absolute';
+    svg.innerHTML = `
+      <filter id="jp-green-dark"><feColorMatrix type="matrix" values="0 0 0 0 0.239 0 0 0 0 0.863 0 0 0 0 0.518 0 0 0 1 0"/></filter>
+      <filter id="jp-green-light"><feColorMatrix type="matrix" values="0 0 0 0 0.094 0 0 0 0 0.502 0 0 0 0 0.220 0 0 0 1 0"/></filter>`;
+    (document.head || document.documentElement).appendChild(svg);
+  }
+
   function injectStyles() {
     if (document.getElementById(STYLE_ID)) return;
     const style = document.createElement('style');
@@ -642,14 +748,13 @@
          whose original light-theme colors become unreadable on dark backgrounds.
          They are scoped to the extension's dark-mode class so normal JetPhotos
          colors remain completely untouched when dark mode is off. */
-      /* Active Like state: JetPhotos sets this to a dark color in its
-         light-theme CSS. In dark mode the label must stay white, matching
-         the already-inverted Like icon. Keep this override scoped to the
-         active Like link so normal/site light-mode colors are untouched. */
+      /* Like curtido (TESTE): rótulo verde no modo escuro (#3ddc84). O
+         ícone verde vai na regra do bloco abaixo; o tom do modo claro fica
+         no estilo geral da extensão (fora do escopo dark). */
       html.jp-site-dark-active a.social__link.social__link--like.social__link--active,
       html.jp-site-dark-active a.social__link.social__link--like.social__link--active .social__text {
-        color: #ffffff !important;
-        -webkit-text-fill-color: #ffffff !important;
+        color: #3ddc84 !important;
+        -webkit-text-fill-color: #3ddc84 !important;
       }
 
       /* Account submenu: JetPhotos keeps these native account links at
@@ -675,6 +780,9 @@
         background: linear-gradient(274deg, hsl(0deg 0% 14.32% / 10%), #1c1b1b) !important;
       }
 
+      /* Hover branco (rótulos) só com mouse de verdade, pelo mesmo
+         motivo acima (hover grudado no touch). */
+      @media (hover:hover) and (pointer:fine) {
       /* Hover state: JetPhotos' original CSS changes .social__link to a
          dark color on hover. In dark mode that becomes unreadable, so keep
          every social action link light while hovered. This is intentionally
@@ -684,19 +792,17 @@
         color: #ffffff !important;
         -webkit-text-fill-color: #ffffff !important;
       }
-
-      /* Explicitly cover the overlap: an already-active Like link while
-         hovered must remain white as well, regardless of source specificity. */
-      html.jp-site-dark-active a.social__link.social__link--like.social__link--active:hover,
-      html.jp-site-dark-active a.social__link.social__link--like.social__link--active:hover .social__text {
-        color: #ffffff !important;
-        -webkit-text-fill-color: #ffffff !important;
       }
 
-      /* Queue estimator: this is extension-owned DOM and is refreshed in
-         place when the live queue data changes. Keep its dark-mode colors
-         here instead of letting the generic page recolor observer touch its
-         table cells after every refresh (which caused a visible white flash). */
+      /* Curtido + hover: continua verde (curtida = verde, sempre). */
+      html.jp-site-dark-active a.social__link.social__link--like.social__link--active:hover,
+      html.jp-site-dark-active a.social__link.social__link--like.social__link--active:hover .social__text {
+        color: #3ddc84 !important;
+        -webkit-text-fill-color: #3ddc84 !important;
+      }
+
+      /* Queue estimator: DOM próprio da extensão, com as cores dark-mode
+         aqui mesmo (o tema manual do site não toca em nada com id jp-*). */
       html.jp-site-dark-active #jp-site-queue-tracker,
       html.jp-site-dark-active #jp-site-queue-tracker .jp-plus-queue-table,
       html.jp-site-dark-active #jp-site-queue-tracker .jp-plus-queue-table tbody {
@@ -731,19 +837,19 @@
         border-color: #3c4043 !important;
       }
 
-      /* Period Totals nativo do JetPhotos: preserva o zebra striping do site.
-         A segunda fileira fica levemente elevada; a primeira permanece com
-         o fundo do próprio dark mode, como no layout original. */
-      html.jp-site-dark-active .jp-plus-dark-native-table tbody > .table__row:nth-child(even),
-      html.jp-site-dark-active .jp-plus-dark-native-table tbody > .table__row:nth-child(even) td {
+      /* Tabelas nativas do site marcadas via JS (Period Totals, fila):
+         preserva o zebra striping com tons escuros. A segunda fileira fica
+         levemente elevada; a primeira integra ao fundo da página. */
+      html.jp-site-dark-active .jp-plus-dark-native-table tbody > tr:nth-child(even),
+      html.jp-site-dark-active .jp-plus-dark-native-table tbody > tr:nth-child(even) td {
         background: #2d2e31 !important;
         background-color: #2d2e31 !important;
         color: #e8eaed !important;
         border-color: #3c4043 !important;
       }
 
-      html.jp-site-dark-active .jp-plus-dark-native-table tbody > .table__row:nth-child(odd),
-      html.jp-site-dark-active .jp-plus-dark-native-table tbody > .table__row:nth-child(odd) td {
+      html.jp-site-dark-active .jp-plus-dark-native-table tbody > tr:nth-child(odd),
+      html.jp-site-dark-active .jp-plus-dark-native-table tbody > tr:nth-child(odd) td {
         background: transparent !important;
         background-color: transparent !important;
         color: #e8eaed !important;
@@ -889,92 +995,159 @@
         outline: none !important;
       }
 
-      /* Ferramenta contextual de curtidas: aparece somente em páginas que
-         realmente possuem links/ícones de Like. Não é launcher. */
-      #jp-like-context-widget {
-        position: fixed;
-        right: 18px;
-        bottom: 18px;
-        width: min(524px, calc(100vw - 28px));
-        min-height: 84px;
-        box-sizing: border-box;
-        display:flex;
-        align-items:center;
-        gap:18px;
-        padding:12px 14px 12px 16px;
-        background:#1c1c1c;
-        color:#eeeeee;
-        border:1px solid #464646;
-        border-radius:10px;
+      /* Host mobile (FAB): visível só quando o launcher do header não
+         está renderizado (layout mobile). Disco branco com a logo preta,
+         no canto oposto ao da bolha de likes. */
+      #jp-plus-mobile-host { position:fixed; left:16px; bottom:16px; z-index:999999; }
+      #jp-plus-mobile-fab {
+        display:flex; align-items:center; justify-content:center;
+        width:52px; height:52px; border-radius:50%;
+        background:#ffffff; border:1px solid rgba(0,0,0,.12);
         box-shadow:0 5px 20px rgba(0,0,0,.30);
-        opacity:0;
-        transform:translateY(6px);
-        transition:opacity .18s ease, transform .18s ease, box-shadow .18s ease;
-        animation:jpLikeWidgetIn .18s ease forwards;
-        z-index:999999;
-        font-family:inherit !important;
-        overflow:hidden;
+        cursor:pointer; padding:0;
+        -webkit-tap-highlight-color:transparent;
+        transition:transform .06s ease-out, background .12s ease;
       }
-      #jp-like-context-widget .jp-like-widget-main { flex:1 1 auto; min-width:0; }
-      #jp-like-context-widget .jp-like-widget-head {
-        margin:0 0 5px;
-        color:#f3f5f7;
-        font-size:15px;
-        font-weight:700;
-        line-height:1.15;
-        letter-spacing:.1px;
+      #jp-plus-mobile-fab img { display:block; width:30px; height:32px; object-fit:contain; }
+      @media (hover:hover) {
+        #jp-plus-mobile-fab:hover { background:#f0f0f0; }
       }
-      #jp-like-context-widget .jp-like-widget-body { padding:0; background:transparent; min-width:0; }
-      #jp-like-context-widget .jp-like-widget-status {
-        margin:0;
-        color:#b6b6b6;
-        font-size:12px;
-        line-height:1.35;
-        transition:opacity .12s ease;
-        white-space:nowrap;
-        overflow:hidden;
-        text-overflow:ellipsis;
+      #jp-plus-mobile-fab:active { transform:scale(.92); }
+      #jp-plus-mobile-fab:focus-visible { outline:2px solid #2c94e8; outline-offset:2px; }
+      #jp-plus-mobile-host.jp-dark #jp-plus-mobile-fab { background:#1c1c1c; border-color:#464646; }
+      #jp-plus-mobile-host.jp-dark #jp-plus-mobile-fab img { filter:brightness(0) invert(1); }
+      /* Docagem do FAB: parado, meio escondido na lateral esquerda + translúcido. A classe
+         jp-fab-docked vai no host, mas o efeito vai no invólucro — o submenu e
+         o painel moram no mesmo host e não podem ser arrastados juntos. */
+      #jp-plus-mobile-fab-wrap { display:block; width:52px; height:52px; transition:transform .22s ease, opacity .22s ease; }
+      #jp-plus-mobile-host.jp-fab-docked #jp-plus-mobile-fab-wrap { transform:translateX(calc(-50% - 16px)); opacity:.5; }
+      @media (prefers-reduced-motion: reduce) {
+        #jp-plus-mobile-fab-wrap { transition:none; }
       }
-      #jp-like-context-widget .jp-like-widget-progress {
+      /* Submenu mobile: os mesmos 4 itens do PC, em folha acima do FAB. */
+      #jp-plus-mobile-host > #jp-plus-mobile-submenu {
         display:none;
-        height:3px;
-        margin:7px 0 0;
-        background:#343434;
-        border-radius:999px;
-        overflow:hidden;
+        position:absolute; left:0; bottom:62px;
+        width:230px; box-sizing:border-box;
+        background:#ffffff; color:#222222;
+        border:1px solid rgba(0,0,0,.12); border-radius:12px;
+        box-shadow:0 8px 28px rgba(0,0,0,.32);
+        overflow:hidden; padding:6px;
+        font-family:inherit;
       }
-      #jp-like-context-widget .jp-like-widget-progress-bar { width:0; height:100%; background:#8a8a8a; border-radius:999px; transition:width .12s ease; }
-      #jp-like-context-widget .jp-like-widget-confirm { display:none; margin:6px 0 0; color:#a9a9a9; font-size:12px; font-weight:600; }
-      #jp-like-context-widget .jp-like-widget-button {
-        flex:0 0 auto;
-        min-width:162px;
-        min-height:42px;
-        padding:9px 12px;
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        gap:9px;
-        border:1px solid #555555;
-        border-radius:8px;
-        background:linear-gradient(#303030,#292929);
-        color:#eeeeee;
-        font:inherit;
-        font-size:14px;
-        font-weight:600;
-        text-align:center;
+      #jp-plus-mobile-host.jp-mobile-menu-open > #jp-plus-mobile-submenu { display:block; animation:jpMobileMenuIn .11s ease; }
+      @keyframes jpMobileMenuIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+      @media (prefers-reduced-motion: reduce) {
+        #jp-plus-mobile-host.jp-mobile-menu-open > #jp-plus-mobile-submenu { animation:none; }
+      }
+      #jp-plus-mobile-host.jp-settings-open > #jp-plus-mobile-submenu { display:none !important; }
+      #jp-plus-mobile-submenu a {
+        display:block; padding:11px 12px; border-radius:8px;
+        color:#222222; background:transparent; text-decoration:none;
+        font-size:15px; line-height:1.3;
+      }
+      #jp-plus-mobile-submenu a:active { background:#e8e8e8; }
+      #jp-plus-mobile-host > #jp-plus-mobile-submenu.jp-dark { background:#292929; color:#eeeeee; }
+      #jp-plus-mobile-submenu.jp-dark a { color:#eeeeee; }
+      #jp-plus-mobile-submenu.jp-dark a:active { background:#3d3d3d; }
+      /* Painel de configs no host mobile: folha sobre o FAB. */
+      #jp-plus-mobile-host > #jp-plus-settings-panel {
+        position:absolute !important; left:0 !important; bottom:62px !important;
+        top:auto !important; right:auto !important;
+        width:min(330px, calc(100vw - 32px)) !important;
+        transform:translateY(8px);
+        border-radius:16px;
+      }
+      #jp-plus-mobile-host.jp-settings-open > #jp-plus-settings-panel { display:block !important; }
+      #jp-plus-mobile-host.jp-settings-open #jp-plus-settings-panel { opacity:1; transform:none; }
+      /* Backdrop invisível: garante o fechar-ao-clicar-fora (PC e mobile). */
+      #jp-plus-backdrop {
+        display:none;
+        position:fixed; inset:0; z-index:999998;
+        background:rgba(0,0,0,0); border:0; padding:0; margin:0;
+      }
+      #jp-plus-backdrop.jp-backdrop-show { display:block; }
+
+      /* Bolha de curtidas: o único UI de likes — aparece somente em páginas
+         que realmente possuem links/ícones de Like. Não é launcher.
+         Sempre visível; compacta — coração + faltantes. */
+      #jp-like-widget-bubble {
+        position:fixed; right:18px; bottom:18px; z-index:999999;
+        display:flex; align-items:center; gap:9px;
+        min-height:54px; padding:12px 18px 12px 16px; box-sizing:border-box;
+        background:#1c1c1c; color:#eeeeee;
+        border:1px solid #464646; border-radius:999px;
+        box-shadow:0 5px 20px rgba(0,0,0,.30);
+        font-family:'Fira Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size:15px; font-weight:700; line-height:1;
         cursor:pointer;
-        box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+        animation:jpBubbleIn .18s ease;
       }
-      #jp-like-context-widget .jp-like-widget-button:hover,
-      #jp-like-context-widget .jp-like-widget-button:focus-visible { background:#363636; border-color:#686868; outline:none; }
-      #jp-like-context-widget .jp-like-widget-heart { width:21px; height:21px; flex:0 0 auto; }
-      #jp-like-context-widget .jp-like-widget-chevron { width:16px; height:16px; opacity:.72; margin-left:1px; }
-      #jp-like-context-widget.jp-dark { background:#1c1c1c; color:#eeeeee; border-color:#464646; }
-      #jp-like-context-widget.jp-dark .jp-like-widget-status { color:#b6b6b6; }
-      #jp-like-context-widget.jp-dark .jp-like-widget-progress { background:#343434; }
-      #jp-like-context-widget.jp-dark .jp-like-widget-confirm { color:#a9a9a9; }
-      #jp-like-context-widget.jp-dark .jp-like-widget-button { background:linear-gradient(#303030,#292929); color:#eeeeee; border-color:#555555; }
-      @keyframes jpLikeWidgetIn { from {opacity:0; transform:translateY(6px)} to {opacity:1; transform:translateY(0)} }
+      #jp-like-widget-bubble:hover { background:#2a2a2a; border-color:#686868; }
+      #jp-like-widget-bubble:focus-visible { outline:2px solid #669DF6; outline-offset:2px; }
+      /* Concluído: a bolha encolhe pra um disco só com o selo — o contador
+         some junto (sem "0" pendurado do lado). Padding igual dos 4 lados
+         centraliza o selo; vale em qualquer breakpoint (seletor mais
+         específico que os paddings dos @media). */
+      #jp-like-widget-bubble.jp-bubble-done { padding:12px; gap:0; min-height:0; }
+      #jp-like-widget-bubble.jp-bubble-done #jp-like-widget-bubble-count { display:none; }
+      /* Durante a leva, a bolha só troca a borda pra verde (estado estático,
+         sem pulsar — o progresso aparece no anel e na contagem regressiva). */
+      #jp-like-widget-bubble.jp-bubble-liking { border-color:#4caf50; }
+      /* Anel de progresso em volta do coração: o track fica sempre visível
+         (contorno sutil) e o fill verde fecha conforme a leva avança (ver
+         setBubbleProgress). Começa no topo por causa do rotate(-90deg). */
+      /* O coração é centralizado por flex (à prova de conta de margem) e o
+         anel preenche o wrap em absoluto — assim os dois ficam concêntricos
+         de verdade, sem depender de margin:auto + inset. */
+      #jp-like-widget-bubble .jp-bubble-ring-wrap { position:relative; width:32px; height:32px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
+      #jp-like-widget-bubble .jp-bubble-ring { position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); }
+      #jp-like-widget-bubble .jp-bubble-ring-track { fill:none; stroke:rgba(255,255,255,.16); stroke-width:2.5; }
+      #jp-like-widget-bubble .jp-bubble-ring-fill { fill:none; stroke:#4caf50; stroke-width:2.5; stroke-linecap:round; stroke-dasharray:75.4; stroke-dashoffset:75.4; transition:stroke-dashoffset .15s linear, opacity .15s linear; }
+      #jp-like-widget-bubble .jp-bubble-thumb { position:relative; width:19px; height:19px; }
+      /* Selo de concluído: quando tudo está curtido, o anel + joinha dão
+         lugar a um disco verde com confere branco (troca seca, sem pop). */
+      #jp-like-widget-bubble .jp-bubble-check { display:none; position:absolute; inset:0; width:100%; height:100%; }
+      #jp-like-widget-bubble.jp-bubble-done .jp-bubble-ring,
+      #jp-like-widget-bubble.jp-bubble-done .jp-bubble-thumb { display:none; }
+      #jp-like-widget-bubble.jp-bubble-done .jp-bubble-check { display:block; }
+      /* Rótulo só no desktop largo (ex: "10 faltando"): deixa a bolha mais
+         larga e autoexplicativa onde há espaço; some no mobile. */
+      #jp-like-widget-bubble .jp-bubble-label { display:none; font-weight:600; opacity:.75; }
+      /* A bolha cresce com a tela: compacta no celular, com presença no PC.
+         O anel é viewBox e escala sozinho junto com o wrap. */
+      @media (min-width:700px) {
+        #jp-like-widget-bubble { min-height:58px; padding:13px 20px 13px 17px; font-size:16px; }
+        #jp-like-widget-bubble .jp-bubble-ring-wrap { width:34px; height:34px; }
+        #jp-like-widget-bubble .jp-bubble-thumb { width:21px; height:21px; }
+      }
+      @media (min-width:1100px) {
+        #jp-like-widget-bubble { min-height:62px; padding:14px 22px 14px 18px; font-size:16px; gap:10px; }
+        #jp-like-widget-bubble .jp-bubble-ring-wrap { width:36px; height:36px; }
+        #jp-like-widget-bubble .jp-bubble-thumb { width:21px; height:21px; }
+        #jp-like-widget-bubble .jp-bubble-label { display:inline; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #jp-like-widget-bubble { animation:none; }
+        #jp-like-widget-bubble .jp-bubble-ring-fill { transition:none; }
+        #jp-like-toast { transition:none; }
+      }
+      @keyframes jpBubbleIn { from {opacity:0} to {opacity:1} }
+      /* Toast de aviso da bolha com a cara do site: cartão claro como os
+         cards de resultado, texto escuro e filete azul como os botões. A fonte
+         é declarada explícita (pilha sans do sistema, igual à do site) em vez
+         de herdada — herança falha se o site escopar a fonte em wrappers. */
+      #jp-like-toast {
+        position:fixed; left:50%; bottom:28px; transform:translateX(-50%); z-index:1000000;
+        max-width:min(420px, calc(100vw - 32px)); box-sizing:border-box;
+        background:#ffffff; color:#212121;
+        border:1px solid #d8d8d8; border-left:4px solid #1f8dd6; border-radius:8px;
+        padding:11px 16px;
+        font-family:'Fira Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        font-size:14px; font-weight:600; line-height:1.35; text-align:center;
+        box-shadow:0 5px 20px rgba(0,0,0,.22); pointer-events:none;
+        opacity:0; transition:opacity .18s ease;
+      }
+      #jp-like-toast.jp-toast-show { opacity:1; }
 
       #jp-like-settings-menu {
         position: absolute !important;
@@ -1016,8 +1189,9 @@
         background: #ffffff;
         color: #222222;
         border: 1px solid #c8c8c8;
-        border-top: 0;
-        box-shadow: 0 2px 8px rgba(0,0,0,.24);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 12px 32px rgba(0,0,0,.28);
         z-index: 1000002;
         opacity: 0;
         transform: translateY(-5px);
@@ -1057,18 +1231,19 @@
         box-shadow:none !important;
       }
       #jp-plus-settings-panel .jp-settings-title {
-        padding: 11px 14px;
-        background: #282828;
-        color: #ffffff;
-        font-size: 14px;
-        font-weight: 600;
-        line-height: 1.2;
+        display:flex; align-items:center; justify-content:space-between; gap:10px;
+        padding:12px 12px 12px 16px;
+        background:#2c94e8;
+        color:#ffffff;
+        font-size:15px;
+        font-weight:700;
+        line-height:1.2;
       }
       #jp-plus-settings-panel .jp-settings-body {
         max-height: min(70vh, 520px);
         overflow-y: auto;
         overflow-x: hidden;
-        padding: 0 14px 14px;
+        padding: 0 16px 16px;
         box-sizing: border-box;
       }
       #jp-plus-settings-panel .jp-settings-body #jp-like-settings-menu {
@@ -1100,13 +1275,16 @@
         box-sizing: border-box;
       }
       #jp-plus-settings-panel .jp-settings-close {
-        float:right;
-        border:0; background:transparent; color:inherit; cursor:pointer;
-        font:inherit; font-size:16px; line-height:1; padding:0 2px;
+        flex:0 0 auto;
+        width:30px; height:30px; border-radius:50%;
+        border:0; background:rgba(255,255,255,.20); color:#ffffff; cursor:pointer;
+        font-size:18px; font-weight:400; line-height:1;
+        display:flex; align-items:center; justify-content:center;
+        padding:0 0 2px;
       }
-      #jp-plus-settings-panel .jp-settings-close:hover { opacity:.75; }
-      #jp-plus-settings-panel.jp-dark .jp-settings-title { background:#202020; }
-      #jp-plus-settings-panel select { border-radius:0 !important; }
+      #jp-plus-settings-panel .jp-settings-close:hover { background:rgba(255,255,255,.35); }
+
+      #jp-plus-settings-panel select { border-radius:8px !important; }
       #jp-plus-launcher-host.jp-settings-open #jp-plus-settings-panel {
         opacity: 1;
         transform: translateY(0);
@@ -1117,14 +1295,11 @@
         #jp-plus-launcher .jp-launcher-logo { width: 25px; height: 27px; }
         #jp-plus-submenu { width: 170px !important; }
         #jp-plus-settings-panel { width: min(360px, calc(100vw - 18px)) !important; }
-        #jp-like-context-widget { right:10px; bottom:10px; width:calc(100vw - 20px); min-height:0; padding:11px; gap:10px; }
-        #jp-like-context-widget .jp-like-widget-button { min-width:48px; padding:9px; }
-        #jp-like-context-widget .jp-like-widget-button span { display:none; }
-        #jp-like-context-widget .jp-like-widget-chevron { display:none; }
+        #jp-like-widget-bubble { right:10px; bottom:10px; }
       }
 
       @media (prefers-reduced-motion: reduce) {
-        #jp-like-context-widget { animation-duration:.001ms !important; transition-duration:.001ms !important; }
+        #jp-like-widget-bubble { animation-duration:.001ms !important; transition-duration:.001ms !important; }
         #jp-plus-settings-panel { transition-duration:.001ms !important; }
         #jp-plus-launcher .jp-launcher-logo {
           transition-duration: .001ms !important;
@@ -1136,22 +1311,58 @@
          ícone .svg do site; a diferença entre curtida/não-curtida é só
          opacidade (o arquivo é preto fixo nos dois estados, então isso é
          suficiente e funciona igual em qualquer tema, sem depender do
-         filtro de dark mode automático — por isso essa classe fica de
-         fora da recoloração genérica, ver recolorElement()). */
-      .${MOBILE_LIKE_STAT_CLASS} { cursor:pointer; }
+         filtro de dark mode automático — por isso o tema manual do site
+         nunca toca nesses ícones (ver a lista "nunca tocados" no tema).
+         Alinhamento: o <img> é display:block pra eliminar a folga de
+         baseline do inline (que deixava o ícone uns px acima dos vizinhos)
+         e o stat usa inline-flex + vertical-align:middle pra acompanhar a
+         altura dos outros ".result__stat" da fileira. A caixa do botão
+         cresceu junto com o ícone (30px) mas a margem negativa compensa na
+         mesma medida, então a altura da fileira continua igual à original.
+         A margem vertical é assimétrica de propósito (-9px em cima, -5px
+         embaixo): sobe o botão 2px em relação aos ícones vizinhos sem
+         alterar a altura total ocupada (30 - 9 - 5 = 16px, igual antes). */
+      .${MOBILE_LIKE_STAT_CLASS} { cursor:pointer; display:inline-flex; align-items:center; vertical-align:middle; }
       .${MOBILE_LIKE_BTN_CLASS} {
         display:inline-flex; align-items:center; justify-content:center;
-        width:28px; height:28px; margin:-6px -4px; padding:0;
+        width:30px; height:30px; margin:-9px -4px -5px; padding:0;
         border:0; background:transparent; border-radius:50%;
         cursor:pointer; transition:background .15s ease, opacity .15s ease, transform .1s ease;
       }
-      .${MOBILE_LIKE_BTN_CLASS} img { width:16px; height:16px; opacity:.4; pointer-events:none; }
+      .${MOBILE_LIKE_BTN_CLASS} img { width:20px; height:20px; display:block; opacity:.4; pointer-events:none; }
       .${MOBILE_LIKE_BTN_CLASS}.${MOBILE_LIKE_BTN_LIKED_CLASS} img { opacity:1; }
       .${MOBILE_LIKE_BTN_CLASS}:active { transform:scale(.9); }
       .${MOBILE_LIKE_BTN_CLASS}:hover { background:rgba(0,0,0,.06); }
-      .${MOBILE_LIKE_BTN_CLASS}.jp-mobile-like-btn--pending { opacity:.6; pointer-events:none; }
+      /* Sem dim no pending: o clique já aplica o estado na hora (UI otimista)
+         e o pop abaixo é o feedback — escurecer o botão brigaria com isso. */
+      .${MOBILE_LIKE_BTN_CLASS}.jp-mobile-like-btn--pending { pointer-events:none; }
+      /* Pop do joinha ao curtir: resposta instantânea e com um pouco de vida.
+         Mora numa classe transitória (--pop), não no estado --liked, pra não
+         repetir a cada refresh() — ver popMobileButton(). */
+      @keyframes jpLikePop {
+        0% { transform:scale(1); }
+        40% { transform:scale(1.35); }
+        70% { transform:scale(.95); }
+        100% { transform:scale(1); }
+      }
+      .${MOBILE_LIKE_BTN_CLASS}.jp-mobile-like-btn--pop img { animation:jpLikePop .2s ease; }
+      @media (prefers-reduced-motion: reduce) {
+        .${MOBILE_LIKE_BTN_CLASS}.jp-mobile-like-btn--pop img { animation:none; }
+      }
+      /* Like curtido = verde (TESTE): vale nos dois temas — o bloco do
+         modo escuro sobrescreve o tom quando ligado. Não-curtido segue o
+         padrão de cada tema (claro: nativo do site; escuro: cinza claro). */
+      a.social__link.social__link--like.social__link--active,
+      a.social__link.social__link--like.social__link--active .social__text { color:#188038 !important; -webkit-text-fill-color:#188038 !important; }
+      a.social__link.social__link--like.social__link--active :not(.social__text):not(:has(.social__text)),
+      a.social__link.social__link--like.social__link--active::before,
+      a.social__link.social__link--like.social__link--active::after,
+      a.social__link.social__link--like.social__link--active .social__text::before,
+      a.social__link.social__link--like.social__link--active .social__text::after { filter:url(#jp-green-light) !important; opacity:1 !important; }
+      .jp-mobile-like-btn.jp-mobile-like-btn--liked img { filter:url(#jp-green-light) !important; }
     `;
     document.head.appendChild(style);
+    ensureLikeGreenFilters();
   }
 
   // ---------------------------------------------------------------------
@@ -1205,264 +1416,261 @@
   }
 
   // =======================================================================
-  // >>> INÍCIO DO BLOCO EXPERIMENTAL <<<
   // -----------------------------------------------------------------------
-  // Modo escuro do SITE (não só do painel). MÉTODO NOVO (v1.8): recoloração
-  // direta, sem filtro global.
+  // Modo escuro do SITE (não só do painel). TEMA MANUAL: folha de estilo
+  // escrita à mão para os seletores reais do JetPhotos (paleta + classes
+  // BEM extraídas do site via snippet de console).
   //
-  // A versão anterior usava "smart invert" (filter: invert()+hue-rotate()
-  // na página inteira, com reinversão pontual em exceções). Foi
-  // abandonada porque tem 3 problemas estruturais que não dá pra corrigir
-  // só com mais exceções:
-  //   1) fotos que carregam DEPOIS do primeiro scan (lazy-load, paginação)
-  //      ficam sem a correção, então saem com cor errada;
-  //   2) hue-rotate não reconstrói o matiz exato de cores saturadas (um
-  //      azul de marca podia sair alaranjado);
-  //   3) cancelar a inversão num container pra proteger um fundo escuro
-  //      (ex: overlay translúcido sobre uma foto de capa) cancela TUDO
-  //      dentro dele — inclusive texto que devia ter sido invertido
-  //      normalmente. Foi isso que deixou números pretos sobre fundo
-  //      escuro (ilegíveis).
-  //
-  // MÉTODO NOVO: em vez de inverter e depois consertar, cada elemento é
-  // lido individualmente (getComputedStyle) e recolorido de forma
-  // direcionada:
-  //   - Fundo/texto claros (quase branco/preto, baixa saturação) →
-  //     sobrescritos com uma cor escura/clara fixa via inline style
-  //     !important, escolhida por faixa de luminosidade (mesma paleta
-  //     usada no painel da extensão, pra manter consistência visual).
-  //   - Cores saturadas/de marca (azul do site, badges coloridos etc.) →
-  //     NUNCA tocadas. Ficam com a cor original, que já costuma ficar
-  //     legível sobre fundo escuro.
-  //   - Imagens, vídeos, canvas, svg, iframe → NUNCA tocados. É
-  //     impossível "escurecer" uma fotografia real sem estragar a cor;
-  //     a solução correta é simplesmente não mexer nelas.
-  // Como cada elemento é resolvido individualmente (não em cascata via
-  // filter), não existe mais o problema de um container "vazar" a
-  // recoloração pros filhos.
-  // =======================================================================
+  // Por que manual, depois de duas tentativas automáticas:
+  //   - "smart invert" (filter global + reinversão): quebrava o matiz de
+  //     cores saturadas e errava fotos de lazy-load.
+  //   - recoloração por elemento (getComputedStyle + !important inline +
+  //     observer): piscava em conteúdo dinâmico, errava gradientes, bordas,
+  //     sombras e iframes, e custava CPU revisitando o DOM inteiro.
+  // O tema manual não tem JS de varredura: é só uma classe no <html>
+  // (jp-site-dark-active) + CSS com !important. Fotos, vídeos, canvas, SVG,
+  // iframes, o header (já escuro) e cores de marca (azul picton, botões de
+  // share) nunca são tocados — as regras miram só página, cards, textos,
+  // links, formulários e controles.
+  // -----------------------------------------------------------------------
   const SITE_DARK_HTML_CLASS = 'jp-site-dark-active';
+  const SITE_DARK_STYLE_ID = 'jp-site-dark-theme';
 
-  // Paleta reaproveitada do painel da extensão (--jp-bg / --jp-text /
-  // --jp-subtext / --jp-border no modo escuro), pra manter a mesma
-  // identidade visual entre o painel e o site recolorido.
-  const DARK_PALETTE = {
-    bgBase: '#202124',     // fundos que eram quase brancos
-    bgElevated: '#2d2e31', // fundos que eram cinza-claro (cards, inputs)
-    border: '#3c4043',     // bordas/divisores que eram cinza-claro
-    textPrimary: '#e8eaed',   // texto que era quase preto
-    textSecondary: 'rgb(224 224 224)'  // texto secundário no modo escuro: #e0e0e0
-  };
-
-  // Extrai saturação (0-1) e luminosidade (0-1) em HSL a partir de uma
-  // string rgb()/rgba() vinda de getComputedStyle.
-  function getHSL(colorStr) {
-    const m = colorStr && colorStr.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
-    if (!m) return null;
-    const r = parseInt(m[1], 10) / 255, g = parseInt(m[2], 10) / 255, b = parseInt(m[3], 10) / 255;
-    const max = Math.max(r, g, b), min = Math.min(r, g, b);
-    const l = (max + min) / 2;
-    let s = 0;
-    if (max !== min) {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  const SITE_DARK_THEME_CSS = `
+    html.jp-site-dark-active { color-scheme:dark; }
+    /* Página: fundo + texto base (o #202124 casa com o preload anti-flash). */
+    html.jp-site-dark-active body,
+    html.jp-site-dark-active .page,
+    html.jp-site-dark-active div[class*="page--"],
+    html.jp-site-dark-active .main,
+    html.jp-site-dark-active .main__section { background-color:#202124 !important; color:#e8e8e8 !important; }
+    /* Cards brancos (resultados, painéis). */
+    html.jp-site-dark-active .box,
+    html.jp-site-dark-active div[class*="box--"] { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
+    /* Títulos. */
+    html.jp-site-dark-active h1,
+    html.jp-site-dark-active h2,
+    html.jp-site-dark-active h3,
+    html.jp-site-dark-active h4,
+    html.jp-site-dark-active h5,
+    html.jp-site-dark-active h6,
+    html.jp-site-dark-active .head { color:#f2f2f2 !important; }
+    /* Links: azul clareado pra leitura no escuro (o azul puro #2c94e8 e o
+       azul-link padrão #0000ee somem no fundo escuro). Botões, logo e moldura
+       de foto ficam de fora — têm estilo próprio. */
+    html.jp-site-dark-active a:not(.btn):not(.header__logo):not(.gallery-photo__frame) { color:#6fb1f0 !important; }
+    /* Guarda: o tema nunca toca nos links dos submenus da extensão. */
+    html.jp-site-dark-active #jp-plus-submenu a,
+    html.jp-site-dark-active #jp-plus-mobile-submenu a { color:inherit !important; }
+    /* Links sobre fundos que já eram escuros (header, popups, dropdowns):
+       herdam o branco do contexto em vez de forçar o azul. */
+    html.jp-site-dark-active .header a:not(.btn):not(.header__logo):not(.gallery-photo__frame),
+    html.jp-site-dark-active .gallery-photo__popup a:not(.btn):not(.header__logo):not(.gallery-photo__frame),
+    html.jp-site-dark-active #quicksearch-dropdown a:not(.btn):not(.header__logo):not(.gallery-photo__frame),
+    html.jp-site-dark-active #overlay a:not(.btn):not(.header__logo):not(.gallery-photo__frame),
+    html.jp-site-dark-active .loader__mobile a:not(.btn):not(.header__logo):not(.gallery-photo__frame) { color:inherit !important; }
+    /* Submenu desktop (era #fefefe). */
+    html.jp-site-dark-active ul.nav-desktop__list--submenu { background-color:#2b2d31 !important; border-color:#3a3d43 !important; }
+    /* Textos da galeria + rótulos de formulário. */
+    html.jp-site-dark-active .gallery-photo__info,
+    html.jp-site-dark-active .gallery-photo__text { color:#e8e8e8 !important; }
+    html.jp-site-dark-active label.form__label { color:#b0b0b0 !important; }
+    /* Campos: wrappers brancos + os inputs. */
+    html.jp-site-dark-active .input-wrapper,
+    html.jp-site-dark-active #header__searchBoxInputWrapper { background-color:#2b2d31 !important; border-color:#4b4e55 !important; }
+    html.jp-site-dark-active input[type="text"],
+    html.jp-site-dark-active input[type="search"],
+    html.jp-site-dark-active input[type="email"],
+    html.jp-site-dark-active input[type="password"],
+    html.jp-site-dark-active input[type="url"],
+    html.jp-site-dark-active input[type="number"],
+    html.jp-site-dark-active input[type="tel"],
+    html.jp-site-dark-active .input-wrapper__field,
+    html.jp-site-dark-active .header__searchBoxInput,
+    html.jp-site-dark-active textarea { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#4b4e55 !important; }
+    html.jp-site-dark-active input::placeholder,
+    html.jp-site-dark-active textarea::placeholder { color:#8e8e8e !important; opacity:1 !important; }
+    /* Selects (busca avançada etc.) + as opções. */
+    html.jp-site-dark-active select,
+    html.jp-site-dark-active .select__control { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#4b4e55 !important; }
+    html.jp-site-dark-active option,
+    html.jp-site-dark-active optgroup { background-color:#2b2d31 !important; color:#e8e8e8 !important; }
+    /* Botões genéricos claros viram escuros; o azul picton e o transparente
+       ficam intactos (já funcionam no escuro). */
+    html.jp-site-dark-active .btn:not(.btn--picton-blue):not(.btn--transparent) { background-color:#3a3d43 !important; color:#e8e8e8 !important; border-color:#4b4e55 !important; }
+    /* Shares mantêm a cor de marca; só garante o texto branco. */
+    html.jp-site-dark-active .resp-sharing-button a { color:#ffffff !important; }
+    /* Setas do carrossel: gradiente claro -> escuro (mesma direção). */
+    html.jp-site-dark-active .slick-prev { background-image:linear-gradient(90deg, #202124 0px, rgba(32,33,36,0)) !important; }
+    html.jp-site-dark-active .slick-next { background-image:linear-gradient(90deg, rgba(32,33,36,0), #202124) !important; }
+    /* Alertas: info azul + erro de login. */
+    html.jp-site-dark-active #alert-email-verification { background-color:#16324a !important; color:#a8d4f5 !important; border-color:#1e659f !important; }
+    html.jp-site-dark-active .alert__content { color:#a8d4f5 !important; }
+    html.jp-site-dark-active #login-form__failed-login { background-color:#3d2223 !important; color:#f2b8b5 !important; }
+    /* Modal de login. */
+    html.jp-site-dark-active .modal { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
+    /* Rodapé. */
+    html.jp-site-dark-active footer { background-color:#17181c !important; color:#cfcfcf !important; }
+    html.jp-site-dark-active .footer__seperator { background-color:#3a3d43 !important; }
+    /* Aba ativa do seletor + painéis de busca avançada. */
+    html.jp-site-dark-active .bigbox-selector__tab--active { background-color:#2b2d31 !important; color:#e8e8e8 !important; }
+    html.jp-site-dark-active .form--searchAdvanced,
+    html.jp-site-dark-active .form--searchAdvancedMulti { background-color:#26272b !important; color:#e8e8e8 !important; }
+    /* Tabelas genéricas: só a borda (fundo transparente mostra a página). */
+    html.jp-site-dark-active table,
+    html.jp-site-dark-active th,
+    html.jp-site-dark-active td { border-color:#3a3d43 !important; }
+    html.jp-site-dark-active th { color:#f2f2f2 !important; }
+    html.jp-site-dark-active hr { border-color:#3a3d43 !important; background-color:#3a3d43 !important; }
+    /* Home: coluna lateral + cards do carrossel de perfis. */
+    html.jp-site-dark-active .index-col { background-color:#26272b !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
+    html.jp-site-dark-active .slick-profile__layout { background-color:#2b2d31 !important; color:#e8e8e8 !important; }
+    html.jp-site-dark-active .slick-profile__layout span { color:#e8e8e8 !important; }
+    /* Perfil: nome sobre a foto de capa fica branco (o "a" no seletor
+       empata a especificidade com a regra genérica de links e vence por vir
+       depois — sem ele, o nome continuaria azul). */
+    html.jp-site-dark-active a.hero__profile-name-link { color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; }
+    /* Área de membros: painel das abas + botões das abas (mesmo motivo do
+       "a" acima nas cores; fundo/borda não competem com regra genérica). */
+    html.jp-site-dark-active .tabnav__content { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
+    html.jp-site-dark-active .tabnav__btn { background-color:#2b2d31 !important; border-color:#3a3d43 !important; }
+    html.jp-site-dark-active a.tabnav__btn { color:#e8e8e8 !important; }
+    html.jp-site-dark-active .tabnav__btn--active { background-color:#3a3d43 !important; }
+    html.jp-site-dark-active a.tabnav__btn--active { color:#ffffff !important; }
+    /* Upload: dropdowns Chosen + pílulas de checkbox/radio. A pílula ativa
+       ganha borda azul pra não perder a distinção (o tema uniformiza bg). */
+    html.jp-site-dark-active .chosen-drop { background-color:#2b2d31 !important; border-color:#4b4e55 !important; }
+    html.jp-site-dark-active .chosen-results li { color:#e8e8e8 !important; }
+    html.jp-site-dark-active .chosen-results li.highlighted { background-color:#1e659f !important; color:#ffffff !important; }
+    html.jp-site-dark-active .checkbox,
+    html.jp-site-dark-active .radio__pill { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#4b4e55 !important; }
+    html.jp-site-dark-active .radio__pill--active { border-color:#2c94e8 !important; }
+    html.jp-site-dark-active .checkbox span,
+    html.jp-site-dark-active .checkbox label,
+    html.jp-site-dark-active .radio__pill span,
+    html.jp-site-dark-active .radio__pill label { color:#e8e8e8 !important; }
+    /* Paginação (álbum, /new, resultados...): caixas brancas viram escuras;
+       o número segue azul (regra genérica), legível no escuro. */
+    html.jp-site-dark-active a.paging__pager { background-color:#2b2d31 !important; border-color:#3a3d43 !important; color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; }
+    /* Página atual da paginação: destaque azul. A sonda mostrou que a
+       atual é a.paging__pager.paging__pager--active — o seletor leva o "a"
+       junto pra ganhar da regra geral no desempate de especificidade. */
+    html.jp-site-dark-active a.paging__pager.paging__pager--active,
+    html.jp-site-dark-active a.paging__pager[aria-current],
+    html.jp-site-dark-active span.paging__pager { background-color:#2c94e8 !important; border-color:#2c94e8 !important; color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; }
+    /* Graficos Highcharts (perfil, stats...): textos SVG usam fill, nao
+       color — a base clareia tudo (eixos, legenda, rotulos, mapa) e o
+       titulo ganha branco. */
+    html.jp-site-dark-active .highcharts-container text { fill:#c3c9d2 !important; }
+    html.jp-site-dark-active .highcharts-title { fill:#f2f2f2 !important; }
+    /* Rotulos dos graficos (ex: nomes na pizza): o Highcharts poe halo
+       branco pra contraste — no escuro, texto interno 100% preto com
+       halo branco (legível na pizza azul e no fundo escuro). */
+    html.jp-site-dark-active .highcharts-data-label text { fill:#000000 !important; stroke:#ffffff !important; paint-order:stroke !important; }
+    /* Barra de filtros dos resultados (contagem, Modify search, Sort by). */
+    html.jp-site-dark-active .show-photos-header { background-color:#26272b !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
+    html.jp-site-dark-active .show-photos-header span { color:#e8e8e8 !important; }
+    /* Cards de badges + nomes (as imagens dos badges ficam intactas). */
+    html.jp-site-dark-active .badge-overview__frame { background-color:#2b2d31 !important; color:#e8e8e8 !important; border-color:#3a3d43 !important; }
+    html.jp-site-dark-active .badge-overview__frame span { color:#e8e8e8 !important; }
+    /* Títulos avulsos com cor escura explícita (ex: upload guidelines). */
+    html.jp-site-dark-active .title { color:#f2f2f2 !important; }
+    /* Album/Like/Share (resultados + foto): cinza claro nos rótulos e
+       ícones; branco no hover; VERDE no Like curtido (rótulo nas regras
+       acima; ícone: matriz SVG constante no tom exato, regra abaixo).
+       brightness(0) zera a cor original e invert(0.78) chega no cinza
+       claro. Os seletores pegam o ícone em qualquer profundidade (o site
+       remonta a estrutura no toggle), ::before/::after do link e do rótulo
+       — i/svg vão por cor/fill exatas, o resto por filtro (todos
+       idempotentes, então aninhamento não duplica o efeito). Opacidade 1
+       pra o tom não variar.
+       Modo claro: intocado (escopo dark). */
+    html.jp-site-dark-active a.social__link,
+    html.jp-site-dark-active a.social__link .social__text { color:#c3c9d2 !important; -webkit-text-fill-color:#c3c9d2 !important; }
+    html.jp-site-dark-active a.social__link :not(.social__text):not(:has(.social__text)):not(i):not(svg),
+    html.jp-site-dark-active a.social__link::before,
+    html.jp-site-dark-active a.social__link::after,
+    html.jp-site-dark-active a.social__link .social__text::before,
+    html.jp-site-dark-active a.social__link .social__text::after { filter:brightness(0) invert(0.78) !important; opacity:1 !important; }
+    html.jp-site-dark-active a.social__link > i,
+    html.jp-site-dark-active a.social__link > svg,
+    html.jp-site-dark-active a.social__link .social__text > i,
+    html.jp-site-dark-active a.social__link .social__text > svg { color:#c3c9d2 !important; fill:#c3c9d2 !important; }
+    /* Hover branco (ícones) só com mouse de verdade: no touch o :hover
+       gruda após o toque e o ícone ficaria branco em vez de cinza. */
+    @media (hover:hover) and (pointer:fine) {
+    html.jp-site-dark-active a.social__link:hover :not(.social__text):not(:has(.social__text)):not(i):not(svg),
+    html.jp-site-dark-active a.social__link:hover::before,
+    html.jp-site-dark-active a.social__link:hover::after,
+    html.jp-site-dark-active a.social__link:hover .social__text::before,
+    html.jp-site-dark-active a.social__link:hover .social__text::after { filter:brightness(0) invert(1) !important; opacity:1 !important; }
+    html.jp-site-dark-active a.social__link:hover > i,
+    html.jp-site-dark-active a.social__link:hover > svg,
+    html.jp-site-dark-active a.social__link:hover .social__text > i,
+    html.jp-site-dark-active a.social__link:hover .social__text > svg { color:#ffffff !important; fill:#ffffff !important; }
     }
-    return { s, l };
+    /* Verde EXATO do curtido = mesmo tom do rótulo (#3ddc84): matriz
+       constante, idempotente — qualquer profundidade, ::before/::after do
+       link e do rótulo, qualquer formato. */
+    html.jp-site-dark-active a.social__link.social__link--like.social__link--active :not(.social__text):not(:has(.social__text)),
+    html.jp-site-dark-active a.social__link.social__link--like.social__link--active::before,
+    html.jp-site-dark-active a.social__link.social__link--like.social__link--active::after,
+    html.jp-site-dark-active a.social__link.social__link--like.social__link--active .social__text::before,
+    html.jp-site-dark-active a.social__link.social__link--like.social__link--active .social__text::after { filter:url(#jp-green-dark) !important; opacity:1 !important; }
+    /* Joinha injetado pela extensão nos cards do layout mobile: o arquivo
+       é preto — branco (apagado) no escuro quando não-curtido, VERDE quando
+       curtido. Modo claro: verde escuro quando curtido (regra no estilo
+       geral), senão o preto nativo com a opacidade .4/1. */
+    html.jp-site-dark-active .jp-mobile-like-btn img { filter:invert(1) !important; }
+    html.jp-site-dark-active .jp-mobile-like-btn.jp-mobile-like-btn--liked img { filter:url(#jp-green-dark) !important; }
+    /* Ícones de câmera do perfil (trocar avatar/capa): brancos no escuro.
+       Vale só nas páginas de fotógrafo (jp-on-profile). Cobre fonte de
+       ícone, SVG e imagem (brightness zera a cor, invert vira branco). */
+    html.jp-site-dark-active.jp-on-profile i[class*=camera i],
+    html.jp-site-dark-active.jp-on-profile svg[class*=camera i],
+    html.jp-site-dark-active.jp-on-profile span[class*=camera i] { color:#ffffff !important; fill:#ffffff !important; }
+    html.jp-site-dark-active.jp-on-profile img[src*=camera i] { filter:brightness(0) invert(1) !important; }
+    /* Menu lateral mobile (hambúrguer): fundo escuro + links claros. */
+    html.jp-site-dark-active .header__extended-section--navigation { background-color:#26272b !important; }
+    html.jp-site-dark-active .header__extended-section--navigation span { color:#e8e8e8 !important; }
+    html.jp-site-dark-active a.nav__link { color:#2c94e8 !important; -webkit-text-fill-color:#2c94e8 !important; }
+  `;
+
+  function ensureSiteDarkThemeStyle() {
+    if (document.getElementById(SITE_DARK_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = SITE_DARK_STYLE_ID;
+    style.textContent = SITE_DARK_THEME_CSS;
+    (document.head || document.documentElement).appendChild(style);
   }
 
-  // Considera transparente tanto a keyword quanto rgba(...,0).
-  function isTransparentColor(colorStr) {
-    if (!colorStr || colorStr === 'transparent') return true;
-    const m = colorStr.match(/rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\s*\)/);
-    return !!m && parseFloat(m[1]) === 0;
-  }
-
-  // Acima desse valor de saturação a cor é considerada "vívida/de marca"
-  // (ex: o azul do site, um badge dourado) — nunca é recolorida, fica
-  // exatamente como no site original.
-  const VIVID_SATURATION_THRESHOLD = 0.35;
-  function isVivid(hsl) {
-    return hsl.s >= VIVID_SATURATION_THRESHOLD && hsl.l > 0.12 && hsl.l < 0.9;
-  }
-
-  // Escolhe a cor de fundo escura equivalente pra uma luminosidade clara
-  // original. Retorna null se não precisa mexer (já é escuro o bastante,
-  // ou está numa faixa ambígua — melhor não tocar do que arriscar).
-  function mapBgColor(l) {
-    if (l >= 0.85) return DARK_PALETTE.bgBase;
-    if (l >= 0.6) return DARK_PALETTE.bgElevated;
-    return null;
-  }
-
-  // Idem para bordas (mesma lógica, cor um pouco mais clara que o fundo
-  // pra continuar visível como divisor).
-  function mapBorderColor(l) {
-    if (l >= 0.6) return DARK_PALETTE.border;
-    return null;
-  }
-
-  // Escolhe a cor de texto clara equivalente pra uma luminosidade escura
-  // original. Preserva a hierarquia visual: texto quase-preto (principal)
-  // vira branco; texto cinza-médio (secundário/legenda) vira um cinza
-  // claro, não branco puro — assim continua parecendo "secundário".
-  function mapTextColor(l) {
-    if (l <= 0.15) return DARK_PALETTE.textPrimary;
-    // Limite subido de 0.45 -> 0.7: cinzas médios (ex: texto de menus como
-    // "Profile/Photos/Change password/Log out", em torno de l≈0.48) ficavam
-    // de fora dessa faixa e não eram tocados, sobrando com baixo contraste
-    // sobre o novo fundo escuro (o "meio cinza" ilegível reportado). Esses
-    // cinzas foram pensados pra contrastar com fundo claro, então qualquer
-    // coisa até bem perto de branco (l<=0.7) ainda precisa ser clareada.
-    if (l <= 0.7) return DARK_PALETTE.textSecondary;
-    return null;
-  }
-
-  // Elementos que já recebemos recoloração, marcados por propriedade —
-  // permite reverter (tirar o modo escuro do site) removendo só o que a
-  // própria extensão adicionou, sem mexer em mais nada.
-  const darkTouched = new Set();
-
-  // Ícones "-black" (Album/Like/Share e outros da mesma família, ex. na
-  // seção Photo Administration): são <img> apontando pra um .svg/.png/.gif
-  // com o glifo pintado de preto fixo no próprio arquivo. Como são <img>
-  // (não SVG inline), a regra "nunca mexe em imagem" da recoloração normal
-  // os deixa pretos-sobre-fundo-escuro, ou seja, invisíveis — foi o que
-  // apareceu no print. O nome do arquivo já indica que é uma versão
-  // monocromática fixa, então é seguro (e só nesse caso) inverter a cor
-  // via filter, sem correr o risco de estragar uma foto de verdade.
-  const BLACK_ICON_SRC_RE = /-black\.(svg|png|gif)(\?.*)?$/i;
-  function isBlackIconImg(el) {
-    return el.tagName === 'IMG' && BLACK_ICON_SRC_RE.test(el.currentSrc || el.src || '');
-  }
-
-  function recolorElement(el) {
-    // Nunca mexe nas UIs próprias da extensão. Elas têm regras de tema
-    // próprias e não devem passar pelo recolor genérico do site.
-    // Em especial, o estimador da fila é reconstruído durante atualizações
-    // de dados; se o observer de dark mode recolorisse seus <td>s depois da
-    // reconstrução, haveria um flash branco antes do próximo scan.
-    if (el.closest('#jp-like-context-widget, #jp-plus-submenu, #jp-plus-launcher-host, #jp-site-queue-tracker, .' + MOBILE_LIKE_BTN_CLASS)) return;
-
-    // Ícones pretos fixos (Album/Like/Share etc.): inverte pra virar
-    // branco sobre o novo fundo escuro. Não passa pelo resto da função
-    // (background/texto/borda não fazem sentido pra esse tipo de <img>).
-    if (isBlackIconImg(el)) {
-      el.style.setProperty('filter', 'invert(1) brightness(1.1)', 'important');
-      el.dataset.jpDarkFilter = '1';
-      darkTouched.add(el);
-      el.dataset.jpDarkScanned = '1';
-      return;
-    }
-
-    const computed = getComputedStyle(el);
-
-    // Fundo (pula elementos com imagem de fundo — texturas/fotos não
-    // devem ser tocadas, e a cor de fundo por trás delas é irrelevante).
-    const bgImage = computed.backgroundImage;
-    if (!bgImage || bgImage === 'none' || !bgImage.includes('url(')) {
-      const bgColor = computed.backgroundColor;
-      if (!isTransparentColor(bgColor)) {
-        const hsl = getHSL(bgColor);
-        if (hsl && !isVivid(hsl)) {
-          const newBg = mapBgColor(hsl.l);
-          if (newBg) {
-            el.style.setProperty('background-color', newBg, 'important');
-            el.dataset.jpDarkBg = '1';
-            darkTouched.add(el);
-          }
-        }
-      }
-    }
-
-    // Texto
-    const hslText = getHSL(computed.color);
-    if (hslText && !isVivid(hslText)) {
-      const newColor = mapTextColor(hslText.l);
-      if (newColor) {
-        el.style.setProperty('color', newColor, 'important');
-        el.dataset.jpDarkText = '1';
-        darkTouched.add(el);
-      }
-    }
-
-    // Borda (divisores/cards costumam usar border-color clara)
-    const borderColor = computed.borderTopColor;
-    if (!isTransparentColor(borderColor)) {
-      const hslBorder = getHSL(borderColor);
-      if (hslBorder && !isVivid(hslBorder)) {
-        const newBorder = mapBorderColor(hslBorder.l);
-        if (newBorder) {
-          el.style.setProperty('border-color', newBorder, 'important');
-          el.dataset.jpDarkBorder = '1';
-          darkTouched.add(el);
-        }
-      }
-    }
-
-    el.dataset.jpDarkScanned = '1';
-  }
-
-  // Varre o DOM recolorindo cada elemento ainda não visto. Roda de novo
-  // (via observer/debounce) sempre que o DOM muda, então elementos que
-  // aparecem depois (lazy-load, paginação AJAX, filtros) são pegos
-  // naturalmente — sem depender de "adivinhar" o momento certo.
-  function scanAndRecolor(root) {
-    if (!currentSettings.siteDarkMode) return;
-    const scope = root && root.querySelectorAll ? root : document;
-    const elements = scope === document ? document.body.querySelectorAll('*') : scope.querySelectorAll('*');
-    elements.forEach(el => {
-      if (el.dataset.jpDarkScanned === '1') return;
-      recolorElement(el);
+  // Tabelas nativas do site (fila, photostats, Period Totals...): marca
+  // pra herdar o zebra escuro. Sem isso, fileiras brancas do zebra original
+  // ficam com texto claro (ilegível). Roda no init e no toggle.
+  function tagNativeTablesForDark() {
+    document.querySelectorAll('table:not(.jp-plus-queue-table)').forEach(table => {
+      table.classList.add('jp-plus-dark-native-table');
     });
-  }
-
-  // Desfaz toda a recoloração aplicada, sem precisar recarregar a página.
-  function revertRecoloring() {
-    darkTouched.forEach(el => {
-      if (el.dataset.jpDarkBg === '1') { el.style.removeProperty('background-color'); delete el.dataset.jpDarkBg; }
-      if (el.dataset.jpDarkText === '1') { el.style.removeProperty('color'); delete el.dataset.jpDarkText; }
-      if (el.dataset.jpDarkBorder === '1') { el.style.removeProperty('border-color'); delete el.dataset.jpDarkBorder; }
-      if (el.dataset.jpDarkFilter === '1') { el.style.removeProperty('filter'); delete el.dataset.jpDarkFilter; }
-      delete el.dataset.jpDarkScanned;
-    });
-    darkTouched.clear();
   }
 
   function applySiteDarkMode(isOn) {
-    document.documentElement.classList.toggle(SITE_DARK_HTML_CLASS, isOn);
     if (isOn) {
-      scanAndRecolor(document);
-    } else {
-      revertRecoloring();
+      ensureSiteDarkThemeStyle();
+      tagNativeTablesForDark();
     }
+    document.documentElement.classList.toggle(SITE_DARK_HTML_CLASS, isOn);
+    document.documentElement.classList.toggle('jp-on-profile', location.pathname.startsWith('/photographer'));
+    repaintLikeIcons(); // re-tinta no tom do tema (o inline guarda a url do tema anterior)
   }
-
-  // Debounce pra reescanear quando o DOM muda (lazy-load, paginação AJAX,
-  // filtros de busca aplicados sem reload, etc).
-  const RECOLOR_DEBOUNCE_MS = 400;
-  let recolorTimer = null;
-  function scheduleRecolor() {
-    if (!currentSettings.siteDarkMode) return;
-    clearTimeout(recolorTimer);
-    recolorTimer = setTimeout(() => scanAndRecolor(document), RECOLOR_DEBOUNCE_MS);
-  }
-
-  let siteDarkObserverStarted = false;
-  function startBgObserverIfNeeded() {
-    if (siteDarkObserverStarted || !currentSettings.siteDarkMode) return;
-    siteDarkObserverStarted = true;
-    scanAndRecolor(document);
-    const observer = new MutationObserver(() => scheduleRecolor());
-    observer.observe(document.body, { childList: true, subtree: true });
-  }
-  // >>> FIM DO BLOCO EXPERIMENTAL <<<
   // =======================================================================
   // Painel principal
   // ---------------------------------------------------------------------
   let panelEl = null;
-  let likeWidgetEl = null;
   let settingsMenuEl = null;
   let settingsPanelEl = null;
+  let launcherHostEl = null;
+  let mobileHostEl = null;
+  let fabModeActive = false;
   let currentSettings = { siteDarkMode: false, queueEstimatorEnabled: true, language: 'pt-BR' };
 
   function buildToggleSwitch(initialOn, onChange) {
@@ -1507,10 +1715,42 @@
 
     const inner = document.createElement('div');
     inner.style.cssText = `
-      margin-top:14px; padding-top:14px;
-      border-top:1px solid var(--jp-border);
-      display:flex; flex-direction:column; gap:16px;
+      padding-top:6px; padding-bottom:4px;
+      display:flex; flex-direction:column; gap:18px;
     `;
+
+    // --- Rótulo "Geral" (sem divisor: é a primeira seção) ---
+    const generalHeader = document.createElement('div');
+    generalHeader.style.cssText = `
+      margin-top:0; padding-top:2px;
+      font-family:Arial,Helvetica,sans-serif; font-size:11px; font-weight:600;
+      letter-spacing:.6px; text-transform:uppercase; color:var(--jp-subtext);
+    `;
+    generalHeader.textContent = t('settingsGeneral');
+    inner.appendChild(generalHeader);
+
+    // --- Linha: idioma ---
+    const languageRow = document.createElement('div');
+    languageRow.style.cssText = `display:flex; align-items:center; justify-content:space-between; gap:12px; min-width:0; width:100%; box-sizing:border-box;`;
+
+    const languageLabel = document.createElement('div');
+    languageLabel.style.cssText = `font-family:Arial,Helvetica,sans-serif; font-size:14px; color:var(--jp-text); line-height:1.4; min-width:0; flex:1 1 auto; overflow-wrap:anywhere; word-break:normal;`;
+    languageLabel.innerHTML = `${t('language')}<br><span style="font-size:12px; color:var(--jp-subtext);">${t('languageHelp')}</span>`;
+
+    const languageSelect = document.createElement('select');
+    languageSelect.id = 'jp-language-select';
+    languageSelect.style.cssText = `font-family:Arial,Helvetica,sans-serif; font-size:13px; color:var(--jp-text); background:var(--jp-bg); border:1px solid var(--jp-border); border-radius:6px; padding:6px 8px; cursor:pointer;`;
+    languageSelect.innerHTML = `<option value="pt-BR">${t('portugueseBrazil')}</option><option value="en">${t('english')}</option>`;
+    languageSelect.value = currentSettings.language;
+    languageSelect.addEventListener('change', () => {
+      currentSettings.language = languageSelect.value === 'en' ? 'en' : 'pt-BR';
+      setLanguage(currentSettings.language);
+      location.reload();
+    });
+
+    languageRow.appendChild(languageLabel);
+    languageRow.appendChild(languageSelect);
+    inner.appendChild(languageRow);
 
     // --- Divisor + rótulo "Experimental" ---
     const experimentalHeader = document.createElement('div');
@@ -1541,8 +1781,8 @@
       applySiteDarkMode(isOn);
       if (panelEl) panelEl.classList.toggle('jp-dark', isOn);
       if (settingsPanelEl) settingsPanelEl.classList.toggle('jp-dark', isOn);
-      if (likeWidgetEl) likeWidgetEl.classList.toggle('jp-dark', isOn);
-      if (isOn) startBgObserverIfNeeded();
+      document.getElementById('jp-plus-mobile-submenu')?.classList.toggle('jp-dark', isOn);
+      if (mobileHostEl) mobileHostEl.classList.toggle('jp-dark', isOn);
     });
 
     siteDarkRow.appendChild(siteDarkLabel);
@@ -1575,28 +1815,6 @@
     queueEstRow.appendChild(queueEstToggle);
     inner.appendChild(queueEstRow);
 
-    // --- Linha: idioma ---
-    const languageRow = document.createElement('div');
-    languageRow.style.cssText = `display:flex; align-items:center; justify-content:space-between; gap:12px; min-width:0; width:100%; box-sizing:border-box;`;
-
-    const languageLabel = document.createElement('div');
-    languageLabel.style.cssText = `font-family:Arial,Helvetica,sans-serif; font-size:14px; color:var(--jp-text); line-height:1.4; min-width:0; flex:1 1 auto; overflow-wrap:anywhere; word-break:normal;`;
-    languageLabel.innerHTML = `${t('language')}<br><span style="font-size:12px; color:var(--jp-subtext);">${t('languageHelp')}</span>`;
-
-    const languageSelect = document.createElement('select');
-    languageSelect.id = 'jp-language-select';
-    languageSelect.style.cssText = `font-family:Arial,Helvetica,sans-serif; font-size:13px; color:var(--jp-text); background:var(--jp-bg); border:1px solid var(--jp-border); border-radius:6px; padding:6px 8px; cursor:pointer;`;
-    languageSelect.innerHTML = `<option value="pt-BR">${t('portugueseBrazil')}</option><option value="en">${t('english')}</option>`;
-    languageSelect.value = currentSettings.language;
-    languageSelect.addEventListener('change', () => {
-      currentSettings.language = languageSelect.value === 'en' ? 'en' : 'pt-BR';
-      setLanguage(currentSettings.language);
-      location.reload();
-    });
-
-    languageRow.appendChild(languageLabel);
-    languageRow.appendChild(languageSelect);
-    inner.appendChild(languageRow);
 
     menu.appendChild(inner);
 
@@ -1669,20 +1887,167 @@
     host.style.lineHeight = launcher.style.lineHeight;
   }
 
-  function installSettingsOutsideClick() {
-    if (document.documentElement.dataset.jpSettingsOutsideClick === '1') return;
-    document.documentElement.dataset.jpSettingsOutsideClick = '1';
-    document.addEventListener('click', event => {
-      const host = document.getElementById('jp-plus-launcher-host');
-      if (!host || !host.classList.contains('jp-settings-open')) return;
-      if (host.contains(event.target)) return;
-      host.classList.remove('jp-settings-open');
-    }, true);
+  // Constrói o menu de configs uma vez só, onde quer que o painel esteja.
+  function ensureSettingsMenu() {
+    if (!settingsMenuEl && settingsPanelEl) {
+      const body = settingsPanelEl.querySelector('.jp-settings-body');
+      if (body) {
+        body.appendChild(buildSettingsMenu());
+        settingsMenuEl = body.firstElementChild;
+      }
+    }
+  }
+
+  function updateBackdrop() {
+    const backdrop = document.getElementById('jp-plus-backdrop');
+    if (!backdrop) return;
+    const open = (launcherHostEl?.classList.contains('jp-settings-open') ||
+      mobileHostEl?.classList.contains('jp-settings-open') ||
+      mobileHostEl?.classList.contains('jp-mobile-menu-open'));
+    backdrop.classList.toggle('jp-backdrop-show', !!open);
+  }
+
+  function setSettingsOpen(open) {
+    const host = fabModeActive && mobileHostEl ? mobileHostEl : launcherHostEl;
+    if (launcherHostEl) launcherHostEl.classList.remove('jp-settings-open');
+    if (mobileHostEl) mobileHostEl.classList.remove('jp-settings-open');
+    if (open && host) host.classList.add('jp-settings-open');
+    updateBackdrop();
+  }
+
+  // Docagem do FAB: ao fechar o menu, o botão fica visível por um instante
+  // e depois volta sozinho pra lateral (meio escondido + translúcido).
+  let fabDockTimer = null;
+  function scheduleFabDock() {
+    if (!mobileHostEl || typeof window === 'undefined') return;
+    if (fabDockTimer) window.clearTimeout(fabDockTimer);
+    fabDockTimer = window.setTimeout(() => {
+      fabDockTimer = null;
+      if (mobileHostEl && !mobileHostEl.classList.contains('jp-mobile-menu-open')) mobileHostEl.classList.add('jp-fab-docked');
+    }, 1400);
+  }
+  function undockFab() {
+    if (fabDockTimer && typeof window !== 'undefined') { window.clearTimeout(fabDockTimer); fabDockTimer = null; }
+    if (mobileHostEl) mobileHostEl.classList.remove('jp-fab-docked');
+  }
+  function setMobileMenuOpen(open) {
+    if (!mobileHostEl) return;
+    if (open) {
+      if (launcherHostEl) launcherHostEl.classList.remove('jp-settings-open');
+      mobileHostEl.classList.remove('jp-settings-open');
+    }
+    mobileHostEl.classList.toggle('jp-mobile-menu-open', open);
+    if (open) undockFab();
+    else scheduleFabDock();
+    updateBackdrop();
+  }
+
+  function closeAllPlus() {
+    if (launcherHostEl) launcherHostEl.classList.remove('jp-settings-open');
+    if (mobileHostEl) {
+      mobileHostEl.classList.remove('jp-settings-open');
+      mobileHostEl.classList.remove('jp-mobile-menu-open');
+    }
+    scheduleFabDock();
+    updateBackdrop();
+  }
+
+  // Modo FAB: o launcher do header não está visível (layout mobile), então
+  // o painel de configs mora no host mobile. Reavaliado no resize.
+  function applyFabMode() {
+    if (!launcherHostEl || !mobileHostEl || !settingsPanelEl) return;
+    const fab = launcherHostEl.offsetParent === null;
+    fabModeActive = fab;
+    mobileHostEl.style.display = fab ? '' : 'none';
+    const target = fab ? mobileHostEl : launcherHostEl;
+    if (settingsPanelEl.parentElement !== target) target.appendChild(settingsPanelEl);
+    const wasOpen = (launcherHostEl.classList.contains('jp-settings-open') ||
+      mobileHostEl.classList.contains('jp-settings-open'));
+    launcherHostEl.classList.remove('jp-settings-open');
+    mobileHostEl.classList.remove('jp-settings-open');
+    if (wasOpen) target.classList.add('jp-settings-open');
+    if (!fab) mobileHostEl.classList.remove('jp-mobile-menu-open');
+    updateBackdrop();
+  }
+
+  let fabResizeTimer = null;
+  function installFabModeWatcher() {
+    if (document.documentElement.dataset.jpFabWatcher === '1') return;
+    document.documentElement.dataset.jpFabWatcher = '1';
+    window.addEventListener('resize', () => {
+      clearTimeout(fabResizeTimer);
+      fabResizeTimer = setTimeout(applyFabMode, 200);
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') closeAllPlus();
+    });
+  }
+
+  // Host mobile: FAB redondo com a logo + submenu igual ao do PC. O painel
+  // de configs (único) muda pra cá quando o modo FAB está ativo.
+  function buildMobileHost() {
+    document.querySelectorAll('#jp-plus-mobile-host').forEach(el => el.remove());
+    let backdrop = document.getElementById('jp-plus-backdrop');
+    if (!backdrop) {
+      backdrop = document.createElement('button');
+      backdrop.type = 'button';
+      backdrop.id = 'jp-plus-backdrop';
+      backdrop.setAttribute('tabindex', '-1');
+      backdrop.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(backdrop);
+      backdrop.addEventListener('click', () => closeAllPlus());
+    }
+    const mhost = document.createElement('div');
+    mhost.id = 'jp-plus-mobile-host';
+    mhost.style.display = 'none';
+    const fab = document.createElement('button');
+    fab.type = 'button';
+    fab.id = 'jp-plus-mobile-fab';
+    fab.setAttribute('aria-label', t('settings'));
+    fab.title = 'JetPhotos+';
+    const logo = document.createElement('img');
+    logo.src = chrome.runtime.getURL('icons/logo.png');
+    logo.alt = '';
+    logo.setAttribute('aria-hidden', 'true');
+    fab.appendChild(logo);
+    fab.addEventListener('click', event => {
+      event.stopPropagation();
+      const anyOpen = mhost.classList.contains('jp-mobile-menu-open') || mhost.classList.contains('jp-settings-open');
+      if (anyOpen) closeAllPlus();
+      else setMobileMenuOpen(true);
+    });
+    const submenu = document.createElement('div');
+    submenu.id = 'jp-plus-mobile-submenu';
+    submenu.setAttribute('role', 'menu');
+    submenu.innerHTML = `
+      <a href="https://github.com/samuelffer/jetphotosplus/releases" id="jp-plus-mobile-releases-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('viewReleases')}</a>
+      <a href="https://github.com/samuelffer/jetphotosplus/issues" id="jp-plus-mobile-issues-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('reportIssue')}</a>
+      <a href="https://samuelffer.github.io/jetphotosplus/" id="jp-plus-mobile-about-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('aboutJetPhotosPlus')}</a>
+      <a href="${DONATE_URL}" id="jp-plus-mobile-donate-link" role="menuitem" target="_blank" rel="noopener noreferrer">\u2665 ${t('donate')}</a>
+      <a href="#" id="jp-plus-mobile-settings-link" role="menuitem">${t('settings')}</a>
+    `;
+    if (currentSettings.siteDarkMode) submenu.classList.add('jp-dark');
+    if (currentSettings.siteDarkMode) mhost.classList.add('jp-dark');
+    submenu.querySelector('#jp-plus-mobile-settings-link').addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      ensureSettingsMenu();
+      setMobileMenuOpen(false);
+      setSettingsOpen(true);
+    });
+    const fabWrap = document.createElement('span');
+    fabWrap.id = 'jp-plus-mobile-fab-wrap';
+    fabWrap.appendChild(fab);
+    mhost.appendChild(fabWrap);
+    mhost.appendChild(submenu);
+    mhost.classList.add('jp-fab-docked');
+    document.body.appendChild(mhost);
+    mobileHostEl = mhost;
+    installFabModeWatcher();
   }
 
   function buildPanel(isPhotoContext, isQueueMode) {
     injectStyles();
-    installSettingsOutsideClick();
 
     const headerTarget = findHeaderIntegrationTarget();
     if (!headerTarget) {
@@ -1691,11 +2056,14 @@
     }
 
     document.querySelectorAll('#jp-plus-launcher-host').forEach(el => el.remove());
-    document.querySelectorAll('#jp-like-context-widget').forEach(el => el.remove());
+    document.querySelectorAll('#jp-like-widget-bubble').forEach(el => el.remove());
     document.querySelectorAll('#jp-plus-settings-panel').forEach(el => el.remove());
+    document.querySelectorAll('#jp-plus-mobile-host').forEach(el => el.remove());
+    mobileHostEl = null;
 
     const host = document.createElement(headerTarget.mode === 'account-list' ? 'li' : 'span');
     host.id = 'jp-plus-launcher-host';
+    launcherHostEl = host;
     if (headerTarget.mode === 'account-list') host.className = 'nav-desktop__item';
 
     const launcher = document.createElement('span');
@@ -1721,6 +2089,7 @@
       <a href="https://github.com/samuelffer/jetphotosplus/releases" id="jp-plus-releases-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('viewReleases')}</a>
       <a href="https://github.com/samuelffer/jetphotosplus/issues" id="jp-plus-issues-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('reportIssue')}</a>
       <a href="https://samuelffer.github.io/jetphotosplus/" id="jp-plus-about-link" role="menuitem" target="_blank" rel="noopener noreferrer">${t('aboutJetPhotosPlus')}</a>
+      <a href="${DONATE_URL}" id="jp-plus-donate-link" role="menuitem" target="_blank" rel="noopener noreferrer">\u2665 ${t('donate')}</a>
       <a href="#" id="jp-plus-settings-link" role="menuitem">${t('settings')}</a>
     `;
     if (currentSettings.siteDarkMode) submenu.classList.add('jp-dark');
@@ -1733,7 +2102,7 @@
     if (currentSettings.siteDarkMode) settingsPanel.classList.add('jp-dark');
     const settingsTitle = document.createElement('div');
     settingsTitle.className = 'jp-settings-title';
-    settingsTitle.innerHTML = `<button type="button" class="jp-settings-close" aria-label="${t('close')}">×</button>${t('settings')}`;
+    settingsTitle.innerHTML = `<span>${t('settings')}</span><button type="button" class="jp-settings-close" aria-label="${t('close')}">×</button>`;
     const settingsBody = document.createElement('div');
     settingsBody.className = 'jp-settings-body';
     settingsPanel.appendChild(settingsTitle);
@@ -1745,17 +2114,15 @@
     settingsLink.addEventListener('click', event => {
       event.preventDefault();
       event.stopPropagation();
-      if (!settingsMenuEl) {
-        settingsBody.appendChild(buildSettingsMenu());
-        settingsMenuEl = settingsBody.firstElementChild;
-      }
-      host.classList.add('jp-settings-open');
+      ensureSettingsMenu();
+      setSettingsOpen(true);
     });
 
     settingsTitle.querySelector('.jp-settings-close').addEventListener('click', event => {
       event.preventDefault();
       event.stopPropagation();
-      host.classList.remove('jp-settings-open');
+      setSettingsOpen(false);
+      if (fabModeActive) setMobileMenuOpen(true);
     });
 
     if (headerTarget.after && headerTarget.after.parentElement === headerTarget.container) {
@@ -1764,69 +2131,122 @@
       headerTarget.container.appendChild(host);
     }
     styleLauncherFromReference(launcher, host, headerTarget.reference, headerTarget.container);
+    buildMobileHost();
+    applyFabMode();
 
     panelEl = submenu;
 
-    // A ferramenta de curtidas não fica mais no submenu do header. Ela é
-    // contextual e aparece no canto inferior direito somente quando a página
-    // realmente contém fotos com ação de Like.
+    // A ferramenta de curtidas é a bolha no canto inferior direito — o único
+    // UI de likes, em qualquer tela. Ela só existe nas páginas que realmente
+    // contêm fotos com ação de Like.
     if (isPhotoContext && !isQueueMode) {
-      const widget = document.createElement('section');
-      widget.id = 'jp-like-context-widget';
-      widget.setAttribute('aria-label', t('likeWidgetLabel'));
-      if (currentSettings.siteDarkMode) widget.classList.add('jp-dark');
-      widget.innerHTML = `
-        <div class="jp-like-widget-main">
-          <div class="jp-like-widget-head">${t('likeWidgetLabel')}</div>
-          <div class="jp-like-widget-body">
-            <div class="jp-like-widget-status" id="jp-like-widget-status">${t('analyzing')}</div>
-            <div class="jp-like-widget-progress" id="jp-like-widget-progress" aria-hidden="true">
-              <div class="jp-like-widget-progress-bar" id="jp-like-widget-progress-bar"></div>
-            </div>
-            <div class="jp-like-widget-confirm" id="jp-like-widget-confirm" aria-live="polite"></div>
-          </div>
-        </div>
-        <button class="jp-like-widget-button" id="jp-like-all-btn" type="button">
-          <svg class="jp-like-widget-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.9c0 5.2-8.8 10.1-8.8 10.1S3.2 14.1 3.2 8.9A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
-          <span>${t('likeMissing').replace(' faltantes',' todas').replace(' missing photos',' all')}</span>
-          <svg class="jp-like-widget-chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-      `;
-      document.body.appendChild(widget);
-      likeWidgetEl = widget;
-    } else {
-      likeWidgetEl = null;
+      // Criada aqui pra já existir antes do primeiro refresh() tentar
+      // atualizar o contador.
+      const bubble = document.createElement('button');
+      bubble.type = 'button';
+      bubble.id = 'jp-like-widget-bubble';
+      bubble.title = t('likeMissing');
+      bubble.setAttribute('aria-label', t('analyzing'));
+      bubble.innerHTML = `
+        <span class="jp-bubble-ring-wrap" aria-hidden="true">
+          <svg class="jp-bubble-ring" viewBox="0 0 28 28"><circle class="jp-bubble-ring-track" cx="14" cy="14" r="12"></circle><circle class="jp-bubble-ring-fill" id="jp-bubble-ring-fill" cx="14" cy="14" r="12"></circle></svg>
+          <svg class="jp-bubble-thumb" viewBox="0 1 26 26"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg class="jp-bubble-check" viewBox="0 0 28 28"><circle cx="14" cy="14" r="13" fill="#22c55e"></circle><path d="M8.5 14.5l4 4L19.5 10" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span id="jp-like-widget-bubble-count">\u2026</span>
+        <span id="jp-like-widget-bubble-label" class="jp-bubble-label"></span>`;
+      bubble.addEventListener('click', () => {
+        // O toque curte tudo direto. Com leva em andamento, ignora; com a
+        // bolha verde (tudo curtido), avisa num toast em vez de calar.
+        if (isLiking) return;
+        if ((lastBubbleMissing ?? 0) <= 0) {
+          if (lastBubbleMissing !== null) showLikeToast(t('allLikedToast'));
+          return;
+        }
+        runLikeAllBatch();
+      });
+      document.body.appendChild(bubble);
     }
 
     settingsMenuEl = null;
     return true;
   }
 
+  // Última contagem vista pela bolha (null = ainda analisando). É o que o
+  // toque na bolha consulta pra decidir se há o que curtir.
+  let lastBubbleMissing = null;
+
+  // Atualiza o contador da bolha. null = ainda analisando (mostra …).
+  // Anel de progresso da bolha: 0 = vazio, 1 = fechado verde.
+  const BUBBLE_RING_C = 75.4; // 2π×12, mesmo r do círculo no SVG (ver CSS)
+  function setBubbleProgress(frac) {
+    const fill = document.getElementById('jp-bubble-ring-fill');
+    if (!fill) return;
+    const clamped = Math.max(0, Math.min(1, frac || 0));
+    // Esconde o arco zerado: com ponta redonda, um arco de comprimento 0
+    // ainda renderiza como um pontinho verde no topo do anel.
+    fill.style.opacity = clamped <= 0 ? '0' : '1';
+    fill.style.strokeDashoffset = String(BUBBLE_RING_C * (1 - clamped));
+  }
+
+  // Toast de aviso da bolha (ex: tudo já curtido). Um de cada vez: se já
+  // houver um visível, só troca o texto e reinicia o temporizador.
+  let likeToastTimer = null;
+  function showLikeToast(message) {
+    let toast = document.getElementById('jp-like-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'jp-like-toast';
+      toast.setAttribute('role', 'status');
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    // Recomeça a transição mesmo quando o toast já estava visível.
+    toast.classList.remove('jp-toast-show');
+    void toast.offsetWidth;
+    toast.classList.add('jp-toast-show');
+    clearTimeout(likeToastTimer);
+    likeToastTimer = setTimeout(() => toast.classList.remove('jp-toast-show'), 2500);
+  }
+
+  function updateBubble(missingOrNull) {
+    const bubble = document.getElementById('jp-like-widget-bubble');
+    const count = document.getElementById('jp-like-widget-bubble-count');
+    const label = document.getElementById('jp-like-widget-bubble-label');
+    if (!bubble || !count) return;
+    if (missingOrNull == null) {
+      lastBubbleMissing = null;
+      setBubbleProgress(0);
+      count.textContent = '\u2026';
+      bubble.classList.remove('jp-bubble-done');
+      bubble.setAttribute('aria-label', t('analyzing'));
+      if (label) { label.textContent = ''; label.style.display = 'none'; }
+      return;
+    }
+    lastBubbleMissing = missingOrNull;
+    const done = missingOrNull <= 0;
+    setBubbleProgress(done ? 1 : 0);
+    count.textContent = done ? '0' : String(missingOrNull);
+    bubble.classList.toggle('jp-bubble-done', done);
+    bubble.setAttribute('aria-label', done
+      ? (currentSettings.language === 'en' ? 'All liked!' : 'Tudo curtido!')
+      : `${missingOrNull} ${t('missing')}`);
+    bubble.title = done
+      ? (currentSettings.language === 'en' ? 'All liked!' : 'Tudo curtido!')
+      : t('likeMissing');
+    // Rótulo do desktop largo ("10 faltando"); some quando concluído (o selo basta).
+    if (label) {
+      label.textContent = done ? '' : t('missing');
+      label.style.display = done ? 'none' : '';
+    }
+  }
+
+  // Placar das curtidas: a bolha é o único mostrador, então é só alimentá-la.
   function updateStatus(cards, missing) {
-    // Durante a leva de curtidas, o observer pode detectar cada mutação do
-    // site. Não deixe esses refreshes sobrescreverem o contador X/Y.
+    // Durante a leva, o clickNext já atualiza a bolha a cada clique — não
+    // deixe esses refreshes brigarem com a contagem regressiva.
     if (isLiking) return;
-
-    const textEl = document.getElementById('jp-like-widget-status');
-    if (!textEl) return;
-
-    const likedCount = Math.max(0, cards.length - missing);
-    const html = !cards.length
-      ? t('noneFound')
-      : (currentSettings.language === 'en'
-          ? `${missing} ${t('missing')} / ${likedCount} ${t('liked')}`
-          : `${missing} ${t('missing')} / ${likedCount} ${t('liked')}`);
-
-    // Evita re-animar quando o texto não mudou (o observer roda com
-    // frequência e o conteúdo costuma ser o mesmo entre uma chamada e outra).
-    if (textEl.dataset.jpHtml === html) return;
-    textEl.dataset.jpHtml = html;
-
-    textEl.style.opacity = '0';
-    setTimeout(() => {
-      textEl.innerHTML = html;
-      textEl.style.opacity = '1';
-    }, 120);
+    updateBubble(cards.length ? missing : null);
   }
 
   function highlightCard(card, liked) {
@@ -1845,11 +2265,16 @@
   }
 
   let isRefreshing = false;
-  let likeConfirmationTimer = null;
-  let likeSafetyTimer = null;
 
   function refresh() {
     if (isRefreshing) return; // evita reentrância
+    // Durante a leva em massa, pula: cada confirmação de rede + cada mutação
+    // do site pediria uma varredura completa (getBoundingClientRect/
+    // getComputedStyle por card = reflow forçado), e no celular isso somava
+    // dezenas de reflows seguidos e travava a página. Cada joinha já se
+    // atualiza sozinho via syncPhotoVisualById (mirado, barato), e o fim da
+    // leva chama refresh() de novo pra assentar contador e realces.
+    if (isLiking) return null;
     isRefreshing = true;
 
     // Desliga o observer enquanto mexemos no DOM/estilo, e religa depois.
@@ -1871,10 +2296,13 @@
         // rede anterior não tenha atualizado ele por qualquer motivo.
         if (anchor?.classList?.contains(MOBILE_LIKE_BTN_CLASS)) {
           applyMobileButtonState(anchor, liked);
+        } else if (anchor) {
+          if (liked) forceLikedVisual(anchor); else revokeLikedVisual(anchor);
         }
         if (!liked) missing++;
       });
 
+      repaintLikeIcons();
       updateStatus(cards, missing);
       return { cards, missing };
     } catch (error) {
@@ -1917,7 +2345,7 @@
       .map(({ anchor }) => anchor);
 
     if (!targets.length) {
-      if (onDone) onDone();
+      if (onDone) onDone(0);
       return 0;
     }
 
@@ -1927,26 +2355,44 @@
       if (i >= targets.length) {
         isLiking = false;
         setTimeout(refresh, 500); // dá um tempo pro site atualizar o estado visual do último clique
-        if (onDone) onDone();
+        if (onDone) onDone(targets.length);
         return;
       }
-      targets[i].click();
-      i++;
-      const progressBarEl = document.getElementById('jp-like-widget-progress-bar');
-      const progressTextEl = document.getElementById('jp-like-widget-status');
-      if (progressBarEl) progressBarEl.style.width = `${Math.min(100, (i / targets.length) * 100)}%`;
-      if (progressTextEl) {
-        delete progressTextEl.dataset.jpHtml;
-        progressTextEl.textContent = currentSettings.language === 'en'
-          ? `Liking ${i}/${targets.length} photo(s)...`
-          : `Curtindo ${i}/${targets.length} foto(s)...`;
+      // Um .click() que lance (handler do próprio site) não pode quebrar a
+      // corrente da leva — essa foto fica pra próxima e o resto continua.
+      try {
+        targets[i].click();
+      } catch (clickError) {
+        console.error('[JetPhotos+] Clique ignorado (handler do site lançou):', clickError);
       }
+      i++;
+      updateBubble(targets.length - i);
+      setBubbleProgress(i / targets.length);
       const delay = LIKE_CLICK_DELAY_MS + Math.random() * LIKE_CLICK_JITTER_MS;
       setTimeout(clickNext, delay);
     }
     clickNext();
 
     return targets.length;
+  }
+
+  // Dispara a leva de "curtir faltantes" a partir da bolha. Todo o feedback
+  // é na própria bolha (contagem regressiva + anel + borda verde + selo).
+  function runLikeAllBatch() {
+    if (isLiking) return;
+    let total = 0;
+    try {
+      total = likeAllMissing(doneCount => {
+        // onDone: a leva terminou (doneCount=0 se não havia nada faltando).
+        updateBubble(0); // bolha vira só o selo verde (o refresh final confirma)
+        document.getElementById('jp-like-widget-bubble')?.classList.remove('jp-bubble-liking');
+      });
+    } catch (error) {
+      console.error('[JetPhotos+] Falha ao iniciar a leva de curtidas:', error);
+      document.getElementById('jp-like-widget-bubble')?.classList.remove('jp-bubble-liking');
+      return;
+    }
+    document.getElementById('jp-like-widget-bubble')?.classList.toggle('jp-bubble-liking', total > 0);
   }
 
   // =======================================================================
@@ -2879,8 +3325,8 @@
 
   function isJetPhotosPlusNode(node) {
     if (!(node instanceof Element)) return false;
-    return node.matches('#jp-site-queue-tracker, #jp-like-context-widget, #jp-plus-launcher-host, .jp-queue-eta-badge') ||
-      !!node.closest('#jp-site-queue-tracker, #jp-like-context-widget, #jp-plus-launcher-host, .jp-queue-eta-badge');
+    return node.matches('#jp-site-queue-tracker, #jp-like-widget-bubble, #jp-plus-launcher-host, .jp-queue-eta-badge') ||
+      !!node.closest('#jp-site-queue-tracker, #jp-like-widget-bubble, #jp-plus-launcher-host, .jp-queue-eta-badge');
   }
 
   function mutationComesOnlyFromExtension(mutation) {
@@ -2953,10 +3399,10 @@
     currentSettings = await getSettings();
 
     applySiteDarkMode(currentSettings.siteDarkMode);
-    // A primeira recolorização (síncrona, dentro de applySiteDarkMode) já
-    // terminou aqui — seguro revelar a página agora, sem flash do tema
-    // claro original. Se o modo escuro estiver desligado, isso é um no-op
-    // (a classe de preload nunca foi adicionada).
+    // O tema (classe no <html> + CSS) já está valendo aqui — seguro revelar
+    // a página agora, sem flash do tema claro original. Se o modo escuro
+    // estiver desligado, isso é um no-op (a classe de preload nunca foi
+    // adicionada).
     removePreloadHide();
 
     // A extensão agora carrega em TODAS as páginas do jetphotos.com (veja
@@ -2992,77 +3438,12 @@
     // O conteúdo de curtidas fica separado, no canto inferior direito, nas
     // páginas que realmente possuem fotos com ação de Like.
 
-    // O widget contextual só passa a ser funcional quando encontra fotos
-    // com ação de Like. Em páginas sem fotos, ele permanece oculto.
+    // A bolha só passa a ser funcional quando encontra fotos com ação de
+    // Like. Em páginas sem fotos ela nem é criada (ver buildPanel); o toque
+    // nela chama runLikeAllBatch() direto.
     if (isPhotoContext) {
       wireLikeSync();
       scheduleRefresh();
-
-      const likeButton = document.getElementById('jp-like-all-btn');
-      if (likeButton) likeButton.addEventListener('click', () => {
-        const btn = document.getElementById('jp-like-all-btn');
-        const textEl = document.getElementById('jp-like-widget-status');
-
-        const total = likeAllMissing(() => {
-          // onDone: reabilita o botão quando a leva de cliques termina.
-          if (btn) {
-            btn.disabled = false;
-            btn.style.opacity = '1';
-            btn.style.cursor = 'pointer';
-          }
-
-          clearTimeout(likeSafetyTimer);
-          const confirmEl = document.getElementById('jp-like-widget-confirm');
-          const progressEl = document.getElementById('jp-like-widget-progress');
-          if (confirmEl && total > 0) {
-            confirmEl.textContent = currentSettings.language === 'en' ? '✓ All liked!' : '✓ Tudo curtido!';
-            confirmEl.style.display = 'block';
-            clearTimeout(likeConfirmationTimer);
-            likeConfirmationTimer = setTimeout(() => {
-              confirmEl.style.display = 'none';
-              refresh();
-            }, 2000);
-          }
-          if (progressEl) progressEl.style.display = 'none';
-        });
-
-        if (total > 0 && btn) {
-          btn.disabled = true;
-          btn.style.opacity = '.6';
-          btn.style.cursor = 'default';
-        }
-
-        if (textEl) {
-          // O texto abaixo é escrito diretamente durante a leva. Invalide o
-          // cache usado por updateStatus(), para que o refresh final sempre
-          // possa substituir o estado "Curtindo X/Y..." pelo estado real.
-          delete textEl.dataset.jpHtml;
-          textEl.textContent = total > 0
-            ? (currentSettings.language === 'en' ? `Liking 0/${total} photo(s)...` : `Curtindo 0/${total} foto(s)...`)
-            : (currentSettings.language === 'en' ? 'Nothing missing here!' : 'Nada faltando por aqui!');
-        }
-
-        const progressEl = document.getElementById('jp-like-widget-progress');
-        const progressBarEl = document.getElementById('jp-like-widget-progress-bar');
-        if (total > 0 && progressEl && progressBarEl) {
-          progressEl.style.display = 'block';
-          progressBarEl.style.width = '0%';
-        }
-
-        // Rede de segurança: se o estado continuar preso em "Curtindo..." por
-        // aproximadamente 6s, força um refresh mesmo que o observer/debounce falhe.
-        if (total > 0) {
-          clearTimeout(likeSafetyTimer);
-          likeSafetyTimer = setTimeout(() => {
-            const currentText = textEl ? textEl.textContent : '';
-            if (currentText.includes('Curtindo') || currentText.includes('Liking')) {
-              refresh();
-            }
-          }, 6000);
-        }
-      });
-
-      // Tenta restringir a observação à área de resultados de fotos em vez
       // do <body> inteiro, pra reduzir o volume de mutações capturadas
       // (o body inteiro inclui spinners, menus, tudo). Se não achar uma
       // área específica, cai no body mesmo — com debounce isso já é seguro.
@@ -3086,11 +3467,6 @@
       initQueueEstimator();
     }
 
-    // [EXPERIMENTAL] Inicia (se o modo escuro do site estiver ligado) o
-    // observer que corrige cores erradas (background-image e fundos
-    // sólidos escuros) — independe da ferramenta contextual, roda em qualquer
-    // página, já que o modo escuro do site também é global.
-    startBgObserverIfNeeded();
   }
 
   if (document.readyState === 'loading') {

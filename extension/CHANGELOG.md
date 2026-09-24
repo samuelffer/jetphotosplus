@@ -2,11 +2,55 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](https://semver.org/lang/pt-BR/).
 
-> **Versão atual: 2.0.0.**
+> **Versão atual: 2.0.1.**
 
 ---
 
-## [2.0.0] — Atual
+## [2.0.1]
+
+Versão de refinamento da experiência de curtir + cobertura do modo escuro: a bolha virou o UI único de likes no PC e no celular, o mobile ganhou botão flutuante com o menu completo, as configs foram redesenhadas e o modo escuro cobre muito mais páginas.
+
+### Curtidas: a bolha é o UI único (PC + celular)
+- O widget grande e o sistema de expandir/minimizar foram removidos — a bolha é o único UI de curtidas em qualquer tela.
+- A bolha mostra as fotos faltando + anel de progresso da leva; tocar nela curte todas as faltantes de uma vez.
+- Tudo curtido = só o selo verde (sem número do lado); clicar nele mostra um toast avisando que a página já está toda curtida.
+- Ícone novo: joinha de contorno (antes era coração), combinando com o Like do site; selo verde de concluído mantido.
+- Visual sóbrio, sem pulsar nem pops: o estado é comunicado por cor + anel + contagem.
+- Tamanho responsivo: maior no celular (54px), tablet (58px) e desktop (62px + rótulo "faltando").
+
+### Curtidas no mobile: instantâneas e sem travar
+- O joinha acende na hora do toque (UI otimista); se o servidor recusar, o estado se desfaz sozinho.
+- Botão de Like injetado nos cards: maior (20px), alinhado com os ícones e sem travar o celular durante a leva (revarredura única no fim).
+- Janela anti-duplo-toque mais curta (300ms).
+
+### Menu mobile: botão flutuante com a logo (novo)
+- Quando o launcher do header não está visível (mobile), um botão redondo com a logo abre o mesmo menu do PC (novidades, issue, sobre, doar, configs).
+- O botão "doca" sozinho: parado, fica meio escondido na lateral + translúcido; o toque mostra ele + abre o menu; ao fechar, espera ~1,4s e volta.
+- O disco segue o tema (branco no claro; no escuro, sempre o preto da bolha, em qualquer estado).
+- O menu abre com fade + subida suave; backdrop invisível + Escape fecham; no PC, clicar fora das configs também fecha.
+
+### Configurações redesenhadas
+- Faixa azul JetPhotos, botão fechar redondo, cartão arredondado com sombra, seção Geral (idioma) + Experimental; no mobile vira folha arredondada.
+
+### Doar (novo)
+- Item ♥ Doar no menu (PC + mobile), abrindo a página de doação em nova aba. (URL ainda provisória: trocar pela definitiva.)
+
+### Modo escuro do site (beta): motor novo + cobertura ampliada
+- Motor trocado: tema CSS manual por seletores no lugar da recoloração elemento a elemento — sem varredura de DOM, sem flash em conteúdo novo, toggle instantâneo e sem custo de CPU.
+- Cobertura nova: sidebar e carrossel da home, perfil (nome sobre a capa, câmeras), área de membros (abas), upload (dropdowns Chosen, pílulas), zebra escuro em todas as tabelas nativas (fila, stats...), paginação (com a página atual destacada em azul), filtros dos resultados, badges, modal de login, rodapé e menu mobile.
+- Album/Like/Share: cinza neutro no escuro, branco no hover (só com mouse de verdade); Like curtido = verde nos dois temas, no tom exato do rótulo, em qualquer formato de ícone.
+- Gráficos (perfil + stats): textos clareados e halo dos rótulos da pizza ajustado pra não estourar.
+- Fotos, header, azul picton, botões de compartilhar e o UI da extensão continuam intocados.
+
+### Toast com a cara do site
+- Toast virou cartão claro como os cards de resultado (texto escuro, filete azul, fonte explícita) e fica de fora da recolorida do modo escuro.
+
+### Documentação
+- `manifest.json`, `CHANGELOG.md` e `leia-me.txt` sincronizados na versão 2.0.1.
+
+---
+
+## [2.0.0]
 
 Versão de reorganização do acompanhamento da fila: o histórico que antes só era visível
 dentro do `queue.php` passou a ter um painel próprio no ícone da extensão, com badge,
