@@ -776,6 +776,9 @@
         background: linear-gradient(274deg, hsl(0deg 0% 14.32% / 10%), #1c1b1b) !important;
       }
 
+      /* Hover branco (rótulos) só com mouse de verdade, pelo mesmo
+         motivo acima (hover grudado no touch). */
+      @media (hover:hover) and (pointer:fine) {
       /* Hover state: JetPhotos' original CSS changes .social__link to a
          dark color on hover. In dark mode that becomes unreadable, so keep
          every social action link light while hovered. This is intentionally
@@ -784,6 +787,7 @@
       html.jp-site-dark-active a.social__link:hover .social__text {
         color: #ffffff !important;
         -webkit-text-fill-color: #ffffff !important;
+      }
       }
 
       /* Curtido + hover: continua verde (curtida = verde, sempre). */
@@ -1494,6 +1498,9 @@
     html.jp-site-dark-active a.social__link > svg,
     html.jp-site-dark-active a.social__link .social__text > i,
     html.jp-site-dark-active a.social__link .social__text > svg { color:#c3c9d2 !important; fill:#c3c9d2 !important; }
+    /* Hover branco (ícones) só com mouse de verdade: no touch o :hover
+       gruda após o toque e o ícone ficaria branco em vez de cinza. */
+    @media (hover:hover) and (pointer:fine) {
     html.jp-site-dark-active a.social__link:hover :not(.social__text):not(:has(.social__text)):not(i):not(svg),
     html.jp-site-dark-active a.social__link:hover::before,
     html.jp-site-dark-active a.social__link:hover::after,
@@ -1503,6 +1510,7 @@
     html.jp-site-dark-active a.social__link:hover > svg,
     html.jp-site-dark-active a.social__link:hover .social__text > i,
     html.jp-site-dark-active a.social__link:hover .social__text > svg { color:#ffffff !important; fill:#ffffff !important; }
+    }
     /* Verde EXATO do curtido = mesmo tom do rótulo (#3ddc84): matriz
        constante, idempotente — qualquer profundidade, ::before/::after do
        link e do rótulo, qualquer formato. */

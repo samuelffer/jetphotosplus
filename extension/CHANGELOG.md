@@ -130,6 +130,9 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Correção: no escuro, descurtir a foto deixava o joinha preto (o site remonta o ícone mais fundo e o cinza só ia até 1 nível) — cinza, branco-hover e verde agora valem em qualquer profundidade + ::before/::after do link e do rótulo.
 - Branco do hover virou brightness(0) invert(1) (idempotente, mesmo branco de antes): aninhamento não duplica o efeito.
 
+### Hover branco só com mouse (TESTE)
+- Correção: no touch, o :hover gruda após o toque e o joinha descurtido ficava branco em vez de cinza — as regras de hover (ícones + rótulos) agora só valem com (hover:hover) e (pointer:fine). No PC nada muda.
+
 ---
 
 ## [2.0.0]
