@@ -140,6 +140,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 ### Textos dos gráficos no escuro
 - Gráficos Highcharts (perfil + stats): textos SVG clareados via fill (base #c3c9d2, títulos #f2f2f2) — antes ficavam camuflados no fundo escuro. Cores dos dados intactas.
 - Rótulos da pizza: halo branco do Highcharts vira escuro (era ele que estourava o texto), texto em #e8e8e8.
+- Halo dos rótulos da pizza agora 100% preto.
 
 ---
 
