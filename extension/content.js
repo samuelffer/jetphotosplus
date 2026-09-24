@@ -3270,13 +3270,18 @@
   const QUEUE_LIST_MAX_HEIGHT_PX = 180;
 
   function renderQueuePhotoEstimates(rows) {
-    const listEl = document.getElementById('jp-queue-list');
-    const labelEl = document.getElementById('jp-queue-list-label');
-    if (!listEl) return;
-
+    // Injeta os badges de estimativa individual em cada foto — isso NÃO
+    // depende do painel da extensão, vai direto no DOM do site (nos <li>
+    // do "Time in Queue"). Faz primeiro porque o restante desta função
+    // (a lista resumida) depende de um elemento do painel que pode não
+    // existir mais.
     rows.forEach(({ timeLi, ahead }) => {
       injectInlineEstimate(timeLi, lastQueueRate != null ? ahead / lastQueueRate : null);
     });
+
+    const listEl = document.getElementById('jp-queue-list');
+    const labelEl = document.getElementById('jp-queue-list-label');
+    if (!listEl) return;
 
     if (!rows.length) {
       if (labelEl) labelEl.style.display = 'none';
