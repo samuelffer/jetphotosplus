@@ -3622,6 +3622,17 @@
         color: #999;
         text-align: center;
       }
+      .jp-enhancer-counter {
+        padding: 8px 12px;
+        font-size: 11px;
+        color: #888;
+        text-align: center;
+        background: #f7f7f7;
+        border-bottom: 1px solid #eee;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+      }
       .jp-enhancer-group-label {
         padding: 8px 14px 4px;
         font-size: 11px;
@@ -3654,6 +3665,7 @@
       html.jp-site-dark-active .jp-enhancer-option.jp-enhancer-selected { background: #1a5a8e; }
       html.jp-site-dark-active .jp-enhancer-group-label { background: #333; color: #aaa; }
       html.jp-site-dark-active .jp-enhancer-no-results { color: #777; }
+      html.jp-site-dark-active .jp-enhancer-counter { background: #333; color: #888; border-bottom-color: #444; }
       /* Esconde o select nativo e o Chosen container no mobile */
       .jp-enhancer-hidden-native {
         display: none !important;
@@ -3733,6 +3745,7 @@
     // Estado
     let allOptions = getSelectOptions(select);
     let isOpen = false;
+    const MAX_RENDERED = 80; // Máximo de opções renderizadas no DOM de uma vez
 
     function renderDropdown(filter) {
       const query = (filter || '').toLowerCase().trim();
@@ -3754,8 +3767,22 @@
         return;
       }
 
+      // Limita a quantidade renderizada pra não travar o celular
+      const toRender = filtered.slice(0, MAX_RENDERED);
+      const hasMore = filtered.length > MAX_RENDERED;
+
+      // Mostra contador quando há mais resultados que o limite
+      if (hasMore) {
+        const counter = document.createElement('div');
+        counter.className = 'jp-enhancer-counter';
+        counter.textContent = currentSettings.language === 'en'
+          ? `Showing ${MAX_RENDERED} of ${filtered.length} results — type to filter`
+          : `Mostrando ${MAX_RENDERED} de ${filtered.length} — digite para filtrar`;
+        dropdown.appendChild(counter);
+      }
+
       let currentGroup = null;
-      filtered.forEach(opt => {
+      toRender.forEach(opt => {
         // Label de grupo (optgroup)
         if (opt.group && opt.group !== currentGroup) {
           currentGroup = opt.group;
@@ -3814,9 +3841,15 @@
       openDropdown();
     });
 
+    // Debounce no filtro: espera 150ms antes de renderizar, pra não
+    // travar o celular filtrando a cada tecla pressionada.
+    let filterTimer = null;
     input.addEventListener('input', () => {
-      renderDropdown(input.value);
-      if (!isOpen) openDropdown();
+      if (filterTimer) clearTimeout(filterTimer);
+      filterTimer = setTimeout(() => {
+        renderDropdown(input.value);
+        if (!isOpen) openDropdown();
+      }, 150);
     });
 
     // Fecha ao clicar fora
