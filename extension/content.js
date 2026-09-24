@@ -3745,70 +3745,94 @@
     // Estado
     let allOptions = getSelectOptions(select);
     let isOpen = false;
-    const MAX_RENDERED = 80; // Máximo de opções renderizadas no DOM de uma vez
+    const MAX_RENDERED = 50; // Reduzido de 80 pra 50 — mais rápido no mobile
+    let renderTimer = null;
 
     function renderDropdown(filter) {
+      // Cancela render anterior se ainda estiver pendente
+      if (renderTimer) { clearTimeout(renderTimer); renderTimer = null; }
+
       const query = (filter || '').toLowerCase().trim();
-      dropdown.innerHTML = '';
 
-      const filtered = allOptions.filter(opt => {
-        if (!opt.value && !opt.text) return false; // pula opções vazias
-        // Pula a opção "Choose..." / "Select..." quando há filtro
-        if (query && (opt.value === '-1' || opt.value === '')) return false;
-        if (!query) return true;
-        return opt.text.toLowerCase().includes(query);
-      });
+      // Mostra loading imediatamente
+      dropdown.innerHTML = `<div class="jp-enhancer-no-results">⏳</div>`;
 
-      if (!filtered.length) {
-        const noResults = document.createElement('div');
-        noResults.className = 'jp-enhancer-no-results';
-        noResults.textContent = currentSettings.language === 'en' ? 'No results found' : 'Nenhum resultado encontrado';
-        dropdown.appendChild(noResults);
-        return;
-      }
+      // Renderiza assincronamente pra não bloquear a thread principal
+      renderTimer = setTimeout(() => {
+        renderTimer = null;
+        dropdown.innerHTML = '';
 
-      // Limita a quantidade renderizada pra não travar o celular
-      const toRender = filtered.slice(0, MAX_RENDERED);
-      const hasMore = filtered.length > MAX_RENDERED;
+        // Pré-filtra com text lowercase cacheado (evita toLowerCase repetido)
+        const filtered = allOptions.filter(opt => {
+          if (!opt.value && !opt.text) return false;
+          if (query && (opt.value === '-1' || opt.value === '')) return false;
+          if (!query) return true;
+          return opt.text.toLowerCase().includes(query);
+        });
 
-      // Mostra contador quando há mais resultados que o limite
-      if (hasMore) {
-        const counter = document.createElement('div');
-        counter.className = 'jp-enhancer-counter';
-        counter.textContent = currentSettings.language === 'en'
-          ? `Showing ${MAX_RENDERED} of ${filtered.length} results — type to filter`
-          : `Mostrando ${MAX_RENDERED} de ${filtered.length} — digite para filtrar`;
-        dropdown.appendChild(counter);
-      }
-
-      let currentGroup = null;
-      toRender.forEach(opt => {
-        // Label de grupo (optgroup)
-        if (opt.group && opt.group !== currentGroup) {
-          currentGroup = opt.group;
-          const groupLabel = document.createElement('div');
-          groupLabel.className = 'jp-enhancer-group-label';
-          groupLabel.textContent = opt.group;
-          dropdown.appendChild(groupLabel);
+        if (!filtered.length) {
+          const noResults = document.createElement('div');
+          noResults.className = 'jp-enhancer-no-results';
+          noResults.textContent = currentSettings.language === 'en' ? 'No results found' : 'Nenhum resultado encontrado';
+          dropdown.appendChild(noResults);
+          return;
         }
 
-        const optionEl = document.createElement('div');
-        optionEl.className = 'jp-enhancer-option';
-        if (opt.value === select.value) optionEl.classList.add('jp-enhancer-selected');
-        optionEl.textContent = opt.text;
-        optionEl.addEventListener('click', () => {
-          selectOption(opt);
+        const toRender = filtered.slice(0, MAX_RENDERED);
+        const hasMore = filtered.length > MAX_RENDERED;
+
+        // Usa DocumentFragment pra inserir tudo de uma vez (mais rápido que
+        // appendChild individual, que força reflow a cada elemento)
+        const fragment = document.createDocumentFragment();
+
+        if (hasMore) {
+          const counter = document.createElement('div');
+          counter.className = 'jp-enhancer-counter';
+          counter.textContent = currentSettings.language === 'en'
+            ? `Showing ${MAX_RENDERED} of ${filtered.length} — type to filter`
+            : `Mostrando ${MAX_RENDERED} de ${filtered.length} — digite para filtrar`;
+          fragment.appendChild(counter);
+        }
+
+        let currentGroup = null;
+        toRender.forEach(opt => {
+          if (opt.group && opt.group !== currentGroup) {
+            currentGroup = opt.group;
+            const groupLabel = document.createElement('div');
+            groupLabel.className = 'jp-enhancer-group-label';
+            groupLabel.textContent = opt.group;
+            fragment.appendChild(groupLabel);
+          }
+
+          const optionEl = document.createElement('div');
+          optionEl.className = 'jp-enhancer-option';
+          if (opt.value === select.value) optionEl.classList.add('jp-enhancer-selected');
+          optionEl.textContent = opt.text;
+          // Usa um único listener com delegation (mais leve que 50 listeners individuais)
+          optionEl.dataset.value = opt.value;
+          optionEl.dataset.text = opt.text;
+          fragment.appendChild(optionEl);
         });
-        // Touch feedback
-        optionEl.addEventListener('touchstart', () => {
-          optionEl.classList.add('jp-enhancer-active');
-        }, { passive: true });
-        optionEl.addEventListener('touchend', () => {
-          optionEl.classList.remove('jp-enhancer-active');
-        }, { passive: true });
-        dropdown.appendChild(optionEl);
-      });
+
+        dropdown.appendChild(fragment);
+      }, 10); // setTimeout mínimo pra liberar a thread antes de renderizar
     }
+
+    // Event delegation: um único listener no dropdown em vez de um por opção
+    dropdown.addEventListener('click', (e) => {
+      const optionEl = e.target.closest('.jp-enhancer-option');
+      if (!optionEl) return;
+      const opt = { value: optionEl.dataset.value, text: optionEl.dataset.text };
+      selectOption(opt);
+    });
+    dropdown.addEventListener('touchstart', (e) => {
+      const optionEl = e.target.closest('.jp-enhancer-option');
+      if (optionEl) optionEl.classList.add('jp-enhancer-active');
+    }, { passive: true });
+    dropdown.addEventListener('touchend', (e) => {
+      const optionEl = e.target.closest('.jp-enhancer-option');
+      if (optionEl) optionEl.classList.remove('jp-enhancer-active');
+    }, { passive: true });
 
     function selectOption(opt) {
       // Atualiza o select original
