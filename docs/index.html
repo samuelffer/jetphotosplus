@@ -37,6 +37,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <!-- Markdown parser para renderizar notas da release (GitHub API retorna markdown) -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js" defer></script>
 </head>
 <body>
   <div class="photo-background" aria-hidden="true">
@@ -138,12 +140,6 @@ Object.entries(BROWSER_ICON_URLS).forEach(([name, url]) => {
     </div>
   </section>
 
-  <footer>
-    <span>JetPhotos+</span>
-    <a class="donate-link" href="doar.html">♥ <span data-i18n="donateLink">Donate</span></a>
-    <span data-i18n="footerDisclaimer">Unofficial community extension · Not affiliated with JetPhotos</span>
-  </footer>
-
   <dialog id="releasesDialog" class="release-dialog">
     <div class="dialog-head">
       <div>
@@ -153,12 +149,14 @@ Object.entries(BROWSER_ICON_URLS).forEach(([name, url]) => {
       <button id="closeReleases" class="close" aria-label="Close" data-i18n-attr="aria-label:close">×</button>
     </div>
     <p class="release-date" id="releaseDate" data-i18n="currentRelease">Current release</p>
-    <ul id="releaseNotes">
-      <li data-i18n="releaseFallback1">Fixed already-liked photo detection, which was showing every photo as missing.</li>
-      <li data-i18n="releaseFallback2">Fixed the flash of the light theme when navigating pages with site dark mode enabled.</li>
-      <li data-i18n="releaseFallback3">Fixed several low-contrast text and icon colors in site dark mode.</li>
-      <li data-i18n="releaseFallback4">General stability improvements.</li>
-    </ul>
+    <div id="releaseNotes" class="release-notes-content">
+      <ul>
+        <li data-i18n="releaseFallback1">Fixed already-liked photo detection, which was showing every photo as missing.</li>
+        <li data-i18n="releaseFallback2">Fixed the flash of the light theme when navigating pages with site dark mode enabled.</li>
+        <li data-i18n="releaseFallback3">Fixed several low-contrast text and icon colors in site dark mode.</li>
+        <li data-i18n="releaseFallback4">General stability improvements.</li>
+      </ul>
+    </div>
     <a class="github-release" id="releaseLink" href="https://github.com/samuelffer/jetphotosplus/releases/latest" target="_blank" rel="noreferrer" data-i18n="viewRelease">View release on GitHub ↗</a>
   </dialog>
 
@@ -198,7 +196,7 @@ Object.entries(BROWSER_ICON_URLS).forEach(([name, url]) => {
       releaseNotesEyebrow: 'RELEASE NOTES',
       close: 'Close',
       currentRelease: 'Current release',
-      viewRelease: 'View release on GitHub ↗',
+      viewRelease: 'View release on GitHub',
       stable: 'STABLE',
       beta: 'BETA',
       currentReleaseFallback: 'Current release',
@@ -234,7 +232,7 @@ Object.entries(BROWSER_ICON_URLS).forEach(([name, url]) => {
       releaseNotesEyebrow: 'NOTAS DA VERSÃO',
       close: 'Fechar',
       currentRelease: 'Versão atual',
-      viewRelease: 'Ver versão no GitHub ↗',
+      viewRelease: 'Ver versão no GitHub',
       stable: 'ESTÁVEL',
       beta: 'BETA',
       currentReleaseFallback: 'Versão atual',
@@ -484,13 +482,20 @@ async function loadRelease() {
     }
 
     if (typeof release.body === 'string' && release.body.trim()) {
-      const items = release.body
-        .split('\n')
-        .map(line => line.replace(/^\s*[-*]\s+/, '').trim())
-        .filter(Boolean)
-        .slice(0, 8);
-      if (items.length) {
-        releaseNotes.innerHTML = items.map(item => `<li>${item.replace(/[<>]/g, '')}</li>`).join('');
+      // Renderiza o markdown da release com marked.js (carregado via CDN).
+      // Se o marked não estiver disponível (CDN falhou), cai no fallback
+      // de texto simples pra não deixar o dialog vazio.
+      if (typeof marked !== 'undefined' && marked.parse) {
+        releaseNotes.innerHTML = marked.parse(release.body);
+      } else {
+        const items = release.body
+          .split('\n')
+          .map(line => line.replace(/^\s*[-*]\s+/, '').trim())
+          .filter(Boolean)
+          .slice(0, 8);
+        if (items.length) {
+          releaseNotes.innerHTML = '<ul>' + items.map(item => `<li>${item.replace(/[<>]/g, '')}</li>`).join('') + '</ul>';
+        }
       }
     }
   } catch (error) {
