@@ -1048,17 +1048,29 @@
         padding-right: 8px;
       }
       .jp-plus-update-indicator {
-        position:absolute; top:-7px; right:-7px; z-index:4;
-        width:30px; height:30px; min-width:30px; min-height:30px;
+        position:absolute; top:-12px; right:-12px; z-index:4;
+        width:40px; height:40px; min-width:40px; min-height:40px;
         display:flex; align-items:center; justify-content:center;
-        padding:0; border:2px solid #ffffff; border-radius:50%;
-        background:#2c94e8; color:#ffffff; box-shadow:0 2px 7px rgba(0,0,0,.35);
-        cursor:pointer; touch-action:manipulation;
+        padding:0; border:0; border-radius:50%; background:transparent;
+        cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent;
       }
       .jp-plus-update-indicator[hidden] { display:none !important; }
-      .jp-plus-update-indicator svg { display:block; width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
-      .jp-plus-update-indicator i { position:absolute; top:-3px; right:-3px; width:9px; height:9px; border:1px solid #fff; border-radius:50%; background:#ef4444; }
-      #jp-plus-launcher-host > .jp-plus-update-indicator { top:-5px; right:-5px; }
+      .jp-plus-update-icon-bubble {
+        position:relative; width:23px; height:23px; box-sizing:border-box;
+        display:flex; align-items:center; justify-content:center;
+        border:1px solid rgba(255,255,255,.7); border-radius:50%;
+        background:#34383f; color:#ffffff; box-shadow:0 2px 5px rgba(0,0,0,.28);
+        transition:transform .16s ease, box-shadow .16s ease;
+      }
+      .jp-plus-update-icon-bubble svg { display:block; width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+      .jp-plus-update-icon-bubble i { position:absolute; top:-1px; right:-2px; width:7px; height:7px; border:1px solid #ffffff; border-radius:50%; background:#e5ad4b; }
+      .jp-plus-update-indicator:focus-visible { outline:2px solid #e5ad4b; outline-offset:-3px; }
+      @media (hover:hover) and (pointer:fine) {
+        .jp-plus-update-indicator:hover .jp-plus-update-icon-bubble { transform:scale(1.08); box-shadow:0 3px 8px rgba(0,0,0,.34); }
+      }
+      html.jp-site-dark-active .jp-plus-update-icon-bubble { border-color:#3c4043; background:#e8eaed; color:#202124; box-shadow:0 2px 6px rgba(0,0,0,.55); }
+      html.jp-site-dark-active .jp-plus-update-icon-bubble i { border-color:#e8eaed; background:#e5ad4b; }
+      #jp-plus-launcher-host > .jp-plus-update-indicator { top:-12px; right:-12px; }
       #jp-plus-launcher .jp-launcher-logo {
         display: block;
         width: 27px;
@@ -1166,7 +1178,9 @@
          jp-fab-docked vai no host, mas o efeito vai no invólucro — o submenu e
          o painel moram no mesmo host e não podem ser arrastados juntos. */
       #jp-plus-mobile-fab-wrap { position:relative; display:block; width:52px; height:52px; transition:transform .22s ease, opacity .22s ease; }
-      #jp-plus-mobile-fab-wrap > .jp-plus-update-indicator { top:-5px; right:-5px; width:36px; height:36px; min-width:36px; min-height:36px; }
+      #jp-plus-mobile-fab-wrap > .jp-plus-update-indicator { top:-12px; right:-12px; }
+      #jp-plus-mobile-fab-wrap .jp-plus-update-icon-bubble { width:25px; height:25px; }
+      #jp-plus-mobile-fab-wrap .jp-plus-update-icon-bubble svg { width:14px; height:14px; }
       #jp-plus-mobile-host.jp-fab-docked #jp-plus-mobile-fab-wrap { transform:translateX(calc(-50% - 16px)); opacity:.5; }
       @media (prefers-reduced-motion: reduce) {
         #jp-plus-mobile-fab-wrap { transition:none; }
@@ -1298,30 +1312,64 @@
       }
       #jp-like-toast.jp-toast-show { opacity:1; }
 
-      #jp-update-notice {
-        position:fixed; top:max(12px, env(safe-area-inset-top)); left:50%; z-index:1000012;
-        width:min(420px, calc(100vw - 24px)); box-sizing:border-box;
-        padding:16px; border:1px solid #d6dbe1; border-top:4px solid #2c94e8; border-radius:12px;
-        background:#ffffff; color:#1f2937; box-shadow:0 12px 36px rgba(0,0,0,.28);
-        transform:translateX(-50%); font-family:Arial,Helvetica,sans-serif;
+      @keyframes jpUpdateNoticeIn {
+        from { opacity:0; transform:translate(-50%, -9px) scale(.975); }
+        to { opacity:1; transform:translate(-50%, 0) scale(1); }
       }
-      #jp-update-notice .jp-update-notice-title { display:block; padding-right:32px; font-size:15px; line-height:1.35; }
-      #jp-update-notice .jp-update-notice-body { margin-top:7px; color:#4b5563; font-size:13px; line-height:1.45; }
+      #jp-update-notice {
+        position:fixed; top:max(14px, env(safe-area-inset-top)); left:50%; z-index:1000012;
+        width:min(420px, calc(100vw - 24px)); box-sizing:border-box;
+        padding:16px; border:1px solid #e1e4e8; border-radius:14px;
+        background:#ffffff; color:#202124; box-shadow:0 12px 34px rgba(20,24,32,.20);
+        transform:translate(-50%, -9px) scale(.975); opacity:0;
+        animation:jpUpdateNoticeIn .24s cubic-bezier(.2,.75,.25,1) forwards;
+        font-family:Arial,Helvetica,sans-serif;
+      }
+      #jp-update-notice.jp-update-notice--closing {
+        opacity:0; transform:translate(-50%, -6px) scale(.985);
+        transition:opacity .17s ease, transform .17s ease; pointer-events:none;
+      }
+      #jp-update-notice .jp-update-notice-heading { display:flex; align-items:center; gap:10px; padding-right:32px; }
+      #jp-update-notice .jp-update-notice-symbol {
+        width:34px; height:34px; flex:0 0 34px; display:flex; align-items:center; justify-content:center;
+        border-radius:11px; background:#f1f3f4; color:#34383f;
+      }
+      #jp-update-notice .jp-update-notice-symbol svg { display:block; width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+      #jp-update-notice .jp-update-notice-title { display:block; font-size:15px; font-weight:700; line-height:1.35; }
+      #jp-update-notice .jp-update-notice-body { margin:9px 0 0 44px; color:#5f6368; font-size:13px; line-height:1.45; }
       #jp-update-notice .jp-update-notice-close {
         position:absolute; top:8px; right:8px; width:36px; height:36px; border:0; border-radius:50%;
-        background:transparent; color:#4b5563; font-size:24px; cursor:pointer; touch-action:manipulation;
+        background:transparent; color:#6b7280; font-size:22px; cursor:pointer; touch-action:manipulation;
       }
+      #jp-update-notice .jp-update-notice-close:hover { background:#f1f3f4; }
       #jp-update-notice .jp-update-notice-actions { display:flex; justify-content:flex-end; margin-top:12px; }
       #jp-update-notice .jp-update-notice-download {
         min-height:44px; display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box;
-        padding:8px 14px; border:0; border-radius:8px; background:#2c94e8; color:#ffffff;
-        font-size:14px; font-weight:700; text-decoration:none; cursor:pointer; touch-action:manipulation;
+        padding:8px 15px; border:0; border-radius:9px; background:#34383f; color:#ffffff;
+        font-size:13px; font-weight:700; text-decoration:none; cursor:pointer; touch-action:manipulation;
+        transition:background .14s ease, transform .14s ease;
       }
+      #jp-update-notice .jp-update-notice-download:hover { background:#4a4f57; }
+      #jp-update-notice .jp-update-notice-download:active { transform:scale(.98); }
+      #jp-update-notice button:focus-visible, #jp-update-notice a:focus-visible { outline:2px solid #d8a646; outline-offset:2px; }
+      html.jp-site-dark-active #jp-update-notice { background:#292a2d; color:#e8eaed; border-color:#45474b; box-shadow:0 14px 38px rgba(0,0,0,.55); }
+      html.jp-site-dark-active #jp-update-notice .jp-update-notice-symbol { background:#3c4043; color:#e8eaed; }
+      html.jp-site-dark-active #jp-update-notice .jp-update-notice-body { color:#bdc1c6; }
+      html.jp-site-dark-active #jp-update-notice .jp-update-notice-close { color:#bdc1c6; }
+      html.jp-site-dark-active #jp-update-notice .jp-update-notice-close:hover { background:#3c4043; }
+      html.jp-site-dark-active #jp-update-notice .jp-update-notice-download { background:#e8eaed; color:#202124; }
+      html.jp-site-dark-active #jp-update-notice .jp-update-notice-download:hover { background:#ffffff; }
       @media (max-width:520px) {
-        #jp-update-notice { top:max(8px, env(safe-area-inset-top)); width:calc(100vw - 20px); padding:14px; }
+        #jp-update-notice { top:max(9px, env(safe-area-inset-top)); width:calc(100vw - 20px); padding:14px; }
+        #jp-update-notice .jp-update-notice-heading { gap:9px; }
+        #jp-update-notice .jp-update-notice-symbol { width:32px; height:32px; flex-basis:32px; }
+        #jp-update-notice .jp-update-notice-body { margin-left:41px; }
         #jp-update-notice .jp-update-notice-title { font-size:14px; }
       }
-      @media (prefers-reduced-motion: reduce) { .jp-plus-update-indicator { transition:none !important; } }
+      @media (prefers-reduced-motion: reduce) {
+        .jp-plus-update-icon-bubble, #jp-update-notice, #jp-update-notice .jp-update-notice-download { transition:none !important; animation:none !important; }
+        #jp-update-notice { opacity:1; transform:translateX(-50%); }
+      }
 
       #jp-like-settings-menu {
         position: absolute !important;
@@ -1905,7 +1953,11 @@
 
   function closeUpdateNotice(isTest = false) {
     if (updateNoticeTimer) { clearTimeout(updateNoticeTimer); updateNoticeTimer = null; }
-    document.getElementById('jp-update-notice')?.remove();
+    const notice = document.getElementById('jp-update-notice');
+    if (notice) {
+      notice.classList.add('jp-update-notice--closing');
+      setTimeout(() => notice.remove(), 190);
+    }
     if (isTest) {
       testUpdatePreviewActive = false;
       renderUpdateIndicator();
@@ -1927,6 +1979,13 @@
     const heading = document.createElement('strong');
     heading.className = 'jp-update-notice-title';
     heading.textContent = isTest ? t('updateTestTitle') : t('releaseUpdateAvailable', tag);
+    const headingRow = document.createElement('div');
+    headingRow.className = 'jp-update-notice-heading';
+    const symbol = document.createElement('span');
+    symbol.className = 'jp-update-notice-symbol';
+    symbol.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0 2 5.5M20 4v7h-7"/></svg>';
+    headingRow.append(symbol, heading);
+
     const close = document.createElement('button');
     close.type = 'button';
     close.className = 'jp-update-notice-close';
@@ -1958,7 +2017,7 @@
       actions.appendChild(download);
     }
 
-    notice.append(close, heading, body, actions);
+    notice.append(close, headingRow, body, actions);
     document.body.appendChild(notice);
     if (autoDismiss) updateNoticeTimer = setTimeout(() => closeUpdateNotice(false), 10000);
   }
@@ -1968,7 +2027,7 @@
     button.type = 'button';
     button.className = 'jp-plus-update-indicator';
     button.hidden = true;
-    button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 0 0-15.36-6.36L3 8.25M3 3v5.25h5.25M3 12a9 9 0 0 0 15.36 6.36L21 15.75M21 21v-5.25h-5.25"/></svg><i aria-hidden="true"></i>';
+    button.innerHTML = '<span class="jp-plus-update-icon-bubble"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0 2 5.5M20 4v7h-7"/></svg><i aria-hidden="true"></i></span>';
     button.addEventListener('click', event => {
       event.preventDefault();
       event.stopPropagation();

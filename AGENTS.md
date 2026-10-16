@@ -85,15 +85,19 @@ Antes de concluir cada tarefa:
 1. Verifique se a alteração funciona em viewport estreita e em dispositivo
    touch, incluindo toque/alvos clicáveis, rolagem, teclado virtual, áreas
    seguras e ausência de dependência exclusiva de hover ou mouse.
-2. Adapte a implementação quando necessário, mantendo a experiência de
-   desktop intacta; se a mudança não exigir adaptação mobile, registre essa
-   verificação no resumo da tarefa.
-3. Preserve o funcionamento nos navegadores convencionais já suportados
+2. Verifique também a aparência e o contraste com o modo claro **e** escuro.
+   Se o elemento novo/alterado precisar acompanhar o tema (cores, superfícies,
+   bordas, ícones ou estados), implemente essa sincronização na mesma alteração;
+   não espere o usuário pedir uma correção posterior.
+3. Adapte a implementação quando necessário, mantendo a experiência de
+   desktop intacta; se a mudança não exigir adaptação mobile ou ao tema,
+   registre essa verificação no resumo da tarefa.
+4. Preserve o funcionamento nos navegadores convencionais já suportados
    (Chrome e Firefox) e considere compatibilidade com Orion/WebExtensions
    quando APIs, permissões, manifesto ou instalação forem afetados. Prefira
    detecção de capacidade e fallbacks isolados a ramificações que mudem o
    comportamento dos navegadores existentes.
-4. Não declare suporte mobile/Orion como confirmado sem teste real. Quando
+5. Não declare suporte mobile/Orion como confirmado sem teste real. Quando
    não houver dispositivo/emulador disponível, faça verificações estáticas e
    automatizadas possíveis, explique o que ficou sem validação e peça ao
    usuário o teste no aparelho.
