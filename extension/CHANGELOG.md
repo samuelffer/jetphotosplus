@@ -16,6 +16,10 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - Adicionada permissão de host para consultar a API pública de releases do GitHub.
 - Adicionado às Configurações um botão temporário para pré-visualizar o aviso sem depender de uma release real.
 
+### Bolha de curtidas
+- A bolha usa a imagem oficial `thumbs-up-black.svg` do JetPhotos, sem desenhos manuais de joinha.
+- Com fotos faltando, o ícone neutro fica centralizado dentro do anel; quando todas estão curtidas, o anel some e o mesmo ícone fica verde, sem sobreposição.
+
 ---
 
 ## [2.0.1]

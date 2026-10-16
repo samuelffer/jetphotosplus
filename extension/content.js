@@ -1239,34 +1239,29 @@
       }
       #jp-like-widget-bubble:hover { background:#2a2a2a; border-color:#686868; }
       #jp-like-widget-bubble:focus-visible { outline:2px solid #669DF6; outline-offset:2px; }
-      /* Concluído: a bolha encolhe pra um disco só com o selo — o contador
-         some junto (sem "0" pendurado do lado). Padding igual dos 4 lados
-         centraliza o selo; vale em qualquer breakpoint (seletor mais
-         específico que os paddings dos @media). */
+      /* Concluído: a bolha encolhe para um disco com o joinha verde; o contador
+         some junto (sem "0" pendurado do lado). O estado concluído esconde o
+         anel e deixa apenas o mesmo ícone oficial, sem um segundo desenho. */
       #jp-like-widget-bubble.jp-bubble-done { padding:12px; gap:0; min-height:0; }
       #jp-like-widget-bubble.jp-bubble-done #jp-like-widget-bubble-count { display:none; }
       /* Durante a leva, a bolha só troca a borda pra verde (estado estático,
          sem pulsar — o progresso aparece no anel e na contagem regressiva). */
       #jp-like-widget-bubble.jp-bubble-liking { border-color:#4caf50; }
-      /* Anel de progresso em volta do coração: o track fica sempre visível
+      /* Anel de progresso ao redor do joinha: o track fica sempre visível
          (contorno sutil) e o fill verde fecha conforme a leva avança (ver
          setBubbleProgress). Começa no topo por causa do rotate(-90deg). */
-      /* O coração é centralizado por flex (à prova de conta de margem) e o
-         anel preenche o wrap em absoluto — assim os dois ficam concêntricos
-         de verdade, sem depender de margin:auto + inset. */
+      /* O joinha oficial é centralizado por flex e o anel preenche o wrap em
+         absoluto — assim os dois ficam concêntricos de verdade. */
       #jp-like-widget-bubble .jp-bubble-ring-wrap { position:relative; width:32px; height:32px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
       #jp-like-widget-bubble .jp-bubble-ring { position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); }
       #jp-like-widget-bubble .jp-bubble-ring-track { fill:none; stroke:rgba(255,255,255,.16); stroke-width:2.5; }
       #jp-like-widget-bubble .jp-bubble-ring-fill { fill:none; stroke:#4caf50; stroke-width:2.5; stroke-linecap:round; stroke-dasharray:75.4; stroke-dashoffset:75.4; transition:stroke-dashoffset .15s linear, opacity .15s linear; }
-      #jp-like-widget-bubble .jp-bubble-thumb { position:relative; width:19px; height:19px; }
-      /* Selo de concluído: quando tudo está curtido, o anel + joinha dão
-         lugar a um disco verde com confere branco (troca seca, sem pop). */
-      #jp-like-widget-bubble .jp-bubble-check { display:none; position:absolute; inset:0; width:100%; height:100%; padding:0; box-sizing:border-box; }
-      #jp-like-widget-bubble .jp-bubble-check { display:flex; align-items:center; justify-content:center; }
-      #jp-like-widget-bubble .jp-bubble-check svg { display:block; width:100%; height:100%; padding:4px 3px 4px 5px; box-sizing:border-box; }77240749094899d59975508229e0aca1f
-      #jp-like-widget-bubble.jp-bubble-done .jp-bubble-ring,
-      #jp-like-widget-bubble.jp-bubble-done .jp-bubble-thumb { display:none; }
-      #jp-like-widget-bubble.jp-bubble-done .jp-bubble-check { display:flex; }
+      /* O asset oficial é preto; no estado faltando fica neutro/branco sobre
+         a bolha escura. O estado concluído reaproveita o mesmo PNG, sem
+         círculo ou segundo desenho por cima, e tinge apenas o próprio ícone. */
+      #jp-like-widget-bubble .jp-bubble-thumb { position:relative; z-index:1; display:block; width:19px; height:19px; object-fit:contain; filter:invert(1); }
+      #jp-like-widget-bubble.jp-bubble-done .jp-bubble-ring { display:none; }
+      #jp-like-widget-bubble.jp-bubble-done .jp-bubble-thumb { width:22px; height:22px; filter:url(#jp-green-dark); }
       /* Rótulo só no desktop largo (ex: "10 faltando"): deixa a bolha mais
          larga e autoexplicativa onde há espaço; some no mobile. */
       #jp-like-widget-bubble .jp-bubble-label { display:none; font-weight:600; opacity:.75; }
@@ -2722,8 +2717,7 @@
       bubble.innerHTML = `
         <span class="jp-bubble-ring-wrap" aria-hidden="true">
           <svg class="jp-bubble-ring" viewBox="0 0 28 28"><circle class="jp-bubble-ring-track" cx="14" cy="14" r="12"></circle><circle class="jp-bubble-ring-fill" id="jp-bubble-ring-fill" cx="14" cy="14" r="12"></circle></svg>
-          <svg class="jp-bubble-thumb" viewBox="0 1 26 26"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <svg class="jp-bubble-check" viewBox="0 0 28 28"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" fill="#22c55e" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <img class="jp-bubble-thumb" src="${MOBILE_LIKE_ICON_URL}" alt="" aria-hidden="true">
         </span>
         <span id="jp-like-widget-bubble-count">\u2026</span>
         <span id="jp-like-widget-bubble-label" class="jp-bubble-label"></span>`;
