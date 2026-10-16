@@ -576,11 +576,9 @@
       }
     }
 
-    // Num clique avulso, atualiza contador/realce na hora, sem esperar o
-    // debounce. Durante a leva em massa o refresh() se auto-pula (ver
-    // refresh) e o settle acontece uma vez só no final — sem isso seriam N
-    // varreduras completas do DOM, uma por foto, que é o que travava o
-    // celular.
+    // Num clique avulso, atualiza contador e ícones na hora, sem esperar o
+    // debounce. Durante a leva em massa o refresh() se auto-pula e roda uma
+    // única vez no final; varrer o DOM a cada foto travava o celular.
     refresh();
   }
 
@@ -742,7 +740,7 @@
     if (nativeAnchor) {
       // Aciona o link nativo do JetPhotos (existe no DOM, só escondido pelo
       // layout mobile). O content-hook.js confirma via rede e
-      // handleLikeNetResult já cuida do cache + realce + contador — aqui só
+      // handleLikeNetResult cuida do cache, dos ícones e do contador — aqui só
       // reabilitamos o botão depois de uma janela curta anti-duplo-toque.
       nativeAnchor.click();
       setTimeout(() => {
@@ -1235,6 +1233,7 @@
         box-shadow:0 5px 20px rgba(0,0,0,.30);
         font-family:'Fira Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size:15px; font-weight:700; line-height:1;
         cursor:pointer;
+        transition:border-color .16s ease;
         animation:jpBubbleIn .18s ease;
       }
       #jp-like-widget-bubble:hover { background:#2a2a2a; border-color:#686868; }
@@ -1250,21 +1249,18 @@
       /* O anel só aparece enquanto a leva está ativa; o wrap mantém o ícone
          e o spinner perfeitamente centralizados em qualquer viewport. */
       #jp-like-widget-bubble .jp-bubble-ring-wrap { position:relative; width:32px; height:32px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
-      #jp-like-widget-bubble .jp-bubble-ring { display:none; position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); }
+      #jp-like-widget-bubble .jp-bubble-ring { position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); transform-origin:50% 50%; opacity:0; visibility:hidden; transition:opacity .16s ease, visibility 0s linear .16s; animation:jpBubbleSpinner .9s linear infinite; animation-play-state:paused; }
       #jp-like-widget-bubble .jp-bubble-ring-track { fill:none; stroke:rgba(255,255,255,.16); stroke-width:2.5; }
-      #jp-like-widget-bubble .jp-bubble-ring-fill { fill:none; stroke:#4caf50; stroke-width:2.5; stroke-linecap:round; stroke-dasharray:75.4; stroke-dashoffset:75.4; transition:stroke-dashoffset .15s linear, opacity .15s linear; }
-      /* O asset oficial é preto; no estado faltando fica neutro/branco sobre
-         a bolha escura. O concluído reaproveita o ícone, sem sobreposição. */
-      #jp-like-widget-bubble .jp-bubble-thumb { position:relative; z-index:1; display:block; width:19px; height:19px; object-fit:contain; filter:invert(1); }
-      #jp-like-widget-bubble.jp-bubble-done .jp-bubble-ring { display:none; }
+      #jp-like-widget-bubble .jp-bubble-ring-fill { fill:none; stroke:#4caf50; stroke-width:2.5; stroke-linecap:round; stroke-dasharray:75.4; stroke-dashoffset:75.4; }
+      /* O asset oficial fica branco quando faltam likes e verde ao concluir. */
+      #jp-like-widget-bubble .jp-bubble-thumb { position:relative; z-index:1; display:block; width:19px; height:19px; object-fit:contain; filter:invert(1); transition:opacity .16s ease; }
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-thumb { width:22px; height:22px; filter:url(#jp-green-dark); }
-      #jp-like-widget-bubble.jp-bubble-liking .jp-bubble-ring { display:block; animation:jpBubbleSpinner .9s linear infinite; transform-origin:50% 50%; }
+      #jp-like-widget-bubble.jp-bubble-liking .jp-bubble-ring { opacity:1; visibility:visible; transition:opacity .16s ease, visibility 0s; animation-play-state:running; }
       #jp-like-widget-bubble.jp-bubble-liking .jp-bubble-ring-track { stroke:rgba(255,255,255,.2); }
-      #jp-like-widget-bubble.jp-bubble-liking .jp-bubble-ring-fill { stroke-dasharray:18 57.4; stroke-dashoffset:0; opacity:1; transition:none; }
-      #jp-like-widget-bubble.jp-bubble-liking .jp-bubble-thumb,
+      #jp-like-widget-bubble.jp-bubble-liking .jp-bubble-ring-fill { stroke-dasharray:18 57.4; stroke-dashoffset:0; }
+      #jp-like-widget-bubble.jp-bubble-liking .jp-bubble-thumb { opacity:0; }
       #jp-like-widget-bubble.jp-bubble-liking #jp-like-widget-bubble-count,
       #jp-like-widget-bubble.jp-bubble-liking .jp-bubble-label { display:none; }
-      #jp-like-widget-bubble.jp-bubble-liking.jp-bubble-done .jp-bubble-ring { display:block; }
       @keyframes jpBubbleSpinner { from { transform:rotate(-90deg); } to { transform:rotate(270deg); } }
       /* Rótulo só no desktop largo (ex: "10 faltando"): deixa a bolha mais
          larga e autoexplicativa onde há espaço; some no mobile. */
@@ -1283,8 +1279,9 @@
         #jp-like-widget-bubble .jp-bubble-label { display:inline; }
       }
       @media (prefers-reduced-motion: reduce) {
-        #jp-like-widget-bubble { animation:none; }
-        #jp-like-widget-bubble .jp-bubble-ring-fill { transition:none; }
+        #jp-like-widget-bubble { animation:none; transition:none; }
+        #jp-like-widget-bubble .jp-bubble-ring,
+        #jp-like-widget-bubble .jp-bubble-thumb { transition:none; }
         #jp-like-widget-bubble.jp-bubble-liking .jp-bubble-ring { animation:none; }
         #jp-like-toast { transition:none; }
       }
@@ -2721,7 +2718,7 @@
       bubble.setAttribute('aria-label', t('analyzing'));
       bubble.innerHTML = `
         <span class="jp-bubble-ring-wrap" aria-hidden="true">
-          <svg class="jp-bubble-ring" viewBox="0 0 28 28"><circle class="jp-bubble-ring-track" cx="14" cy="14" r="12"></circle><circle class="jp-bubble-ring-fill" id="jp-bubble-ring-fill" cx="14" cy="14" r="12"></circle></svg>
+          <svg class="jp-bubble-ring" viewBox="0 0 28 28"><circle class="jp-bubble-ring-track" cx="14" cy="14" r="12"></circle><circle class="jp-bubble-ring-fill" cx="14" cy="14" r="12"></circle></svg>
           <img class="jp-bubble-thumb" src="${MOBILE_LIKE_ICON_URL}" alt="" aria-hidden="true">
         </span>
         <span id="jp-like-widget-bubble-count">\u2026</span>
@@ -2793,7 +2790,7 @@
         ? (currentSettings.language === 'en' ? 'All liked!' : 'Tudo curtido!')
         : t('likeMissing');
     }
-    // Rótulo do desktop largo ("10 faltando"); some quando concluído (o selo basta).
+    // Rótulo do desktop largo; no estado concluído, o joinha basta.
     if (label) {
       label.textContent = done ? '' : t('missing');
       label.style.display = done ? 'none' : '';
@@ -2808,25 +2805,6 @@
     updateBubble(cards.length ? missing : null);
   }
 
-  function highlightCard(card, liked) {
-    if (!card) return;
-
-    // Outline removido a pedido do usuário — as linhas vermelhas ao redor
-    // das fotos não curtidas eram confusas. Se um dia quiser voltar, é só
-    // descomentar as linhas abaixo.
-    // const wanted = liked ? 'none' : '3px solid #ff5f5f';
-    // if (card.style.outline !== wanted) {
-    //   card.style.transition = 'outline-color .2s ease';
-    //   card.style.outline = wanted;
-    //   card.style.outlineOffset = '2px';
-    // }
-
-    // Remove outline se existir (caso venha de versão anterior)
-    if (card.style.outline && card.style.outline !== 'none') {
-      card.style.outline = 'none';
-    }
-  }
-
   let isRefreshing = false;
 
   function refresh() {
@@ -2836,7 +2814,7 @@
     // getComputedStyle por card = reflow forçado), e no celular isso somava
     // dezenas de reflows seguidos e travava a página. Cada joinha já se
     // atualiza sozinho via syncPhotoVisualById (mirado, barato), e o fim da
-    // leva chama refresh() de novo pra assentar contador e realces.
+    // leva roda refresh() uma vez pra acertar contador e ícones do site.
     if (isLiking) return null;
     isRefreshing = true;
 
@@ -2851,12 +2829,9 @@
       let missing = 0;
       cards.forEach(({ anchor, card }) => {
         const liked = isAlreadyLiked(anchor, card);
-        highlightCard(card, liked);
         // O botão injetado no layout mobile também é um "anchor" normal
-        // aqui (ver findPhotoCards) — só precisa, além da classe de
-        // destaque do card, ter seu próprio ícone sincronizado a cada
-        // scan. Isso corrige o ícone sozinho mesmo que uma confirmação de
-        // rede anterior não tenha atualizado ele por qualquer motivo.
+        // (ver findPhotoCards); sincronize seu ícone em cada scan caso uma
+        // confirmação de rede anterior não o tenha atualizado.
         if (anchor?.classList?.contains(MOBILE_LIKE_BTN_CLASS)) {
           applyMobileButtonState(anchor, liked);
         } else if (anchor) {
@@ -2893,11 +2868,11 @@
   // os handlers no mesmo instante; cadência levemente maior que a anterior.
   const LIKE_CLICK_DELAY_MS = 10;
   const LIKE_CLICK_JITTER_MS = 8; // intervalo de 10 a 18 ms, com pequena variação
+  const LIKE_SPINNER_MIN_MS = 220; // dá tempo para a transição aparecer em levas curtas
   let isLiking = false;
+  let likeSpinnerStartedAt = 0;
 
-  // onDone é chamado quando todos os cliques da leva atual terminam
-  // (sucesso ou lista vazia). Retorna de imediato a quantidade de fotos
-  // que serão clicadas, mesmo os cliques em si sendo espaçados no tempo.
+  // O callback roda ao fim; a função retorna de imediato o número de alvos.
   function likeAllMissing(onDone) {
     if (isLiking) return 0; // já tem uma leva rodando, ignora clique duplo
     const cards = findPhotoCards();
@@ -2906,7 +2881,7 @@
       .map(({ anchor }) => anchor);
 
     if (!targets.length) {
-      if (onDone) onDone(0);
+      if (onDone) onDone();
       return 0;
     }
 
@@ -2914,9 +2889,15 @@
     let i = 0;
     function clickNext() {
       if (i >= targets.length) {
-        isLiking = false;
-        setTimeout(refresh, 500); // dá um tempo pro site atualizar o estado visual do último clique
-        if (onDone) onDone(targets.length);
+        const finishBatch = () => {
+          isLiking = false;
+          likeSpinnerStartedAt = 0;
+          setTimeout(refresh, 500); // dá um tempo pro site atualizar o último clique
+          if (onDone) onDone();
+        };
+        const spinnerWait = LIKE_SPINNER_MIN_MS - (performance.now() - likeSpinnerStartedAt);
+        if (spinnerWait > 0) setTimeout(finishBatch, spinnerWait);
+        else finishBatch();
         return;
       }
       // Um .click() que lance (handler do próprio site) não pode quebrar a
@@ -2942,9 +2923,8 @@
     if (isLiking) return;
     let total = 0;
     try {
-      total = likeAllMissing(doneCount => {
-        // onDone: a leva terminou (doneCount=0 se não havia nada faltando).
-        updateBubble(0); // bolha vira só o selo verde (o refresh final confirma)
+      total = likeAllMissing(() => {
+        updateBubble(0); // o refresh final confirma o estado do servidor
         document.getElementById('jp-like-widget-bubble')?.classList.remove('jp-bubble-liking');
       });
     } catch (error) {
@@ -2954,7 +2934,10 @@
     }
     const bubble = document.getElementById('jp-like-widget-bubble');
     bubble?.classList.toggle('jp-bubble-liking', total > 0);
-    if (total > 0 && bubble) bubble.title = '';
+    if (total > 0 && bubble) {
+      likeSpinnerStartedAt = performance.now();
+      bubble.title = '';
+    }
   }
 
   // =======================================================================
@@ -3884,11 +3867,6 @@
       if (hasRelevantMutation) scheduleQueueRefresh();
     });
     queueObserver.observe(target, { childList: true, subtree: true });
-
-    // (campo de cálculo manual removido a pedido — a extensão agora só
-    // mostra o ritmo geral e, quando detecta linhas na tabela "YOUR QUEUE
-    // STATUS", a estimativa de cada foto, tudo automaticamente ao abrir a
-    // página. Ver runQueueScan() -> renderQueueRate() / renderQueuePhotoEstimates())
 
     const refreshBtn = document.getElementById('jp-queue-refresh-btn');
     if (refreshBtn) {

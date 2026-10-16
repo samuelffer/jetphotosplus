@@ -20,6 +20,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 - A bolha usa a imagem oficial `thumbs-up-black.svg` do JetPhotos, sem desenhos manuais de joinha.
 - Com fotos faltando e sem uma leva ativa, o joinha neutro e o contador aparecem sem anel.
 - Ao iniciar a leva, a bolha mostra apenas um anel animado e indeterminado, sem texto nem preenchimento progressivo; ao terminar, aparece o joinha verde sem anel.
+- Uma transição discreta por opacidade suaviza a troca entre o joinha neutro, o anel e o joinha verde.
 - A cadência entre cliques foi levemente aumentada, mantendo uma pequena variação entre eles.
 
 ---
