@@ -1055,21 +1055,16 @@
         cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent;
       }
       .jp-plus-update-indicator[hidden] { display:none !important; }
-      .jp-plus-update-icon-bubble {
-        position:relative; width:23px; height:23px; box-sizing:border-box;
-        display:flex; align-items:center; justify-content:center;
-        border:1px solid rgba(255,255,255,.7); border-radius:50%;
-        background:#34383f; color:#ffffff; box-shadow:0 2px 5px rgba(0,0,0,.28);
-        transition:transform .16s ease, box-shadow .16s ease;
+      .jp-plus-update-dot {
+        display:block; width:9px; height:9px; box-sizing:border-box; border-radius:50%;
+        background:#e5ad4b; border:1px solid rgba(255,255,255,.95);
+        box-shadow:0 2px 5px rgba(0,0,0,.34);
       }
-      .jp-plus-update-icon-bubble svg { display:block; width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
-      .jp-plus-update-icon-bubble i { position:absolute; top:-1px; right:-2px; width:7px; height:7px; border:1px solid #ffffff; border-radius:50%; background:#e5ad4b; }
-      .jp-plus-update-indicator:focus-visible { outline:2px solid #e5ad4b; outline-offset:-3px; }
+      .jp-plus-update-indicator:focus-visible { outline:2px solid #e5ad4b; outline-offset:-4px; }
       @media (hover:hover) and (pointer:fine) {
-        .jp-plus-update-indicator:hover .jp-plus-update-icon-bubble { transform:scale(1.08); box-shadow:0 3px 8px rgba(0,0,0,.34); }
+        .jp-plus-update-indicator:hover .jp-plus-update-dot { transform:scale(1.12); }
       }
-      html.jp-site-dark-active .jp-plus-update-icon-bubble { border-color:#3c4043; background:#e8eaed; color:#202124; box-shadow:0 2px 6px rgba(0,0,0,.55); }
-      html.jp-site-dark-active .jp-plus-update-icon-bubble i { border-color:#e8eaed; background:#e5ad4b; }
+      html.jp-site-dark-active .jp-plus-update-dot { border-color:#202124; box-shadow:0 2px 6px rgba(0,0,0,.7); }
       #jp-plus-launcher-host > .jp-plus-update-indicator { top:-12px; right:-12px; }
       #jp-plus-launcher .jp-launcher-logo {
         display: block;
@@ -1179,8 +1174,7 @@
          o painel moram no mesmo host e não podem ser arrastados juntos. */
       #jp-plus-mobile-fab-wrap { position:relative; display:block; width:52px; height:52px; transition:transform .22s ease, opacity .22s ease; }
       #jp-plus-mobile-fab-wrap > .jp-plus-update-indicator { top:-12px; right:-12px; }
-      #jp-plus-mobile-fab-wrap .jp-plus-update-icon-bubble { width:25px; height:25px; }
-      #jp-plus-mobile-fab-wrap .jp-plus-update-icon-bubble svg { width:14px; height:14px; }
+      #jp-plus-mobile-fab-wrap .jp-plus-update-dot { width:9px; height:9px; }
       #jp-plus-mobile-host.jp-fab-docked #jp-plus-mobile-fab-wrap { transform:translateX(calc(-50% - 16px)); opacity:.5; }
       @media (prefers-reduced-motion: reduce) {
         #jp-plus-mobile-fab-wrap { transition:none; }
@@ -1332,9 +1326,9 @@
       #jp-update-notice .jp-update-notice-heading { display:flex; align-items:center; gap:10px; padding-right:32px; }
       #jp-update-notice .jp-update-notice-symbol {
         width:34px; height:34px; flex:0 0 34px; display:flex; align-items:center; justify-content:center;
-        border-radius:11px; background:#f1f3f4; color:#34383f;
+        border-radius:11px; background:#f1f3f4; color:#111111;
       }
-      #jp-update-notice .jp-update-notice-symbol svg { display:block; width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+      #jp-update-notice .jp-update-notice-symbol svg { display:block; width:20px; height:20px; fill:currentColor; }
       #jp-update-notice .jp-update-notice-title { display:block; font-size:15px; font-weight:700; line-height:1.35; }
       #jp-update-notice .jp-update-notice-body { margin:9px 0 0 44px; color:#5f6368; font-size:13px; line-height:1.45; }
       #jp-update-notice .jp-update-notice-close {
@@ -1353,7 +1347,7 @@
       #jp-update-notice .jp-update-notice-download:active { transform:scale(.98); }
       #jp-update-notice button:focus-visible, #jp-update-notice a:focus-visible { outline:2px solid #d8a646; outline-offset:2px; }
       html.jp-site-dark-active #jp-update-notice { background:#292a2d; color:#e8eaed; border-color:#45474b; box-shadow:0 14px 38px rgba(0,0,0,.55); }
-      html.jp-site-dark-active #jp-update-notice .jp-update-notice-symbol { background:#3c4043; color:#e8eaed; }
+      html.jp-site-dark-active #jp-update-notice .jp-update-notice-symbol { background:#3c4043; color:#ffffff; }
       html.jp-site-dark-active #jp-update-notice .jp-update-notice-body { color:#bdc1c6; }
       html.jp-site-dark-active #jp-update-notice .jp-update-notice-close { color:#bdc1c6; }
       html.jp-site-dark-active #jp-update-notice .jp-update-notice-close:hover { background:#3c4043; }
@@ -1367,7 +1361,7 @@
         #jp-update-notice .jp-update-notice-title { font-size:14px; }
       }
       @media (prefers-reduced-motion: reduce) {
-        .jp-plus-update-icon-bubble, #jp-update-notice, #jp-update-notice .jp-update-notice-download { transition:none !important; animation:none !important; }
+        .jp-plus-update-dot, #jp-update-notice, #jp-update-notice .jp-update-notice-download { transition:none !important; animation:none !important; }
         #jp-update-notice { opacity:1; transform:translateX(-50%); }
       }
 
@@ -1983,7 +1977,7 @@
     headingRow.className = 'jp-update-notice-heading';
     const symbol = document.createElement('span');
     symbol.className = 'jp-update-notice-symbol';
-    symbol.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0 2 5.5M20 4v7h-7"/></svg>';
+    symbol.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4V1L7 6l5 5V8a4 4 0 1 1-3.46 2H6.22A6 6 0 1 0 12 6z"/></svg>';
     headingRow.append(symbol, heading);
 
     const close = document.createElement('button');
@@ -2027,7 +2021,7 @@
     button.type = 'button';
     button.className = 'jp-plus-update-indicator';
     button.hidden = true;
-    button.innerHTML = '<span class="jp-plus-update-icon-bubble"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0 2 5.5M20 4v7h-7"/></svg><i aria-hidden="true"></i></span>';
+    button.innerHTML = '<span class="jp-plus-update-dot" aria-hidden="true"></span>';
     button.addEventListener('click', event => {
       event.preventDefault();
       event.stopPropagation();
