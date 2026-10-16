@@ -11,6 +11,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) + [SemVer](
 ### Avisos de atualização
 - A extensão verifica a última release pública do GitHub em segundo plano, com intervalo de seis horas e ETag para reduzir tráfego.
 - Quando encontra uma versão SemVer acima da instalada, mostra um aviso animado com botão de download e mantém um pequeno ponto âmbar sobre a logo do JetPhotos+ no desktop e no mobile, adaptado ao modo escuro.
+- O aviso usa o ícone PNG de atualização indicado pelo usuário; no tema escuro, o filtro inverte o ícone preto para branco.
 - O aviso informa que a instalação do pacote baixado ainda precisa ser feita manualmente no navegador.
 - Adicionada permissão de host para consultar a API pública de releases do GitHub.
 - Adicionado às Configurações um botão temporário para pré-visualizar o aviso sem depender de uma release real.

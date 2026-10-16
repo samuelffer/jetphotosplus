@@ -1056,7 +1056,7 @@
       }
       .jp-plus-update-indicator[hidden] { display:none !important; }
       .jp-plus-update-dot {
-        display:block; width:9px; height:9px; box-sizing:border-box; border-radius:50%;
+        display:block; width:11px; height:11px; box-sizing:border-box; border-radius:50%;
         background:#e5ad4b; border:1px solid rgba(255,255,255,.95);
         box-shadow:0 2px 5px rgba(0,0,0,.34);
       }
@@ -1174,7 +1174,7 @@
          o painel moram no mesmo host e não podem ser arrastados juntos. */
       #jp-plus-mobile-fab-wrap { position:relative; display:block; width:52px; height:52px; transition:transform .22s ease, opacity .22s ease; }
       #jp-plus-mobile-fab-wrap > .jp-plus-update-indicator { top:-12px; right:-12px; }
-      #jp-plus-mobile-fab-wrap .jp-plus-update-dot { width:9px; height:9px; }
+      #jp-plus-mobile-fab-wrap .jp-plus-update-dot { width:11px; height:11px; }
       #jp-plus-mobile-host.jp-fab-docked #jp-plus-mobile-fab-wrap { transform:translateX(calc(-50% - 16px)); opacity:.5; }
       @media (prefers-reduced-motion: reduce) {
         #jp-plus-mobile-fab-wrap { transition:none; }
@@ -1328,7 +1328,7 @@
         width:34px; height:34px; flex:0 0 34px; display:flex; align-items:center; justify-content:center;
         border-radius:11px; background:#f1f3f4; color:#111111;
       }
-      #jp-update-notice .jp-update-notice-symbol svg { display:block; width:20px; height:20px; fill:currentColor; }
+      #jp-update-notice .jp-update-notice-symbol img { display:block; width:20px; height:20px; object-fit:contain; }
       #jp-update-notice .jp-update-notice-title { display:block; font-size:15px; font-weight:700; line-height:1.35; }
       #jp-update-notice .jp-update-notice-body { margin:9px 0 0 44px; color:#5f6368; font-size:13px; line-height:1.45; }
       #jp-update-notice .jp-update-notice-close {
@@ -1348,6 +1348,7 @@
       #jp-update-notice button:focus-visible, #jp-update-notice a:focus-visible { outline:2px solid #d8a646; outline-offset:2px; }
       html.jp-site-dark-active #jp-update-notice { background:#292a2d; color:#e8eaed; border-color:#45474b; box-shadow:0 14px 38px rgba(0,0,0,.55); }
       html.jp-site-dark-active #jp-update-notice .jp-update-notice-symbol { background:#3c4043; color:#ffffff; }
+      html.jp-site-dark-active #jp-update-notice .jp-update-notice-symbol img { filter:invert(1); }
       html.jp-site-dark-active #jp-update-notice .jp-update-notice-body { color:#bdc1c6; }
       html.jp-site-dark-active #jp-update-notice .jp-update-notice-close { color:#bdc1c6; }
       html.jp-site-dark-active #jp-update-notice .jp-update-notice-close:hover { background:#3c4043; }
@@ -1977,7 +1978,12 @@
     headingRow.className = 'jp-update-notice-heading';
     const symbol = document.createElement('span');
     symbol.className = 'jp-update-notice-symbol';
-    symbol.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4V1L7 6l5 5V8a4 4 0 1 1-3.46 2H6.22A6 6 0 1 0 12 6z"/></svg>';
+    const symbolImage = document.createElement('img');
+    symbolImage.src = 'https://cdn-icons-png.flaticon.com/512/1/1064.png';
+    symbolImage.referrerPolicy = 'no-referrer';
+    symbolImage.alt = '';
+    symbolImage.setAttribute('aria-hidden', 'true');
+    symbol.appendChild(symbolImage);
     headingRow.append(symbol, heading);
 
     const close = document.createElement('button');
