@@ -1225,7 +1225,7 @@
 
       /* Bolha de curtidas: o único UI de likes — aparece somente em páginas
          que realmente possuem links/ícones de Like. Não é launcher.
-         Sempre visível; compacta — coração + faltantes. */
+         Sempre visível; joinha + faltantes. O anel só anima durante a leva. */
       #jp-like-widget-bubble {
         position:fixed; right:18px; bottom:18px; z-index:999999;
         display:flex; align-items:center; gap:9px;
@@ -1244,24 +1244,28 @@
          anel e deixa apenas o mesmo ícone oficial, sem um segundo desenho. */
       #jp-like-widget-bubble.jp-bubble-done { padding:12px; gap:0; min-height:0; }
       #jp-like-widget-bubble.jp-bubble-done #jp-like-widget-bubble-count { display:none; }
-      /* Durante a leva, a bolha só troca a borda pra verde (estado estático,
-         sem pulsar — o progresso aparece no anel e na contagem regressiva). */
-      #jp-like-widget-bubble.jp-bubble-liking { border-color:#4caf50; }
-      /* Anel de progresso ao redor do joinha: o track fica sempre visível
-         (contorno sutil) e o fill verde fecha conforme a leva avança (ver
-         setBubbleProgress). Começa no topo por causa do rotate(-90deg). */
-      /* O joinha oficial é centralizado por flex e o anel preenche o wrap em
-         absoluto — assim os dois ficam concêntricos de verdade. */
+      /* Durante a leva, a bolha vira um loader compacto: só o anel gira,
+         sem contador, rótulo, joinha ou progresso acumulado. */
+      #jp-like-widget-bubble.jp-bubble-liking { border-color:#4caf50; width:54px; height:54px; min-height:54px; padding:10px; gap:0; }
+      /* O anel só aparece enquanto a leva está ativa; o wrap mantém o ícone
+         e o spinner perfeitamente centralizados em qualquer viewport. */
       #jp-like-widget-bubble .jp-bubble-ring-wrap { position:relative; width:32px; height:32px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
-      #jp-like-widget-bubble .jp-bubble-ring { position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); }
+      #jp-like-widget-bubble .jp-bubble-ring { display:none; position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); }
       #jp-like-widget-bubble .jp-bubble-ring-track { fill:none; stroke:rgba(255,255,255,.16); stroke-width:2.5; }
       #jp-like-widget-bubble .jp-bubble-ring-fill { fill:none; stroke:#4caf50; stroke-width:2.5; stroke-linecap:round; stroke-dasharray:75.4; stroke-dashoffset:75.4; transition:stroke-dashoffset .15s linear, opacity .15s linear; }
       /* O asset oficial é preto; no estado faltando fica neutro/branco sobre
-         a bolha escura. O estado concluído reaproveita o mesmo PNG, sem
-         círculo ou segundo desenho por cima, e tinge apenas o próprio ícone. */
+         a bolha escura. O concluído reaproveita o ícone, sem sobreposição. */
       #jp-like-widget-bubble .jp-bubble-thumb { position:relative; z-index:1; display:block; width:19px; height:19px; object-fit:contain; filter:invert(1); }
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-ring { display:none; }
       #jp-like-widget-bubble.jp-bubble-done .jp-bubble-thumb { width:22px; height:22px; filter:url(#jp-green-dark); }
+      #jp-like-widget-bubble.jp-bubble-liking .jp-bubble-ring { display:block; animation:jpBubbleSpinner .9s linear infinite; transform-origin:50% 50%; }
+      #jp-like-widget-bubble.jp-bubble-liking .jp-bubble-ring-track { stroke:rgba(255,255,255,.2); }
+      #jp-like-widget-bubble.jp-bubble-liking .jp-bubble-ring-fill { stroke-dasharray:18 57.4; stroke-dashoffset:0; opacity:1; transition:none; }
+      #jp-like-widget-bubble.jp-bubble-liking .jp-bubble-thumb,
+      #jp-like-widget-bubble.jp-bubble-liking #jp-like-widget-bubble-count,
+      #jp-like-widget-bubble.jp-bubble-liking .jp-bubble-label { display:none; }
+      #jp-like-widget-bubble.jp-bubble-liking.jp-bubble-done .jp-bubble-ring { display:block; }
+      @keyframes jpBubbleSpinner { from { transform:rotate(-90deg); } to { transform:rotate(270deg); } }
       /* Rótulo só no desktop largo (ex: "10 faltando"): deixa a bolha mais
          larga e autoexplicativa onde há espaço; some no mobile. */
       #jp-like-widget-bubble .jp-bubble-label { display:none; font-weight:600; opacity:.75; }
@@ -1281,6 +1285,7 @@
       @media (prefers-reduced-motion: reduce) {
         #jp-like-widget-bubble { animation:none; }
         #jp-like-widget-bubble .jp-bubble-ring-fill { transition:none; }
+        #jp-like-widget-bubble.jp-bubble-liking .jp-bubble-ring { animation:none; }
         #jp-like-toast { transition:none; }
       }
       @keyframes jpBubbleIn { from {opacity:0} to {opacity:1} }
@@ -2743,18 +2748,6 @@
   let lastBubbleMissing = null;
 
   // Atualiza o contador da bolha. null = ainda analisando (mostra …).
-  // Anel de progresso da bolha: 0 = vazio, 1 = fechado verde.
-  const BUBBLE_RING_C = 75.4; // 2π×12, mesmo r do círculo no SVG (ver CSS)
-  function setBubbleProgress(frac) {
-    const fill = document.getElementById('jp-bubble-ring-fill');
-    if (!fill) return;
-    const clamped = Math.max(0, Math.min(1, frac || 0));
-    // Esconde o arco zerado: com ponta redonda, um arco de comprimento 0
-    // ainda renderiza como um pontinho verde no topo do anel.
-    fill.style.opacity = clamped <= 0 ? '0' : '1';
-    fill.style.strokeDashoffset = String(BUBBLE_RING_C * (1 - clamped));
-  }
-
   // Toast de aviso da bolha (ex: tudo já curtido). Um de cada vez: se já
   // houver um visível, só troca o texto e reinicia o temporizador.
   let likeToastTimer = null;
@@ -2782,7 +2775,6 @@
     if (!bubble || !count) return;
     if (missingOrNull == null) {
       lastBubbleMissing = null;
-      setBubbleProgress(0);
       count.textContent = '\u2026';
       bubble.classList.remove('jp-bubble-done');
       bubble.setAttribute('aria-label', t('analyzing'));
@@ -2791,15 +2783,16 @@
     }
     lastBubbleMissing = missingOrNull;
     const done = missingOrNull <= 0;
-    setBubbleProgress(done ? 1 : 0);
     count.textContent = done ? '0' : String(missingOrNull);
     bubble.classList.toggle('jp-bubble-done', done);
     bubble.setAttribute('aria-label', done
       ? (currentSettings.language === 'en' ? 'All liked!' : 'Tudo curtido!')
       : `${missingOrNull} ${t('missing')}`);
-    bubble.title = done
-      ? (currentSettings.language === 'en' ? 'All liked!' : 'Tudo curtido!')
-      : t('likeMissing');
+    if (!isLiking) {
+      bubble.title = done
+        ? (currentSettings.language === 'en' ? 'All liked!' : 'Tudo curtido!')
+        : t('likeMissing');
+    }
     // Rótulo do desktop largo ("10 faltando"); some quando concluído (o selo basta).
     if (label) {
       label.textContent = done ? '' : t('missing');
@@ -2809,8 +2802,8 @@
 
   // Placar das curtidas: a bolha é o único mostrador, então é só alimentá-la.
   function updateStatus(cards, missing) {
-    // Durante a leva, o clickNext já atualiza a bolha a cada clique — não
-    // deixe esses refreshes brigarem com a contagem regressiva.
+    // Durante a leva, o clickNext já atualiza o estado a cada clique — não
+    // deixe esses refreshes interromperem o spinner nem o rótulo acessível.
     if (isLiking) return;
     updateBubble(cards.length ? missing : null);
   }
@@ -2896,12 +2889,10 @@
     debounceTimer = setTimeout(refresh, DEBOUNCE_MS);
   }
 
-  // Pequena pausa entre cada clique de "curtir": evita disparar dezenas de
-  // cliques no mesmo instante (mais parecido com uso normal, e reduz
-  // qualquer chance do site tratar como automação/flood). É curto de
-  // propósito — a ideia é só "não ser instantâneo", não deixar lento.
-  const LIKE_CLICK_DELAY_MS = 12;
-  const LIKE_CLICK_JITTER_MS = 10; // variação aleatória somada ao delay, pra não ficar um intervalo perfeitamente uniforme
+  // Pausa curta entre cliques: mantém a leva responsiva sem disparar todos
+  // os handlers no mesmo instante; cadência levemente maior que a anterior.
+  const LIKE_CLICK_DELAY_MS = 10;
+  const LIKE_CLICK_JITTER_MS = 8; // intervalo de 10 a 18 ms, com pequena variação
   let isLiking = false;
 
   // onDone é chamado quando todos os cliques da leva atual terminam
@@ -2937,7 +2928,6 @@
       }
       i++;
       updateBubble(targets.length - i);
-      setBubbleProgress(i / targets.length);
       const delay = LIKE_CLICK_DELAY_MS + Math.random() * LIKE_CLICK_JITTER_MS;
       setTimeout(clickNext, delay);
     }
@@ -2946,8 +2936,8 @@
     return targets.length;
   }
 
-  // Dispara a leva de "curtir faltantes" a partir da bolha. Todo o feedback
-  // é na própria bolha (contagem regressiva + anel + borda verde + selo).
+  // Dispara a leva de "curtir faltantes" a partir da bolha. Durante o
+  // processamento, a bolha mostra só o spinner; ao terminar, o joinha verde.
   function runLikeAllBatch() {
     if (isLiking) return;
     let total = 0;
@@ -2962,7 +2952,9 @@
       document.getElementById('jp-like-widget-bubble')?.classList.remove('jp-bubble-liking');
       return;
     }
-    document.getElementById('jp-like-widget-bubble')?.classList.toggle('jp-bubble-liking', total > 0);
+    const bubble = document.getElementById('jp-like-widget-bubble');
+    bubble?.classList.toggle('jp-bubble-liking', total > 0);
+    if (total > 0 && bubble) bubble.title = '';
   }
 
   // =======================================================================
