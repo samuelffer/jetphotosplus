@@ -1,4 +1,4 @@
-JETPHOTOS+ — VERSÃO 2.0.1
+JETPHOTOS+ — VERSÃO 2.1.0
 ==========================
 
 
@@ -39,6 +39,15 @@ Nas configurações da extensão (menu JetPhotos+ no site):
   apagar o que já foi coletado e sem fazer o coletor voltar no tempo.
 
 
+ATUALIZAÇÕES
+------------
+A extensão consulta a última release pública do GitHub a cada seis horas,
+sem precisar abrir a página de releases. Quando encontra uma versão mais
+recente, mostra um aviso e um indicador sobre a logo do JetPhotos+ no site.
+Use "Baixar atualização" para obter o pacote; a instalação ainda precisa ser
+confirmada manualmente no navegador.
+
+
 IDIOMA
 ------
 A extensão oferece Português (Brasil) e English em Configurações > Idioma.
@@ -46,4 +55,4 @@ O idioma inicial segue o idioma do navegador; outros idiomas usam English
 como fallback. Uma escolha manual em Configurações tem prioridade.
 
 
-Versão atual: 2.0.1.
+Versão atual: 2.1.0.

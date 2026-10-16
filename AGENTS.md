@@ -42,7 +42,9 @@ extensão no próprio PC. O GitHub é a ponte, não o destino final.
    documento do repositório, ver `ZIP_EXCLUDE` no script).
    Cada modificação gera um zip novo e **nunca sobrescreve** um anterior:
    como a versão só muda quando o usuário mandar, testes repetidos na
-   mesma versão ganham sufixo automático (`-r2`, `-r3`, ...).
+   mesma versão ganham sufixo automático (`-r2`, `-r3`, ...). Se o usuário
+   pedir explicitamente uma revisão nomeada (por exemplo `-r1` ao iniciar
+   uma nova versão), use `node scripts/build-zip.mjs --revision 1`.
 3. Commite e dê push **na branch da sessão (Arena)** — código + zip juntos:
    ```bash
    git add -A
@@ -126,7 +128,8 @@ extension/
                      modo escuro, estimador da fila
   content-hook.js    roda no MUNDO DA PÁGINA; espiona fetch/XHR do
                      PostHandler.php pra confirmar like no servidor
-  background.js      service worker: coleta a fila a cada 10 min (alarms)
+  background.js      service worker: coleta a fila a cada 10 min e verifica
+                     releases do GitHub a cada 6h (alarms)
   (sem popup)        o ícone da extensão não abre painel; export/import ficam nas Configurações no site
   _locales/          só nome e descrição da extensão
   CHANGELOG.md       histórico (Keep a Changelog + SemVer)
@@ -139,8 +142,15 @@ docs/                site de divulgação (GitHub Pages — mexendo aqui, leia A
 ### Armazenamento
 
 - `chrome.storage.local`: `jpQueueDailyStats`, `jpSiteDarkMode`,
-  `jpQueueEstimatorEnabled`, `jpLanguage`
+  `jpQueueEstimatorEnabled`, `jpLanguage`, `jpLatestReleaseInfo`,
+  `jpReleaseCheckMeta`, `jpReleaseNoticeShownVersion`
 - `localStorage` da página: `jpPlusLikedPhotoIds_v1` (cache de curtidas)
+- A verificação de release consulta `api.github.com` a cada 6 horas, usando
+  ETag quando disponível. Só notifica quando a tag SemVer é maior que a versão
+  instalada; a instalação continua manual (o navegador não permite auto-update
+  de pacote carregado localmente).
+- O botão **Testar aviso de atualização** nas Configurações é temporário,
+  apenas para pré-visualização; remova quando o usuário não precisar mais dele.
 
 ### Pontos sensíveis do código
 

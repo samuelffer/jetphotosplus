@@ -8,6 +8,7 @@
  *
  * Uso:
  *   node scripts/build-zip.mjs [--min-r N]
+ *   node scripts/build-zip.mjs --revision N  (força um sufixo rN, inclusive r1)
  *
  * N continua a numeração -rN de sessões anteriores: como zips/ é ignorada
  * pelo git, toda sessão nova começa com ela vazia — sem o N, a contagem
@@ -185,16 +186,26 @@ function main() {
   // informa de onde continuar via --min-r <último+1> (ver AGENTS.md).
   const minRFlag = process.argv.indexOf('--min-r');
   const minRevision = minRFlag === -1 ? 2 : Math.max(2, parseInt(process.argv[minRFlag + 1], 10) || 2);
+  const revisionFlag = process.argv.indexOf('--revision');
+  const requestedRevision = revisionFlag === -1 ? null : Math.max(1, parseInt(process.argv[revisionFlag + 1], 10) || 1);
 
   mkdirSync(OUTPUT_DIR, { recursive: true });
 
-  // Nunca sobrescreve um zip anterior: se a versão repetir (o normal, já
-  // que ela só muda quando o usuário mandar), gera -r2, -r3, ...
-  let outputPath = join(OUTPUT_DIR, `jetphotosplus-v${version}.zip`);
-  if (existsSync(outputPath) || minRevision > 2) {
-    let revision = minRevision;
+  // Nunca sobrescreve um zip anterior. O modo normal começa sem sufixo e
+  // revisões seguintes usam r2, r3...; --revision permite nomes explícitos
+  // como r1 quando o usuário inicia uma nova série de versão.
+  let outputPath;
+  if (requestedRevision !== null) {
+    let revision = requestedRevision;
     while (existsSync(join(OUTPUT_DIR, `jetphotosplus-v${version}-r${revision}.zip`))) revision++;
     outputPath = join(OUTPUT_DIR, `jetphotosplus-v${version}-r${revision}.zip`);
+  } else {
+    outputPath = join(OUTPUT_DIR, `jetphotosplus-v${version}.zip`);
+    if (existsSync(outputPath) || minRevision > 2) {
+      let revision = minRevision;
+      while (existsSync(join(OUTPUT_DIR, `jetphotosplus-v${version}-r${revision}.zip`))) revision++;
+      outputPath = join(OUTPUT_DIR, `jetphotosplus-v${version}-r${revision}.zip`);
+    }
   }
 
   writeFileSync(outputPath, buildZip(files, SOURCE_DIR));

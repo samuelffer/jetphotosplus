@@ -7,16 +7,17 @@
 const JP_WEBEXT = globalThis.browser || globalThis.chrome || null;
 const JP_USE_BROWSER_PROMISES = Boolean(globalThis.browser && globalThis.browser !== globalThis.chrome);
 
-function getStoredValue(key) {
+function getStoredValue(keys) {
   const storage = JP_WEBEXT?.storage?.local;
+  const list = Array.isArray(keys) ? keys : [keys];
   if (!storage?.get) return Promise.resolve({});
   if (JP_USE_BROWSER_PROMISES) {
-    try { return Promise.resolve(storage.get([key])).then(result => result || {}, () => ({})); }
+    try { return Promise.resolve(storage.get(list)).then(result => result || {}, () => ({})); }
     catch (_) { return Promise.resolve({}); }
   }
   return new Promise(resolve => {
     try {
-      storage.get([key], result => {
+      storage.get(list, result => {
         try {
           if (JP_WEBEXT.runtime?.lastError) { resolve({}); return; }
         } catch (_) { resolve({}); return; }
@@ -49,6 +50,126 @@ const JP_QUEUE_POLL_MINUTES = 10;
 const JP_QUEUE_DAILY_KEY = 'jpQueueDailyStats';
 const JP_QUEUE_DAILY_MAX_DAYS = 60;
 const JP_BADGE_COLOR = '#4299dc';
+
+const JP_RELEASE_API_URL = 'https://api.github.com/repos/samuelffer/jetphotosplus/releases/latest';
+const JP_RELEASE_CHECK_ALARM = 'jp-release-update-check';
+const JP_RELEASE_CHECK_INTERVAL_MINUTES = 360; // uma consulta a cada seis horas
+const JP_RELEASE_CHECK_INTERVAL_MS = JP_RELEASE_CHECK_INTERVAL_MINUTES * 60 * 1000;
+const JP_RELEASE_INFO_KEY = 'jpLatestReleaseInfo';
+const JP_RELEASE_CHECK_META_KEY = 'jpReleaseCheckMeta';
+
+function parseSemver(value) {
+  const match = String(value || '').trim().replace(/^v/i, '').match(/^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/);
+  if (!match) return null;
+  return { major: +match[1], minor: +match[2], patch: +match[3], prerelease: match[4] ? match[4].split('.') : [] };
+}
+
+function compareSemver(left, right) {
+  const a = parseSemver(left);
+  const b = parseSemver(right);
+  if (!a || !b) return null;
+  for (const part of ['major', 'minor', 'patch']) {
+    if (a[part] !== b[part]) return a[part] > b[part] ? 1 : -1;
+  }
+  if (!a.prerelease.length && b.prerelease.length) return 1;
+  if (a.prerelease.length && !b.prerelease.length) return -1;
+  for (let i = 0; i < Math.max(a.prerelease.length, b.prerelease.length); i++) {
+    if (a.prerelease[i] === undefined) return -1;
+    if (b.prerelease[i] === undefined) return 1;
+    if (a.prerelease[i] === b.prerelease[i]) continue;
+    const an = /^\d+$/.test(a.prerelease[i]);
+    const bn = /^\d+$/.test(b.prerelease[i]);
+    if (an && bn) return Number(a.prerelease[i]) > Number(b.prerelease[i]) ? 1 : -1;
+    if (an !== bn) return an ? -1 : 1;
+    return a.prerelease[i] > b.prerelease[i] ? 1 : -1;
+  }
+  return 0;
+}
+
+async function checkForReleaseUpdate(force = false) {
+  const manifest = JP_WEBEXT?.runtime?.getManifest?.();
+  const installedVersion = manifest?.version;
+  if (!installedVersion || !JP_WEBEXT?.storage?.local || typeof fetch !== 'function') return;
+
+  const stored = await getStoredValue([JP_RELEASE_CHECK_META_KEY, JP_RELEASE_INFO_KEY]);
+  const oldMeta = stored[JP_RELEASE_CHECK_META_KEY] || {};
+  const now = Date.now();
+  if (!force && now - Number(oldMeta.lastAttemptAtMs || 0) < JP_RELEASE_CHECK_INTERVAL_MS) return;
+
+  // Registrar a tentativa antes da rede evita repetir consultas em um loop
+  // caso o GitHub ou a conexão estejam indisponíveis.
+  const meta = { ...oldMeta, lastAttemptAtMs: now };
+  await setStoredValue({ [JP_RELEASE_CHECK_META_KEY]: meta });
+
+  try {
+    const headers = { Accept: 'application/vnd.github+json' };
+    if (oldMeta.etag && oldMeta.lastSuccessfulCheckAtMs) headers['If-None-Match'] = oldMeta.etag;
+    const response = await fetch(JP_RELEASE_API_URL, {
+      method: 'GET',
+      headers,
+      cache: 'no-store',
+      credentials: 'omit'
+    });
+
+    if (response.status === 304) {
+      await setStoredValue({
+        [JP_RELEASE_CHECK_META_KEY]: {
+          ...meta,
+          etag: oldMeta.etag || '',
+          lastSuccessfulCheckAtMs: now
+        }
+      });
+      return;
+    }
+    if (!response.ok) throw new Error(`GitHub API respondeu HTTP ${response.status}`);
+
+    const release = await response.json();
+    const tagName = String(release?.tag_name || '').trim();
+    if (!parseSemver(tagName) || compareSemver(tagName, installedVersion) <= 0) {
+      await setStoredValue({
+        [JP_RELEASE_INFO_KEY]: null,
+        [JP_RELEASE_CHECK_META_KEY]: {
+          ...meta,
+          etag: response.headers?.get?.('ETag') || '',
+          lastSuccessfulCheckAtMs: now
+        }
+      });
+      return;
+    }
+
+    const zipAsset = Array.isArray(release.assets)
+      ? release.assets.find(asset => String(asset?.name || '').toLowerCase().endsWith('.zip'))
+      : null;
+    await setStoredValue({
+      [JP_RELEASE_INFO_KEY]: {
+        tagName,
+        name: String(release.name || tagName),
+        htmlUrl: String(release.html_url || 'https://github.com/samuelffer/jetphotosplus/releases/latest'),
+        zipUrl: String(zipAsset?.browser_download_url || ''),
+        publishedAt: String(release.published_at || '')
+      },
+      [JP_RELEASE_CHECK_META_KEY]: {
+        ...meta,
+        etag: response.headers?.get?.('ETag') || '',
+        lastSuccessfulCheckAtMs: now
+      }
+    });
+  } catch (error) {
+    console.warn('[JetPhotos+] Não foi possível verificar atualizações agora:', error?.message || error);
+  }
+}
+
+function ensureReleaseCheckAlarm() {
+  try {
+    const result = JP_WEBEXT?.alarms?.create?.(JP_RELEASE_CHECK_ALARM, {
+      delayInMinutes: 2,
+      periodInMinutes: JP_RELEASE_CHECK_INTERVAL_MINUTES
+    });
+    result?.catch?.(() => {});
+  } catch (_) {
+    // A verificação sob demanda na inicialização continua funcionando sem alarms.
+  }
+}
 
 let queueCollectionInFlight = null;
 
@@ -245,17 +366,22 @@ function ensureQueueAlarm() {
 
 JP_WEBEXT?.runtime?.onInstalled?.addListener(() => {
   ensureQueueAlarm();
+  ensureReleaseCheckAlarm();
   loadDailyStats().then(updateBadge);
   collectQueueStats();
+  checkForReleaseUpdate(true);
 });
 
 JP_WEBEXT?.runtime?.onStartup?.addListener(() => {
   ensureQueueAlarm();
+  ensureReleaseCheckAlarm();
   loadDailyStats().then(updateBadge);
+  checkForReleaseUpdate(false);
 });
 
 JP_WEBEXT?.alarms?.onAlarm?.addListener(alarm => {
   if (alarm.name === JP_QUEUE_ALARM) collectQueueStats();
+  if (alarm.name === JP_RELEASE_CHECK_ALARM) checkForReleaseUpdate(false);
 });
 
 // queue.php pode pedir uma coleta imediata quando o painel é aberto.

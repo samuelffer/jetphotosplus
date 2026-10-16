@@ -227,6 +227,14 @@
       allLikedToast: 'Todas as fotos da página já estão curtidas',
       settingsGeneral: 'Geral',
       experimental: 'Experimental',
+      releaseUpdateAvailable: (version) => `Nova versão ${version} do JetPhotos+ disponível`,
+      releaseUpdateBody: 'Baixe o pacote e atualize a extensão pelo navegador. A instalação não é automática.',
+      downloadUpdate: 'Baixar atualização',
+      closeUpdatePreview: 'Fechar prévia',
+      updateTestTitle: 'Prévia do aviso de atualização',
+      updateTestBody: 'Esta é uma simulação; nenhum arquivo será baixado.',
+      testUpdateNotice: 'Testar aviso de atualização',
+      testUpdateNoticeHelp: 'Mostra temporariamente como o aviso aparecerá quando houver uma nova versão.',
       siteDarkMode: 'Modo escuro (beta)',
       siteDarkModeHelp: 'Escurece o JetPhotos e também a interface da extensão (painel, submenu e widget). Fotos e cores de marca não são alteradas.',
       queueEstimator: 'Estimador de dias na fila (beta)',
@@ -275,7 +283,16 @@
       likeMissing: 'Like missing photos',
       missing: 'missing',
       allLikedToast: 'All photos on this page are already liked',
-      experimental: 'Experimental', settingsGeneral: 'General', siteDarkMode: 'Site dark mode (beta)', siteDarkModeHelp: 'Darkens JetPhotos backgrounds and light text. Photos and brand colors are not changed.',
+      experimental: 'Experimental', settingsGeneral: 'General',
+      releaseUpdateAvailable: (version) => `JetPhotos+ ${version} is available`,
+      releaseUpdateBody: 'Download the package and update the extension in your browser. Installation is not automatic.',
+      downloadUpdate: 'Download update',
+      closeUpdatePreview: 'Close preview',
+      updateTestTitle: 'Update notice preview',
+      updateTestBody: 'This is a simulation; no file will be downloaded.',
+      testUpdateNotice: 'Test update notice',
+      testUpdateNoticeHelp: 'Temporarily previews how the notice will look when a new version is available.',
+      siteDarkMode: 'Site dark mode (beta)', siteDarkModeHelp: 'Darkens JetPhotos backgrounds and light text. Photos and brand colors are not changed.',
       queueEstimator: 'Queue days estimator (beta)', queueEstimatorHelp: 'Estimates how long your photo may take to be reviewed on queue.php. Reload the page after changing.',
       language: 'Language', languageHelp: 'Choose the extension language.', portugueseBrazil: 'Português (Brasil)', english: 'English',
       queueEstimate: 'Queue estimate', likeWidgetLabel: 'JETPHOTOS+ · Likes', screenedToday: 'Screened today:', dailyAverage: 'Daily average:', estimatedQueueTime: 'Estimated time:', lastCollection: 'Last collection:',
@@ -1008,6 +1025,7 @@
         padding: 0;
       }
       #jp-plus-launcher {
+        position:relative;
         appearance: none;
         -webkit-appearance: none;
         box-sizing: border-box;
@@ -1029,6 +1047,18 @@
         padding-left: 8px;
         padding-right: 8px;
       }
+      .jp-plus-update-indicator {
+        position:absolute; top:-7px; right:-7px; z-index:4;
+        width:30px; height:30px; min-width:30px; min-height:30px;
+        display:flex; align-items:center; justify-content:center;
+        padding:0; border:2px solid #ffffff; border-radius:50%;
+        background:#2c94e8; color:#ffffff; box-shadow:0 2px 7px rgba(0,0,0,.35);
+        cursor:pointer; touch-action:manipulation;
+      }
+      .jp-plus-update-indicator[hidden] { display:none !important; }
+      .jp-plus-update-indicator svg { display:block; width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
+      .jp-plus-update-indicator i { position:absolute; top:-3px; right:-3px; width:9px; height:9px; border:1px solid #fff; border-radius:50%; background:#ef4444; }
+      #jp-plus-launcher-host > .jp-plus-update-indicator { top:-5px; right:-5px; }
       #jp-plus-launcher .jp-launcher-logo {
         display: block;
         width: 27px;
@@ -1135,7 +1165,8 @@
       /* Docagem do FAB: parado, meio escondido na lateral esquerda + translúcido. A classe
          jp-fab-docked vai no host, mas o efeito vai no invólucro — o submenu e
          o painel moram no mesmo host e não podem ser arrastados juntos. */
-      #jp-plus-mobile-fab-wrap { display:block; width:52px; height:52px; transition:transform .22s ease, opacity .22s ease; }
+      #jp-plus-mobile-fab-wrap { position:relative; display:block; width:52px; height:52px; transition:transform .22s ease, opacity .22s ease; }
+      #jp-plus-mobile-fab-wrap > .jp-plus-update-indicator { top:-5px; right:-5px; width:36px; height:36px; min-width:36px; min-height:36px; }
       #jp-plus-mobile-host.jp-fab-docked #jp-plus-mobile-fab-wrap { transform:translateX(calc(-50% - 16px)); opacity:.5; }
       @media (prefers-reduced-motion: reduce) {
         #jp-plus-mobile-fab-wrap { transition:none; }
@@ -1266,6 +1297,31 @@
         opacity:0; transition:opacity .18s ease;
       }
       #jp-like-toast.jp-toast-show { opacity:1; }
+
+      #jp-update-notice {
+        position:fixed; top:max(12px, env(safe-area-inset-top)); left:50%; z-index:1000012;
+        width:min(420px, calc(100vw - 24px)); box-sizing:border-box;
+        padding:16px; border:1px solid #d6dbe1; border-top:4px solid #2c94e8; border-radius:12px;
+        background:#ffffff; color:#1f2937; box-shadow:0 12px 36px rgba(0,0,0,.28);
+        transform:translateX(-50%); font-family:Arial,Helvetica,sans-serif;
+      }
+      #jp-update-notice .jp-update-notice-title { display:block; padding-right:32px; font-size:15px; line-height:1.35; }
+      #jp-update-notice .jp-update-notice-body { margin-top:7px; color:#4b5563; font-size:13px; line-height:1.45; }
+      #jp-update-notice .jp-update-notice-close {
+        position:absolute; top:8px; right:8px; width:36px; height:36px; border:0; border-radius:50%;
+        background:transparent; color:#4b5563; font-size:24px; cursor:pointer; touch-action:manipulation;
+      }
+      #jp-update-notice .jp-update-notice-actions { display:flex; justify-content:flex-end; margin-top:12px; }
+      #jp-update-notice .jp-update-notice-download {
+        min-height:44px; display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box;
+        padding:8px 14px; border:0; border-radius:8px; background:#2c94e8; color:#ffffff;
+        font-size:14px; font-weight:700; text-decoration:none; cursor:pointer; touch-action:manipulation;
+      }
+      @media (max-width:520px) {
+        #jp-update-notice { top:max(8px, env(safe-area-inset-top)); width:calc(100vw - 20px); padding:14px; }
+        #jp-update-notice .jp-update-notice-title { font-size:14px; }
+      }
+      @media (prefers-reduced-motion: reduce) { .jp-plus-update-indicator { transition:none !important; } }
 
       #jp-like-settings-menu {
         position: absolute !important;
@@ -1795,6 +1851,171 @@
   let mobileHostEl = null;
   let fabModeActive = false;
   let currentSettings = { siteDarkMode: false, queueEstimatorEnabled: true, language: 'pt-BR' };
+  const JP_RELEASE_INFO_KEY = 'jpLatestReleaseInfo';
+  const JP_RELEASE_NOTICE_KEY = 'jpReleaseNoticeShownVersion';
+  let currentUpdateRelease = null;
+  let currentUpdateNoticeShownVersion = '';
+  let testUpdatePreviewActive = false;
+  let updateNoticeTimer = null;
+
+  function parseUpdateVersion(value) {
+    const match = String(value || '').trim().replace(/^v/i, '').match(/^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/);
+    if (!match) return null;
+    return { parts: [+match[1], +match[2], +match[3]], prerelease: match[4] ? match[4].split('.') : [] };
+  }
+
+  function compareUpdateVersions(left, right) {
+    const a = parseUpdateVersion(left);
+    const b = parseUpdateVersion(right);
+    if (!a || !b) return null;
+    for (let i = 0; i < 3; i++) if (a.parts[i] !== b.parts[i]) return a.parts[i] > b.parts[i] ? 1 : -1;
+    if (!a.prerelease.length && b.prerelease.length) return 1;
+    if (a.prerelease.length && !b.prerelease.length) return -1;
+    for (let i = 0; i < Math.max(a.prerelease.length, b.prerelease.length); i++) {
+      if (a.prerelease[i] === undefined) return -1;
+      if (b.prerelease[i] === undefined) return 1;
+      if (a.prerelease[i] === b.prerelease[i]) continue;
+      const aNumeric = /^\d+$/.test(a.prerelease[i]);
+      const bNumeric = /^\d+$/.test(b.prerelease[i]);
+      if (aNumeric && bNumeric) return Number(a.prerelease[i]) > Number(b.prerelease[i]) ? 1 : -1;
+      if (aNumeric !== bNumeric) return aNumeric ? -1 : 1;
+      return a.prerelease[i] > b.prerelease[i] ? 1 : -1;
+    }
+    return 0;
+  }
+
+  function getInstalledExtensionVersion() {
+    try { return JP_WEBEXT?.runtime?.getManifest?.().version || ''; }
+    catch (_) { return ''; }
+  }
+
+  function isUpdateAvailable(release) {
+    const tag = release?.tagName || release?.tag_name || '';
+    const installed = getInstalledExtensionVersion();
+    return Boolean(tag && installed && compareUpdateVersions(tag, installed) > 0);
+  }
+
+  function safeReleaseUrl(release) {
+    const fallback = 'https://github.com/samuelffer/jetphotosplus/releases/latest';
+    try {
+      const candidate = new URL(release?.zipUrl || release?.htmlUrl || fallback);
+      return candidate.protocol === 'https:' && candidate.hostname === 'github.com' ? candidate.href : fallback;
+    } catch (_) { return fallback; }
+  }
+
+  function closeUpdateNotice(isTest = false) {
+    if (updateNoticeTimer) { clearTimeout(updateNoticeTimer); updateNoticeTimer = null; }
+    document.getElementById('jp-update-notice')?.remove();
+    if (isTest) {
+      testUpdatePreviewActive = false;
+      renderUpdateIndicator();
+    }
+  }
+
+  function showUpdateNotice(release, autoDismiss = false) {
+    if (!document.body) return;
+    document.getElementById('jp-update-notice')?.remove();
+    if (updateNoticeTimer) { clearTimeout(updateNoticeTimer); updateNoticeTimer = null; }
+
+    const isTest = release?.isTest === true;
+    const tag = release?.tagName || release?.tag_name || '';
+    const notice = document.createElement('section');
+    notice.id = 'jp-update-notice';
+    notice.setAttribute('role', 'status');
+    notice.setAttribute('aria-live', 'polite');
+
+    const heading = document.createElement('strong');
+    heading.className = 'jp-update-notice-title';
+    heading.textContent = isTest ? t('updateTestTitle') : t('releaseUpdateAvailable', tag);
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'jp-update-notice-close';
+    close.setAttribute('aria-label', t('close'));
+    close.textContent = '×';
+    close.addEventListener('click', () => closeUpdateNotice(isTest));
+
+    const body = document.createElement('div');
+    body.className = 'jp-update-notice-body';
+    body.textContent = isTest ? t('updateTestBody') : t('releaseUpdateBody');
+
+    const actions = document.createElement('div');
+    actions.className = 'jp-update-notice-actions';
+    if (isTest) {
+      const closePreview = document.createElement('button');
+      closePreview.type = 'button';
+      closePreview.className = 'jp-update-notice-download';
+      closePreview.textContent = t('closeUpdatePreview');
+      closePreview.addEventListener('click', () => closeUpdateNotice(true));
+      actions.appendChild(closePreview);
+    } else {
+      const download = document.createElement('a');
+      download.className = 'jp-update-notice-download';
+      download.href = safeReleaseUrl(release);
+      download.target = '_blank';
+      download.rel = 'noopener noreferrer';
+      download.textContent = t('downloadUpdate');
+      download.addEventListener('click', () => setTimeout(() => closeUpdateNotice(false), 500));
+      actions.appendChild(download);
+    }
+
+    notice.append(close, heading, body, actions);
+    document.body.appendChild(notice);
+    if (autoDismiss) updateNoticeTimer = setTimeout(() => closeUpdateNotice(false), 10000);
+  }
+
+  function createUpdateIndicator() {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'jp-plus-update-indicator';
+    button.hidden = true;
+    button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 0 0-15.36-6.36L3 8.25M3 3v5.25h5.25M3 12a9 9 0 0 0 15.36 6.36L21 15.75M21 21v-5.25h-5.25"/></svg><i aria-hidden="true"></i>';
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      const release = testUpdatePreviewActive
+        ? { tagName: 'v99.0.0', isTest: true }
+        : currentUpdateRelease;
+      if (release) showUpdateNotice(release, false);
+    });
+    return button;
+  }
+
+  function renderUpdateIndicator() {
+    const show = testUpdatePreviewActive || isUpdateAvailable(currentUpdateRelease);
+    const version = testUpdatePreviewActive
+      ? 'v99.0.0'
+      : (currentUpdateRelease?.tagName || currentUpdateRelease?.tag_name || '');
+    document.querySelectorAll('.jp-plus-update-indicator').forEach(button => {
+      button.hidden = !show;
+      const label = testUpdatePreviewActive
+        ? t('updateTestTitle')
+        : t('releaseUpdateAvailable', version);
+      button.setAttribute('aria-label', label);
+      button.title = label;
+    });
+  }
+
+  function refreshReleaseUpdateUI(announce = true) {
+    renderUpdateIndicator();
+    if (!announce || !launcherHostEl || !isUpdateAvailable(currentUpdateRelease)) return;
+    const version = currentUpdateRelease.tagName || currentUpdateRelease.tag_name;
+    if (!version || currentUpdateNoticeShownVersion === version) return;
+    currentUpdateNoticeShownVersion = version;
+    setExtensionStorage({ [JP_RELEASE_NOTICE_KEY]: version });
+    showUpdateNotice(currentUpdateRelease, true);
+  }
+
+  function handleReleaseStorageChange(changes, areaName) {
+    if (areaName !== 'local') return;
+    if (Object.prototype.hasOwnProperty.call(changes || {}, JP_RELEASE_NOTICE_KEY)) {
+      currentUpdateNoticeShownVersion = String(changes[JP_RELEASE_NOTICE_KEY].newValue || '');
+    }
+    if (Object.prototype.hasOwnProperty.call(changes || {}, JP_RELEASE_INFO_KEY)) {
+      currentUpdateRelease = changes[JP_RELEASE_INFO_KEY].newValue || null;
+      refreshReleaseUpdateUI(true);
+    }
+  }
+  try { JP_WEBEXT?.storage?.onChanged?.addListener?.(handleReleaseStorageChange); } catch (_) {}
 
   function buildToggleSwitch(initialOn, onChange) {
     const wrapper = document.createElement('button');
@@ -2033,6 +2254,22 @@
     historyActions.appendChild(importInput);
     inner.appendChild(historyActions);
     inner.appendChild(historyMsg);
+
+    // Botão temporário para conferir o aviso e o indicador sem depender de uma release real.
+    const updateTestRow = document.createElement('div');
+    updateTestRow.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; border-top:1px dashed var(--jp-border); padding-top:12px;';
+    const updateTestLabel = document.createElement('div');
+    updateTestLabel.style.cssText = 'font-family:Arial,Helvetica,sans-serif; font-size:12px; color:var(--jp-subtext); line-height:1.4; flex:1 1 180px;';
+    updateTestLabel.textContent = t('testUpdateNoticeHelp');
+    const updateTestButton = mkBtn(t('testUpdateNotice'));
+    updateTestButton.style.minHeight = '44px';
+    updateTestButton.addEventListener('click', () => {
+      testUpdatePreviewActive = true;
+      renderUpdateIndicator();
+      showUpdateNotice({ tagName: 'v99.0.0', isTest: true }, false);
+    });
+    updateTestRow.append(updateTestLabel, updateTestButton);
+    inner.appendChild(updateTestRow);
 
     menu.appendChild(inner);
 
@@ -2298,6 +2535,7 @@
     const fabWrap = document.createElement('span');
     fabWrap.id = 'jp-plus-mobile-fab-wrap';
     fabWrap.appendChild(fab);
+    fabWrap.appendChild(createUpdateIndicator());
     mhost.appendChild(fabWrap);
     mhost.appendChild(submenu);
     mhost.classList.add('jp-fab-docked');
@@ -2345,6 +2583,7 @@
     launcherLogo.setAttribute('aria-hidden', 'true');
     launcher.appendChild(launcherLogo);
     host.appendChild(launcher);
+    host.appendChild(createUpdateIndicator());
 
     // O launcher não tem ação de clique: o comportamento é exclusivamente
     // hover/foco, igual aos menus nativos do JetPhotos.
@@ -2406,6 +2645,7 @@
     styleLauncherFromReference(launcher, host, headerTarget.reference, headerTarget.container);
     buildMobileHost();
     applyFabMode();
+    refreshReleaseUpdateUI(true);
 
     panelEl = submenu;
 
@@ -4100,7 +4340,13 @@
   }
 
   async function init() {
-    currentSettings = await getSettings();
+    const [settings, updateState] = await Promise.all([
+      getSettings(),
+      getExtensionStorage([JP_RELEASE_INFO_KEY, JP_RELEASE_NOTICE_KEY])
+    ]);
+    currentSettings = settings;
+    currentUpdateRelease = updateState[JP_RELEASE_INFO_KEY] || null;
+    currentUpdateNoticeShownVersion = String(updateState[JP_RELEASE_NOTICE_KEY] || '');
 
     applySiteDarkMode(currentSettings.siteDarkMode);
     // O tema (classe no <html> + CSS) já está valendo aqui — seguro revelar
