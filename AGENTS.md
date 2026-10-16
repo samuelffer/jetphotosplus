@@ -70,6 +70,32 @@ extensão no próprio PC. O GitHub é a ponte, não o destino final.
 - `zips/` está no `.gitignore` de propósito: os pacotes de teste são
   commitados com `-f` só nas branches de sessão e nunca chegam ao `main`.
 
+## Compatibilidade mobile e de navegadores (obrigatório em toda alteração)
+
+Toda alteração de código deve ser pensada e revisada também para celular e
+outros dispositivos com toque — não espere o usuário pedir uma segunda
+alteração mobile. Isso vale para **qualquer recurso novo ou corrigido**:
+interface, botões, menus, fluxos, armazenamento, APIs do navegador e código
+executado em páginas, não apenas mudanças de CSS.
+
+Antes de concluir cada tarefa:
+
+1. Verifique se a alteração funciona em viewport estreita e em dispositivo
+   touch, incluindo toque/alvos clicáveis, rolagem, teclado virtual, áreas
+   seguras e ausência de dependência exclusiva de hover ou mouse.
+2. Adapte a implementação quando necessário, mantendo a experiência de
+   desktop intacta; se a mudança não exigir adaptação mobile, registre essa
+   verificação no resumo da tarefa.
+3. Preserve o funcionamento nos navegadores convencionais já suportados
+   (Chrome e Firefox) e considere compatibilidade com Orion/WebExtensions
+   quando APIs, permissões, manifesto ou instalação forem afetados. Prefira
+   detecção de capacidade e fallbacks isolados a ramificações que mudem o
+   comportamento dos navegadores existentes.
+4. Não declare suporte mobile/Orion como confirmado sem teste real. Quando
+   não houver dispositivo/emulador disponível, faça verificações estáticas e
+   automatizadas possíveis, explique o que ficou sem validação e peça ao
+   usuário o teste no aparelho.
+
 ## Versão: manter tudo sincronizado
 
 **Não troque a versão a cada alteração.** A versão só muda quando o usuário

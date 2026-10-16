@@ -14,6 +14,114 @@
 (function () {
   'use strict';
 
+  // Orion e Firefox podem expor a API WebExtensions no namespace `browser`,
+  // enquanto Chrome e derivados tradicionalmente usam `chrome`. Mantemos a
+  // API nativa quando disponível e só recorremos ao armazenamento da origem
+  // como fallback, sem alterar o caminho normal dos navegadores convencionais.
+  const JP_WEBEXT = globalThis.browser || globalThis.chrome || null;
+  const JP_USE_BROWSER_PROMISES = Boolean(globalThis.browser && globalThis.browser !== globalThis.chrome);
+  const JP_LOCAL_FALLBACK_PREFIX = 'jpplus-webext-fallback:';
+
+  function readLocalFallback(keys) {
+    const result = {};
+    const list = Array.isArray(keys) ? keys : [keys];
+    try {
+      for (const key of list) {
+        const raw = localStorage.getItem(`${JP_LOCAL_FALLBACK_PREFIX}${key}`);
+        if (raw !== null) result[key] = JSON.parse(raw);
+      }
+    } catch (_) {}
+    return result;
+  }
+
+  function writeLocalFallback(items) {
+    try {
+      for (const [key, value] of Object.entries(items || {})) {
+        localStorage.setItem(`${JP_LOCAL_FALLBACK_PREFIX}${key}`, JSON.stringify(value));
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function getExtensionStorage(keys) {
+    const storage = JP_WEBEXT?.storage?.local;
+    if (!storage?.get) return Promise.resolve(readLocalFallback(keys));
+    if (JP_USE_BROWSER_PROMISES) {
+      try {
+        return Promise.resolve(storage.get(keys)).catch(() => readLocalFallback(keys));
+      } catch (_) {
+        return Promise.resolve(readLocalFallback(keys));
+      }
+    }
+    return new Promise(resolve => {
+      try {
+        storage.get(keys, result => {
+          try {
+            if (JP_WEBEXT.runtime?.lastError) { resolve(readLocalFallback(keys)); return; }
+          } catch (_) { resolve(readLocalFallback(keys)); return; }
+          resolve(result || readLocalFallback(keys));
+        });
+      } catch (_) {
+        resolve(readLocalFallback(keys));
+      }
+    });
+  }
+
+  function setExtensionStorage(items) {
+    const storage = JP_WEBEXT?.storage?.local;
+    if (!storage?.set) {
+      writeLocalFallback(items);
+      return Promise.resolve();
+    }
+    if (JP_USE_BROWSER_PROMISES) {
+      try {
+        return Promise.resolve(storage.set(items)).catch(() => { writeLocalFallback(items); });
+      } catch (_) {
+        writeLocalFallback(items);
+        return Promise.resolve();
+      }
+    }
+    return new Promise(resolve => {
+      try {
+        storage.set(items, () => {
+          let failed = false;
+          try { failed = Boolean(JP_WEBEXT.runtime?.lastError); } catch (_) { failed = true; }
+          if (failed) writeLocalFallback(items);
+          resolve();
+        });
+      } catch (_) {
+        writeLocalFallback(items);
+        resolve();
+      }
+    });
+  }
+
+  function sendExtensionMessage(message) {
+    const runtime = JP_WEBEXT?.runtime;
+    if (!runtime?.sendMessage) return Promise.resolve(null);
+    if (JP_USE_BROWSER_PROMISES) {
+      try { return Promise.resolve(runtime.sendMessage(message)).catch(() => null); }
+      catch (_) { return Promise.resolve(null); }
+    }
+    return new Promise(resolve => {
+      try {
+        runtime.sendMessage(message, response => {
+          try {
+            if (runtime.lastError) { resolve(null); return; }
+          } catch (_) { resolve(null); return; }
+          resolve(response || null);
+        });
+      } catch (_) { resolve(null); }
+    });
+  }
+
+  function getExtensionURL(path) {
+    try { return JP_WEBEXT?.runtime?.getURL?.(path) || ''; }
+    catch (_) { return ''; }
+  }
+
   // ---------------------------------------------------------------------
   // CONFIG: seletores possíveis do botão de Like e de estado "já curtido".
   // O JetPhotos costuma usar um link com ícone thumbs-up. Depois de
@@ -33,7 +141,8 @@
   function injectNetworkHook() {
     try {
       const script = document.createElement('script');
-      script.src = chrome.runtime.getURL('content-hook.js');
+      script.src = getExtensionURL('content-hook.js');
+      if (!script.src) return;
       script.onload = () => script.remove();
       (document.head || document.documentElement).appendChild(script);
     } catch (error) {
@@ -91,9 +200,7 @@
 
   (function preloadDarkModeCheck() {
     try {
-      if (!isExtensionContextAlive()) return;
-      chrome.storage.local.get([STORAGE_KEY_SITE_DARK_MODE], (result) => {
-        if (chrome.runtime.lastError) return;
+      getExtensionStorage([STORAGE_KEY_SITE_DARK_MODE]).then(result => {
         if (result[STORAGE_KEY_SITE_DARK_MODE] === true) {
           injectPreloadHideStyle();
           document.documentElement.classList.add(PRELOAD_HIDE_CLASS);
@@ -209,7 +316,7 @@
   // é recarregada durante o desenvolvimento. Nesse estado, qualquer acesso à
   // API da extensão pode lançar "Extension context invalidated".
   function isExtensionContextAlive() {
-    try { return Boolean(chrome && chrome.runtime && chrome.runtime.id); }
+    try { return Boolean(JP_WEBEXT?.runtime && JP_WEBEXT.runtime.id); }
     catch (_) { return false; }
   }
 
@@ -1400,30 +1507,29 @@
 
   function getSettings() {
     return new Promise(resolve => {
-      chrome.storage.local.get(
-        [STORAGE_KEY_SITE_DARK_MODE, STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED, STORAGE_KEY_LANGUAGE],
-        result => {
-          resolve({
-            siteDarkMode: result[STORAGE_KEY_SITE_DARK_MODE] === true, // padrão: false
-            queueEstimatorEnabled: result[STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED] !== false, // padrão: true (EXPERIMENTAL)
-            language: result[STORAGE_KEY_LANGUAGE] || getBrowserLanguage()
-          });
-        }
-      );
+      getExtensionStorage(
+        [STORAGE_KEY_SITE_DARK_MODE, STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED, STORAGE_KEY_LANGUAGE]
+      ).then(result => {
+        resolve({
+          siteDarkMode: result[STORAGE_KEY_SITE_DARK_MODE] === true, // padrão: false
+          queueEstimatorEnabled: result[STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED] !== false, // padrão: true (EXPERIMENTAL)
+          language: result[STORAGE_KEY_LANGUAGE] || getBrowserLanguage()
+        });
+      });
     });
   }
 
 
   function setSiteDarkMode(value) {
-    chrome.storage.local.set({ [STORAGE_KEY_SITE_DARK_MODE]: value });
+    setExtensionStorage({ [STORAGE_KEY_SITE_DARK_MODE]: value });
   }
 
   function setQueueEstimatorEnabled(value) {
-    chrome.storage.local.set({ [STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED]: value });
+    setExtensionStorage({ [STORAGE_KEY_QUEUE_ESTIMATOR_ENABLED]: value });
   }
 
   function setLanguage(value) {
-    chrome.storage.local.set({ [STORAGE_KEY_LANGUAGE]: value });
+    setExtensionStorage({ [STORAGE_KEY_LANGUAGE]: value });
   }
 
   // =======================================================================
@@ -1909,10 +2015,11 @@
         }
         const trimmedKeys = Object.keys(merged).filter(k => k !== '__meta' && /^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
         for (const oldKey of trimmedKeys.slice(0, Math.max(0, trimmedKeys.length - 60))) delete merged[oldKey];
-        await new Promise(resolve => chrome.storage.local.set({ [STORAGE_KEY_QUEUE_DAILY_STATS]: merged }, resolve));
+        await setExtensionStorage({ [STORAGE_KEY_QUEUE_DAILY_STATS]: merged });
         try {
-          chrome.action.setBadgeText({ text: String(Math.min(Object.keys(merged).filter(k => k !== '__meta').length, 99)) });
-          chrome.action.setBadgeBackgroundColor({ color: '#4299dc' });
+          const action = JP_WEBEXT?.action || JP_WEBEXT?.browserAction;
+          action?.setBadgeText?.({ text: String(Math.min(Object.keys(merged).filter(k => k !== '__meta').length, 99)) });
+          action?.setBadgeBackgroundColor?.({ color: '#4299dc' });
         } catch (_) {}
         historyMsg.textContent = t('historyImported', keys.length);
       } catch (_) {
@@ -2159,7 +2266,7 @@
     fab.setAttribute('aria-label', t('settings'));
     fab.title = 'JetPhotos+';
     const logo = document.createElement('img');
-    logo.src = chrome.runtime.getURL('icons/logo.png');
+    logo.src = getExtensionURL('icons/logo.png');
     logo.alt = '';
     logo.setAttribute('aria-hidden', 'true');
     fab.appendChild(logo);
@@ -2233,7 +2340,7 @@
     launcher.setAttribute('title', 'JetPhotos+');
     const launcherLogo = document.createElement('img');
     launcherLogo.className = 'jp-launcher-logo';
-    launcherLogo.src = chrome.runtime.getURL('icons/logo.png');
+    launcherLogo.src = getExtensionURL('icons/logo.png');
     launcherLogo.alt = '';
     launcherLogo.setAttribute('aria-hidden', 'true');
     launcher.appendChild(launcherLogo);
@@ -2888,19 +2995,52 @@
   // -----------------------------------------------------------------------
   function loadQueueDailyStats() {
     const key = STORAGE_KEY_QUEUE_DAILY_STATS;
-    return new Promise(resolve => {
-      if (!isExtensionContextAlive()) { resolve({}); return; }
-      try {
-        chrome.storage.local.get([key], result => {
-          try {
-            if (chrome.runtime.lastError) { resolve({}); return; }
-          } catch (_) { resolve({}); return; }
-          resolve(result?.[key] || {});
-        });
-      } catch (_) {
-        resolve({});
+    return getExtensionStorage([key]).then(result => result?.[key] || {});
+  }
+
+  // Se o host não mantiver o service worker ativo (restrição comum em
+  // navegadores móveis), usa a leitura já disponível em queue.php para
+  // guardar o mesmo Total Screened que o coletor em background guardaria.
+  // Assim, o histórico continua evoluindo quando a página da fila é aberta.
+  async function recordQueueStatsFromPage(parsed, siteTodayKey) {
+    const totalScreened = parsed?.periodTotals?.totalScreened;
+    if (!Number.isFinite(totalScreened) || !siteTodayKey) return null;
+
+    const stats = await loadQueueDailyStats();
+    const now = Date.now();
+    const previousKey = stats.__meta?.lastObservedDay || null;
+    if (previousKey && siteTodayKey > previousKey) {
+      const previous = stats[previousKey];
+      if (previous && previous.maxScreened != null) {
+        previous.closed = true;
+        previous.closedAtMs = now;
+        previous.closeReason = 'site-day-changed';
       }
-    });
+    }
+
+    const current = stats[siteTodayKey] || {
+      maxScreened: 0,
+      firstObservedAtMs: now,
+      samples: 0,
+      closed: false
+    };
+    current.maxScreened = Math.max(current.maxScreened || 0, totalScreened);
+    current.lastObserved = totalScreened;
+    current.lastObservedAtMs = now;
+    current.samples = (current.samples || 0) + 1;
+    current.totalInQueue = parsed.totalInQueue;
+    current.closed = false;
+    stats[siteTodayKey] = current;
+    stats.__meta = {
+      lastObservedDay: siteTodayKey,
+      lastObservedAtMs: now,
+      lastScreened: totalScreened,
+      lastTotalInQueue: parsed.totalInQueue,
+      collectorVersion: 1
+    };
+
+    await setExtensionStorage({ [STORAGE_KEY_QUEUE_DAILY_STATS]: stats });
+    return { ok: true, day: siteTodayKey, totalScreened, maxScreened: current.maxScreened, totalInQueue: parsed.totalInQueue, stats };
   }
 
   function getDailyAnalyzedValue(stats, key) {
@@ -3201,12 +3341,8 @@
         refresh.textContent = t('collecting');
 
         try {
-          const result = await new Promise(resolve => {
-            chrome.runtime.sendMessage({ type: 'jp-collect-queue-now' }, response => {
-              if (chrome.runtime.lastError) resolve(null);
-              else resolve(response || null);
-            });
-          });
+          let result = await sendExtensionMessage({ type: 'jp-collect-queue-now' });
+          if (!result?.ok) result = await recordQueueStatsFromPage(parsed, siteTodayKey);
 
           const fresh = await loadQueueDailyStats();
           renderQueueTrackerSiteCard(fresh, siteTodayKey, parsed, result);
@@ -3355,17 +3491,14 @@
     let collectorResult = null;
     if (isExtensionContextAlive()) {
       try {
-        collectorResult = await new Promise(resolve => {
-          chrome.runtime.sendMessage({ type: 'jp-collect-queue-now' }, response => {
-            try {
-              if (chrome.runtime.lastError) { resolve(null); return; }
-            } catch (_) { resolve(null); return; }
-            resolve(response || null);
-          });
-        });
+        collectorResult = await sendExtensionMessage({ type: 'jp-collect-queue-now' });
       } catch (_) {
         collectorResult = null;
       }
+    }
+
+    if (!collectorResult?.ok) {
+      collectorResult = await recordQueueStatsFromPage(parsed, siteTodayKey);
     }
 
     const dailyStats = await loadQueueDailyStats();

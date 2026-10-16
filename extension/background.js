@@ -4,6 +4,45 @@
 // A coleta acontece em background para que o usuário não precise abrir
 // queue.php todos os dias.
 
+const JP_WEBEXT = globalThis.browser || globalThis.chrome || null;
+const JP_USE_BROWSER_PROMISES = Boolean(globalThis.browser && globalThis.browser !== globalThis.chrome);
+
+function getStoredValue(key) {
+  const storage = JP_WEBEXT?.storage?.local;
+  if (!storage?.get) return Promise.resolve({});
+  if (JP_USE_BROWSER_PROMISES) {
+    try { return Promise.resolve(storage.get([key])).then(result => result || {}, () => ({})); }
+    catch (_) { return Promise.resolve({}); }
+  }
+  return new Promise(resolve => {
+    try {
+      storage.get([key], result => {
+        try {
+          if (JP_WEBEXT.runtime?.lastError) { resolve({}); return; }
+        } catch (_) { resolve({}); return; }
+        resolve(result || {});
+      });
+    } catch (_) { resolve({}); }
+  });
+}
+
+function setStoredValue(items) {
+  const storage = JP_WEBEXT?.storage?.local;
+  if (!storage?.set) return Promise.resolve(false);
+  if (JP_USE_BROWSER_PROMISES) {
+    try { return Promise.resolve(storage.set(items)).then(() => true, () => false); }
+    catch (_) { return Promise.resolve(false); }
+  }
+  return new Promise(resolve => {
+    try {
+      storage.set(items, () => {
+        try { resolve(!JP_WEBEXT.runtime?.lastError); }
+        catch (_) { resolve(false); }
+      });
+    } catch (_) { resolve(false); }
+  });
+}
+
 const JP_QUEUE_URL = 'https://www.jetphotos.com/members/queue.php';
 const JP_QUEUE_ALARM = 'jp-queue-daily-tracker';
 const JP_QUEUE_POLL_MINUTES = 10;
@@ -77,9 +116,10 @@ function updateBadge(stats) {
   try {
     const keys = Object.keys(stats || {}).filter(key => key !== '__meta');
     const text = keys.length ? String(Math.min(keys.length, 99)) : '';
-    chrome.action.setBadgeText({ text });
-    chrome.action.setBadgeBackgroundColor({ color: JP_BADGE_COLOR });
-    chrome.action.setTitle({
+    const action = JP_WEBEXT?.action || JP_WEBEXT?.browserAction;
+    action?.setBadgeText?.({ text });
+    action?.setBadgeBackgroundColor?.({ color: JP_BADGE_COLOR });
+    action?.setTitle?.({
       title: text
         ? `JetPhotos+ — ${text} dia${text === '1' ? '' : 's'} acompanhados`
         : 'JetPhotos+'
@@ -88,11 +128,7 @@ function updateBadge(stats) {
 }
 
 function loadDailyStats() {
-  return new Promise(resolve => {
-    chrome.storage.local.get([JP_QUEUE_DAILY_KEY], result => {
-      resolve(result[JP_QUEUE_DAILY_KEY] || {});
-    });
-  });
+  return getStoredValue(JP_QUEUE_DAILY_KEY).then(result => result[JP_QUEUE_DAILY_KEY] || {});
 }
 
 function saveDailyStats(stats) {
@@ -105,8 +141,9 @@ function saveDailyStats(stats) {
   });
   if (stats.__meta) trimmed.__meta = stats.__meta;
 
-  return new Promise(resolve => {
-    chrome.storage.local.set({ [JP_QUEUE_DAILY_KEY]: trimmed }, () => { updateBadge(trimmed); resolve(trimmed); });
+  return setStoredValue({ [JP_QUEUE_DAILY_KEY]: trimmed }).then(() => {
+    updateBadge(trimmed);
+    return trimmed;
   });
 }
 
@@ -194,29 +231,35 @@ async function collectQueueStats() {
 }
 
 function ensureQueueAlarm() {
-  chrome.alarms.create(JP_QUEUE_ALARM, {
-    delayInMinutes: 1,
-    periodInMinutes: JP_QUEUE_POLL_MINUTES
-  });
+  try {
+    const result = JP_WEBEXT?.alarms?.create?.(JP_QUEUE_ALARM, {
+      delayInMinutes: 1,
+      periodInMinutes: JP_QUEUE_POLL_MINUTES
+    });
+    result?.catch?.(() => {});
+  } catch (_) {
+    // Alguns hosts WebExtensions móveis não oferecem execução periódica.
+    // A coleta imediata solicitada ao abrir queue.php continua disponível.
+  }
 }
 
-chrome.runtime.onInstalled.addListener(() => {
+JP_WEBEXT?.runtime?.onInstalled?.addListener(() => {
   ensureQueueAlarm();
   loadDailyStats().then(updateBadge);
   collectQueueStats();
 });
 
-chrome.runtime.onStartup.addListener(() => {
+JP_WEBEXT?.runtime?.onStartup?.addListener(() => {
   ensureQueueAlarm();
   loadDailyStats().then(updateBadge);
 });
 
-chrome.alarms.onAlarm.addListener(alarm => {
+JP_WEBEXT?.alarms?.onAlarm?.addListener(alarm => {
   if (alarm.name === JP_QUEUE_ALARM) collectQueueStats();
 });
 
 // queue.php pode pedir uma coleta imediata quando o painel é aberto.
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+JP_WEBEXT?.runtime?.onMessage?.addListener((message, sender, sendResponse) => {
   if (message?.type === 'jp-collect-queue-now') {
     collectQueueStats().then(sendResponse);
     return true;
