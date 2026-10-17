@@ -228,13 +228,14 @@
       settingsGeneral: 'Geral',
       experimental: 'Experimental',
       releaseUpdateAvailable: (version) => `Nova versão ${version} do JetPhotos+ disponível`,
-      releaseUpdateBody: 'Baixe o pacote e atualize a extensão pelo navegador. A instalação não é automática.',
+      releaseUpdateBodyDirect: 'O botão baixa o ZIP diretamente do GitHub. Depois, instale o pacote manualmente no navegador.',
+      releaseUpdateBodyPage: 'Esta release não tem ZIP anexado; o botão abre a página da release no GitHub.',
       downloadUpdate: 'Baixar atualização',
-      closeUpdatePreview: 'Fechar prévia',
-      updateTestTitle: 'Prévia do aviso de atualização',
-      updateTestBody: 'Esta é uma simulação; nenhum arquivo será baixado.',
-      testUpdateNotice: 'Testar aviso de atualização',
-      testUpdateNoticeHelp: 'Mostra temporariamente como o aviso aparecerá quando houver uma nova versão.',
+      viewReleasePage: 'Ver release no GitHub',
+      updateTestDirectFeedback: 'Prévia: em uma atualização real, este botão iniciaria o download do ZIP pelo GitHub. Nenhum arquivo foi baixado.',
+      updateTestPageFeedback: 'Prévia: em uma atualização real, este botão abriria a página da release no GitHub. Nenhuma página foi aberta.',
+      testUpdateNotice: 'Prévia completa da atualização',
+      testUpdateNoticeHelp: 'Mostra o aviso e o botão de download como se houvesse um ZIP novo. Clicar no botão da prévia não baixa nada.',
       siteDarkMode: 'Modo escuro (beta)',
       siteDarkModeHelp: 'Escurece o JetPhotos e também a interface da extensão (painel, submenu e widget). Fotos e cores de marca não são alteradas.',
       queueEstimator: 'Estimador de dias na fila (beta)',
@@ -285,13 +286,14 @@
       allLikedToast: 'All photos on this page are already liked',
       experimental: 'Experimental', settingsGeneral: 'General',
       releaseUpdateAvailable: (version) => `JetPhotos+ ${version} is available`,
-      releaseUpdateBody: 'Download the package and update the extension in your browser. Installation is not automatic.',
+      releaseUpdateBodyDirect: 'This button downloads the ZIP directly from GitHub. Then install the package manually in your browser.',
+      releaseUpdateBodyPage: 'This release has no ZIP attached, so the button opens its GitHub release page.',
       downloadUpdate: 'Download update',
-      closeUpdatePreview: 'Close preview',
-      updateTestTitle: 'Update notice preview',
-      updateTestBody: 'This is a simulation; no file will be downloaded.',
-      testUpdateNotice: 'Test update notice',
-      testUpdateNoticeHelp: 'Temporarily previews how the notice will look when a new version is available.',
+      viewReleasePage: 'View release on GitHub',
+      updateTestDirectFeedback: 'Preview: on a real update, this button would start the ZIP download from GitHub. No file was downloaded.',
+      updateTestPageFeedback: 'Preview: on a real update, this button would open the GitHub release page. No page was opened.',
+      testUpdateNotice: 'Full update preview',
+      testUpdateNoticeHelp: 'Shows the notice and download button as if a new ZIP were available. Clicking the preview button does not download anything.',
       siteDarkMode: 'Site dark mode (beta)', siteDarkModeHelp: 'Darkens JetPhotos backgrounds and light text. Photos and brand colors are not changed.',
       queueEstimator: 'Queue days estimator (beta)', queueEstimatorHelp: 'Estimates how long your photo may take to be reviewed on queue.php. Reload the page after changing.',
       language: 'Language', languageHelp: 'Choose the extension language.', portugueseBrazil: 'Português (Brasil)', english: 'English',
@@ -1328,6 +1330,7 @@
       #jp-update-notice .jp-update-notice-symbol img { display:block; width:20px; height:20px; object-fit:contain; }
       #jp-update-notice .jp-update-notice-title { display:block; font-size:15px; font-weight:700; line-height:1.35; }
       #jp-update-notice .jp-update-notice-body { margin:9px 0 0 44px; color:#5f6368; font-size:13px; line-height:1.45; }
+      #jp-update-notice .jp-update-notice-preview-feedback { margin:8px 0 0 44px; color:#5f6368; font-size:12px; line-height:1.4; }
       #jp-update-notice .jp-update-notice-close {
         position:absolute; top:8px; right:8px; width:36px; height:36px; border:0; border-radius:50%;
         background:transparent; color:#6b7280; font-size:22px; cursor:pointer; touch-action:manipulation;
@@ -1337,7 +1340,8 @@
       #jp-update-notice .jp-update-notice-download {
         min-height:44px; display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box;
         padding:8px 15px; border:0; border-radius:9px; background:#34383f; color:#ffffff;
-        font-size:13px; font-weight:700; text-decoration:none; cursor:pointer; touch-action:manipulation;
+        font-family:inherit; font-size:13px; font-weight:700; line-height:1.2; text-decoration:none;
+        appearance:none; -webkit-appearance:none; cursor:pointer; touch-action:manipulation;
         transition:background .14s ease, transform .14s ease;
       }
       #jp-update-notice .jp-update-notice-download:hover { background:#4a4f57; }
@@ -1346,7 +1350,8 @@
       html.jp-site-dark-active #jp-update-notice { background:#292a2d; color:#e8eaed; border-color:#45474b; box-shadow:0 14px 38px rgba(0,0,0,.55); }
       html.jp-site-dark-active #jp-update-notice .jp-update-notice-symbol { background:#3c4043; color:#ffffff; }
       html.jp-site-dark-active #jp-update-notice .jp-update-notice-symbol img { filter:invert(1); }
-      html.jp-site-dark-active #jp-update-notice .jp-update-notice-body { color:#bdc1c6; }
+      html.jp-site-dark-active #jp-update-notice .jp-update-notice-body,
+      html.jp-site-dark-active #jp-update-notice .jp-update-notice-preview-feedback { color:#bdc1c6; }
       html.jp-site-dark-active #jp-update-notice .jp-update-notice-close { color:#bdc1c6; }
       html.jp-site-dark-active #jp-update-notice .jp-update-notice-close:hover { background:#3c4043; }
       html.jp-site-dark-active #jp-update-notice .jp-update-notice-download { background:#e8eaed; color:#202124; }
@@ -1355,7 +1360,8 @@
         #jp-update-notice { top:max(9px, env(safe-area-inset-top)); width:calc(100vw - 20px); padding:14px; }
         #jp-update-notice .jp-update-notice-heading { gap:9px; }
         #jp-update-notice .jp-update-notice-symbol { width:32px; height:32px; flex-basis:32px; }
-        #jp-update-notice .jp-update-notice-body { margin-left:41px; }
+        #jp-update-notice .jp-update-notice-body,
+        #jp-update-notice .jp-update-notice-preview-feedback { margin-left:41px; }
         #jp-update-notice .jp-update-notice-title { font-size:14px; }
       }
       @media (prefers-reduced-motion: reduce) {
@@ -1897,6 +1903,12 @@
   let currentUpdateNoticeShownVersion = '';
   let testUpdatePreviewActive = false;
   let updateNoticeTimer = null;
+  const UPDATE_PREVIEW_RELEASE = Object.freeze({
+    tagName: 'v99.0.0',
+    zipUrl: 'preview-only',
+    htmlUrl: 'https://github.com/samuelffer/jetphotosplus/releases/latest',
+    isTest: true
+  });
 
   function parseUpdateVersion(value) {
     const match = String(value || '').trim().replace(/^v/i, '').match(/^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/);
@@ -1963,6 +1975,7 @@
 
     const isTest = release?.isTest === true;
     const tag = release?.tagName || release?.tag_name || '';
+    const hasZipAsset = Boolean(release?.zipUrl);
     const notice = document.createElement('section');
     notice.id = 'jp-update-notice';
     notice.setAttribute('role', 'status');
@@ -1970,7 +1983,7 @@
 
     const heading = document.createElement('strong');
     heading.className = 'jp-update-notice-title';
-    heading.textContent = isTest ? t('updateTestTitle') : t('releaseUpdateAvailable', tag);
+    heading.textContent = t('releaseUpdateAvailable', tag);
     const headingRow = document.createElement('div');
     headingRow.className = 'jp-update-notice-heading';
     const symbol = document.createElement('span');
@@ -1992,24 +2005,33 @@
 
     const body = document.createElement('div');
     body.className = 'jp-update-notice-body';
-    body.textContent = isTest ? t('updateTestBody') : t('releaseUpdateBody');
+    body.textContent = hasZipAsset ? t('releaseUpdateBodyDirect') : t('releaseUpdateBodyPage');
 
     const actions = document.createElement('div');
     actions.className = 'jp-update-notice-actions';
     if (isTest) {
-      const closePreview = document.createElement('button');
-      closePreview.type = 'button';
-      closePreview.className = 'jp-update-notice-download';
-      closePreview.textContent = t('closeUpdatePreview');
-      closePreview.addEventListener('click', () => closeUpdateNotice(true));
-      actions.appendChild(closePreview);
+      const previewAction = document.createElement('button');
+      previewAction.type = 'button';
+      previewAction.className = 'jp-update-notice-download';
+      previewAction.textContent = hasZipAsset ? t('downloadUpdate') : t('viewReleasePage');
+      let previewFeedback = null;
+      previewAction.addEventListener('click', () => {
+        if (!previewFeedback) {
+          previewFeedback = document.createElement('div');
+          previewFeedback.className = 'jp-update-notice-preview-feedback';
+          previewFeedback.setAttribute('role', 'status');
+          notice.insertBefore(previewFeedback, actions);
+        }
+        previewFeedback.textContent = t(hasZipAsset ? 'updateTestDirectFeedback' : 'updateTestPageFeedback');
+      });
+      actions.appendChild(previewAction);
     } else {
       const download = document.createElement('a');
       download.className = 'jp-update-notice-download';
       download.href = safeReleaseUrl(release);
       download.target = '_blank';
       download.rel = 'noopener noreferrer';
-      download.textContent = t('downloadUpdate');
+      download.textContent = hasZipAsset ? t('downloadUpdate') : t('viewReleasePage');
       download.addEventListener('click', () => setTimeout(() => closeUpdateNotice(false), 500));
       actions.appendChild(download);
     }
@@ -2028,9 +2050,7 @@
     button.addEventListener('click', event => {
       event.preventDefault();
       event.stopPropagation();
-      const release = testUpdatePreviewActive
-        ? { tagName: 'v99.0.0', isTest: true }
-        : currentUpdateRelease;
+      const release = testUpdatePreviewActive ? UPDATE_PREVIEW_RELEASE : currentUpdateRelease;
       if (release) showUpdateNotice(release, false);
     });
     return button;
@@ -2039,13 +2059,11 @@
   function renderUpdateIndicator() {
     const show = testUpdatePreviewActive || isUpdateAvailable(currentUpdateRelease);
     const version = testUpdatePreviewActive
-      ? 'v99.0.0'
+      ? UPDATE_PREVIEW_RELEASE.tagName
       : (currentUpdateRelease?.tagName || currentUpdateRelease?.tag_name || '');
     document.querySelectorAll('.jp-plus-update-indicator').forEach(button => {
       button.hidden = !show;
-      const label = testUpdatePreviewActive
-        ? t('updateTestTitle')
-        : t('releaseUpdateAvailable', version);
+      const label = t('releaseUpdateAvailable', version);
       button.setAttribute('aria-label', label);
       button.title = label;
     });
@@ -2053,7 +2071,7 @@
 
   function refreshReleaseUpdateUI(announce = true) {
     renderUpdateIndicator();
-    if (!announce || !launcherHostEl || !isUpdateAvailable(currentUpdateRelease)) return;
+    if (!announce || testUpdatePreviewActive || !launcherHostEl || !isUpdateAvailable(currentUpdateRelease)) return;
     const version = currentUpdateRelease.tagName || currentUpdateRelease.tag_name;
     if (!version || currentUpdateNoticeShownVersion === version) return;
     currentUpdateNoticeShownVersion = version;
@@ -2322,7 +2340,7 @@
     updateTestButton.addEventListener('click', () => {
       testUpdatePreviewActive = true;
       renderUpdateIndicator();
-      showUpdateNotice({ tagName: 'v99.0.0', isTest: true }, false);
+      showUpdateNotice(UPDATE_PREVIEW_RELEASE, false);
     });
     updateTestRow.append(updateTestLabel, updateTestButton);
     inner.appendChild(updateTestRow);
